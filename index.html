@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資産形成ダッシュボード</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>資産形成ダッシュボード</h1>
+    <span id="last-updated"></span>
+</header>
+<nav class="main-nav">
+    <button class="active" onclick="switchTab('dashboard')">ダッシュボード</button>
+    <button onclick="switchTab('record')">記録</button>
+    <button onclick="switchTab('settings')">設定</button>
+</nav>
+<main>
+
+<!-- クイックナビ（ダッシュボード専用） -->
+<div id="dash-qnav" class="dash-qnav" style="display:none;">
+    <button class="qnav-pill" onclick="qScroll('sec-summary')">概要</button>
+    <button class="qnav-pill" onclick="qScroll('sec-schd')">SCHD</button>
+    <button class="qnav-pill" onclick="qScroll('sec-nisa')">NISA</button>
+    <button class="qnav-pill" onclick="qScroll('sec-portfolio')">ポートフォリオ</button>
+    <span class="qnav-sep">｜</span>
+    <button class="qnav-pill" onclick="qScroll('sec-trend')">資産推移</button>
+    <button class="qnav-pill" onclick="qScroll('sec-sim')">シミュレーション</button>
+    <button class="qnav-pill" onclick="qScroll('sec-detail')">詳細分析</button>
+</div>
+
+<!-- ======= ダッシュボード ======= -->
+<div id="tab-dashboard" class="tab-content active">
+    <!-- HERO -->
+    <div class="hero mb" id="sec-summary">
+        <div>
+            <div class="hero-label">総資産</div>
+            <div class="hero-value" id="db-total">¥0</div>
+            <div class="hero-gain" id="db-total-gain"></div>
+        </div>
+        <div class="hero-right">
+            <div class="hero-month">先月比</div>
+            <div class="hero-month-val" id="db-month-diff">--</div>
+        </div>
+    </div>
+
+    <!-- 3枚サマリー -->
+    <div class="g3 mb">
+        <div class="sum-card">
+            <div class="sum-label">投資資産（NISA・特定）</div>
+            <div class="sum-val" id="db-inv">¥0</div>
+            <div class="sum-gain" id="db-inv-gain"></div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">iDeCo</div>
+            <div class="sum-val" id="db-ideco">¥0</div>
+            <div class="sum-gain" id="db-ideco-gain"></div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">現金・預金</div>
+            <div class="sum-val" id="db-cash">¥0</div>
+            <div class="bank-mini" id="db-bank-mini"></div>
+        </div>
+    </div>
+
+    <!-- SCHD ストリップ -->
+    <div class="schd-strip" id="sec-schd">
+        <div>
+            <div class="sl-label">楽天SCHD 元本</div>
+            <div class="sl-val" id="ss-val">¥0</div>
+            <div class="sl-meta" id="ss-meta">/ ¥10,000,000</div>
+        </div>
+        <div class="strip-bar">
+            <div class="pb-label"><span id="ss-pct">0%</span><span id="ss-rem">残り ¥0</span></div>
+            <div class="pb"><div class="pb-fill fill-blue" id="ss-bar" style="width:0%"></div></div>
+        </div>
+        <div class="strip-right">
+            <div style="margin-bottom:2px;">到達予想</div>
+            <strong id="ss-eta">--</strong>
+        </div>
+    </div>
+
+    <!-- NISA + ポートフォリオ -->
+    <div class="g2 mb" id="sec-nisa">
+        <!-- NISA コンパクト（自動計算） -->
+        <div class="card" id="sec-portfolio-nisa">
+            <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span>NISA 枠 <span id="db-nisa-year" style="font-weight:400">2026</span>年</span>
+            </div>
+
+            <div class="nisa-item">
+                <div class="nisa-top">
+                    <span class="nisa-name">成長投資枠（年間）</span>
+                    <span class="nisa-vals"><span id="ns-s-used">¥0</span> / ¥240万</span>
+                </div>
+                <div class="pb"><div class="pb-fill fill-orange" id="ns-s-bar" style="width:0%"></div></div>
+                <div class="nisa-sub"><span id="ns-s-pct">0%</span>　残り <span id="ns-s-rem">¥2,400,000</span></div>
+            </div>
+
+            <div class="nisa-item">
+                <div class="nisa-top">
+                    <span class="nisa-name">積立投資枠（年間）</span>
+                    <span class="nisa-vals"><span id="ns-t-used">¥0</span> / ¥120万</span>
+                </div>
+                <div class="pb"><div class="pb-fill fill-purple" id="ns-t-bar" style="width:0%"></div></div>
+                <div class="nisa-sub"><span id="ns-t-pct">0%</span>　残り <span id="ns-t-rem">¥1,200,000</span></div>
+            </div>
+
+            <div class="nisa-item" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+                <div class="nisa-top">
+                    <span class="nisa-name">生涯投資枠（総計）</span>
+                    <span class="nisa-vals"><span id="ns-l-used">¥0</span> / ¥1,800万</span>
+                </div>
+                <div class="pb"><div class="pb-fill fill-green" id="ns-l-bar" style="width:0%"></div></div>
+                <div class="nisa-sub"><span id="ns-l-pct">0%</span>　残り <span id="ns-l-rem">¥18,000,000</span></div>
+            </div>
+
+            <div class="nisa-item">
+                <div class="nisa-top">
+                    <span class="nisa-name" style="color:var(--warning);">└ 成長投資枠（生涯上限）</span>
+                    <span class="nisa-vals" style="color:var(--warning);"><span id="ns-sl-used">¥0</span> / ¥1,200万</span>
+                </div>
+                <div class="pb"><div class="pb-fill fill-orange" id="ns-sl-bar" style="width:0%"></div></div>
+                <div class="nisa-sub" style="color:var(--warning);"><span id="ns-sl-pct">0%</span>　残り <span id="ns-sl-rem">¥12,000,000</span></div>
+            </div>
+        </div>
+
+        <!-- ポートフォリオ -->
+        <div class="card" style="padding:0;overflow:hidden;" id="sec-portfolio">
+            <div class="port-grid">
+                <div style="padding:16px;border-right:1px solid var(--border);">
+                    <div class="chart-wrap"><canvas id="portfolio-chart"></canvas></div>
+                </div>
+                <div style="overflow:auto;max-height:280px;">
+                    <table>
+                        <thead><tr><th>銘柄名</th><th>口座</th><th style="text-align:right">比率</th></tr></thead>
+                        <tbody id="db-ptable"><tr><td colspan="3" class="empty">データなし</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分析折りたたみ -->
+    <hr class="an-divider" id="sec-trend">
+
+    <details class="an-block" id="det-trend" ontoggle="if(this.open)renderTrendChart()">
+        <summary>資産推移チャート</summary>
+        <div class="an-body"><div class="chart-wrap" style="height:300px;"><canvas id="trend-chart"></canvas></div></div>
+    </details>
+
+    <details class="an-block" id="sec-sim">
+        <summary>SCHD シミュレーション / 配当シミュレーション</summary>
+        <div class="an-body">
+            <div class="g2" style="margin-bottom:20px;">
+                <div>
+                    <div style="font-size:13px;font-weight:700;margin-bottom:12px;">SCHD 到達シミュレーション</div>
+                    <table>
+                        <tr><td style="color:var(--muted)">現在の元本</td><td style="text-align:right;font-weight:600" id="sim-cur">¥0</td></tr>
+                        <tr><td style="color:var(--muted)">目標元本</td><td style="text-align:right">¥10,000,000</td></tr>
+                        <tr><td style="color:var(--muted)">月次積立</td><td style="text-align:right" id="sim-m">--</td></tr>
+                        <tr><td style="color:var(--muted)">年間スポット</td><td style="text-align:right" id="sim-sp">--</td></tr>
+                        <tr><td style="color:var(--muted)">残り元本</td><td style="text-align:right" id="sim-rem">¥0</td></tr>
+                        <tr><td style="color:var(--muted)">予想到達月</td><td style="text-align:right;font-weight:700;color:var(--primary)" id="sim-eta">--</td></tr>
+                        <tr><td style="color:var(--muted)">残り期間</td><td style="text-align:right" id="sim-months">--</td></tr>
+                    </table>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:700;margin-bottom:12px;">SCHD 分配金再投資シミュレーション（元本1000万到達後）</div>
+                    <div class="fg" style="margin-bottom:8px;"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.5" step="0.1" oninput="renderSCHDReinvest()"></div>
+                    <div class="schd-scroll-wrap">
+                        <table>
+                            <thead><tr><th>経過年</th><th style="text-align:right">評価額</th><th style="text-align:right">年間分配金</th><th style="text-align:right">月換算</th><th style="text-align:right">累計分配金</th></tr></thead>
+                            <tbody id="schd-reinvest-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 全銘柄配当シミュレーション -->
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;padding-top:16px;border-top:1px solid var(--border);">全銘柄 配当シミュレーション</div>
+            <input type="text" class="tbl-filter" id="div-filter" placeholder="銘柄名で絞り込み..." oninput="filterTable('div-sim-body',this.value)">
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>銘柄名</th><th>口座</th><th>課税</th><th style="text-align:right">評価額</th><th style="text-align:right">利回り%</th><th style="text-align:right">年間(税前)</th><th style="text-align:right">年間(税後)</th><th style="text-align:right">月換算(税後)</th></tr></thead>
+                    <tbody id="div-sim-body"></tbody>
+                    <tfoot id="div-sim-foot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </details>
+
+    <details class="an-block" id="sec-detail">
+        <summary>全銘柄詳細分析</summary>
+        <div class="an-body">
+            <div class="g4 mb">
+                <div class="card" style="padding:14px"><div class="clabel">総評価額</div><div class="cval" id="an-total-val">¥0</div></div>
+                <div class="card" style="padding:14px"><div class="clabel">総元本</div><div class="cval" id="an-total-pri">¥0</div></div>
+                <div class="card" style="padding:14px"><div class="clabel">含み損益</div><div class="cval" id="an-total-gain" style="font-size:20px;">--</div></div>
+                <div class="card" style="padding:14px"><div class="clabel">損益率</div><div class="cval" id="an-total-gain-r" style="font-size:20px;">--%</div></div>
+            </div>
+            <div class="g2 mb">
+                <div class="tbl-wrap">
+                    <div class="tbl-head">口座別合計</div>
+                    <table><thead><tr><th>口座</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <tbody id="an-by-account"></tbody></table>
+                </div>
+                <div class="tbl-wrap">
+                    <div class="tbl-head">種別合計</div>
+                    <table><thead><tr><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <tbody id="an-by-type"></tbody></table>
+                </div>
+            </div>
+            <div class="tbl-wrap">
+                <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>銘柄別一覧</span>
+                    <input type="text" class="tbl-filter" style="width:200px;margin:0;" id="holdings-filter" placeholder="絞り込み..." oninput="filterTable('an-holdings',this.value)">
+                </div>
+                <table>
+                    <thead><tr><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">元本</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <tbody id="an-holdings"><tr><td colspan="8" class="empty">データなし</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </details>
+</div>
+
+<!-- ======= 記録タブ ======= -->
+<div id="tab-record" class="tab-content">
+    <!-- 固定バー -->
+    <div class="rec-sticky">
+        <div class="rec-sticky-inner">
+            <label>記録月</label>
+            <input type="month" id="rec-month" onchange="markUnsaved()">
+            <select id="rec-past-select" onchange="if(this.value){loadSnap(this.value);this.value=''}">
+                <option value="">過去月を編集...</option>
+            </select>
+            <button class="btn btn-p btn-sm" onclick="saveSnapshot()" style="white-space:nowrap;">この月を保存</button>
+            <span class="rec-unsaved" id="rec-unsaved" style="display:none">● 未保存</span>
+        </div>
+    </div>
+
+    <!-- サブタブ（NISA枠は自動計算のため削除） -->
+    <div class="sub-nav">
+        <button class="active" onclick="switchSubTab('rec','banks')">銀行・カード</button>
+        <button onclick="switchSubTab('rec','holdings')">保有銘柄</button>
+    </div>
+
+    <div id="rec-banks" class="sub-content active">
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>銀行口座残高</span></div>
+            <div class="rec-sec-body"><div id="rec-banks-grid" class="g4"></div></div>
+        </div>
+        <div class="rec-sec" id="rec-cards-section" style="display:none;">
+            <div class="rec-sec-head"><span>クレジットカード 請求予定額</span></div>
+            <div class="rec-sec-body"><div id="rec-cards-grid" class="g4"></div></div>
+        </div>
+    </div>
+
+    <div id="rec-holdings" class="sub-content">
+        <div class="rec-sec">
+            <div class="rec-sec-head">
+                <span>保有銘柄（NISA・特定口座）</span>
+                <button class="btn btn-s btn-sm" onclick="switchTab('settings');switchSubTab('set','holdings')">銘柄管理</button>
+            </div>
+            <table>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
+                <tbody id="rec-holdings-body"></tbody>
+            </table>
+        </div>
+        <div class="rec-sec">
+            <div class="rec-sec-head">
+                <span>iDeCo</span>
+                <button class="btn btn-s btn-sm" onclick="switchTab('settings');switchSubTab('set','holdings')">銘柄管理</button>
+            </div>
+            <table>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
+                <tbody id="rec-ideco-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="rec-nisa" class="sub-content">
+        <div class="rec-sec">
+            <div class="rec-sec-head">
+                <span>NISA 枠使用状況（年初からの累計）</span>
+                <button class="btn-auto" onclick="autoFillNisa()">積立設定から推計</button>
+            </div>
+            <div class="rec-sec-body">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">「推計」ボタンで今年の積立設定から自動計算します。スポット投資は手動で加算してください。</div>
+                <div class="g3">
+                    <div class="fg"><label>成長投資枠 使用額（年間）</label><input type="number" id="rec-seichou" placeholder="0" oninput="markUnsaved()"></div>
+                    <div class="fg"><label>積立投資枠 使用額（年間）</label><input type="number" id="rec-tsumitate" placeholder="0" oninput="markUnsaved()"></div>
+                    <div class="fg"><label>生涯使用額（累計総計）</label><input type="number" id="rec-lifetime" placeholder="0" oninput="markUnsaved()"></div>
+                </div>
+                <div class="fg" style="max-width:280px;">
+                    <label>成長投資枠 生涯使用額（累計）</label>
+                    <input type="number" id="rec-seichou-lifetime" placeholder="0" oninput="markUnsaved()">
+                    <div style="font-size:11px;color:var(--muted);margin-top:3px;">生涯上限: ¥12,000,000</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:24px;">
+        <div class="sec-label">過去の記録</div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>月</th><th style="text-align:right">総資産</th><th style="text-align:right">投資</th><th style="text-align:right">iDeCo</th><th style="text-align:right">現金</th><th style="text-align:right">SCHD元本</th><th></th></tr></thead>
+                <tbody id="rec-history"><tr><td colspan="7" class="empty">記録なし</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ======= 設定タブ ======= -->
+<div id="tab-settings" class="tab-content">
+    <div class="sub-nav">
+        <button class="active" onclick="switchSubTab('set','holdings')">銘柄管理</button>
+        <button onclick="switchSubTab('set','accounts')">口座管理</button>
+        <button onclick="switchSubTab('set','basic')">基本設定</button>
+    </div>
+
+    <!-- 銘柄管理 -->
+    <div id="set-holdings" class="sub-content active">
+        <div class="sec-label">保有銘柄（NISA・特定口座）</div>
+        <div class="tbl-wrap mb">
+            <table>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">月次積立</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
+                <tbody id="s-holdings-table"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openHoldingPanel()">+ 追加</button>
+        <div id="s-holding-panel" class="add-panel" style="max-width:620px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-holding-panel-title">銘柄を追加</div>
+            <input type="hidden" id="s-holding-id">
+            <div class="fi">
+                <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-h-name"></div>
+                <div class="fg"><label>口座</label>
+                    <select id="s-h-account">
+                        <option value="nisa-growth">NISA成長投資</option>
+                        <option value="nisa-tsumitate">NISA積立</option>
+                        <option value="specific">特定口座</option>
+                    </select>
+                </div>
+                <div class="fg"><label>種別</label>
+                    <select id="s-h-type">
+                        <option value="fund">投資信託</option>
+                        <option value="domestic-stock">国内株式</option>
+                        <option value="us-stock">米国株式</option>
+                        <option value="other">その他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fi" style="margin-top:8px;">
+                <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0"></div>
+                <div class="fg"><label>年間スポット額（円）</label><input type="number" id="s-h-spot" placeholder="0"></div>
+                <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1"></div>
+            </div>
+            <div class="flex-gap" style="margin-top:10px;">
+                <button class="btn btn-p btn-sm" onclick="saveHolding()">保存</button>
+                <button class="btn btn-s btn-sm" onclick="closeHoldingPanel()">キャンセル</button>
+            </div>
+        </div>
+
+        <div class="sec-label" style="margin-top:20px;">iDeCo 銘柄</div>
+        <div class="tbl-wrap mb">
+            <table>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th style="text-align:right">月次拠出</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
+                <tbody id="s-ideco-table"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openIdecoPanel()">+ 追加</button>
+        <div id="s-ideco-panel" class="add-panel" style="max-width:480px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-ideco-panel-title">iDeCo銘柄を追加</div>
+            <input type="hidden" id="s-ideco-id">
+            <div class="fi">
+                <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
+                <div class="fg"><label>種別</label>
+                    <select id="s-i-type">
+                        <option value="fund">投資信託</option>
+                        <option value="domestic-stock">国内株式</option>
+                        <option value="us-stock">米国株式</option>
+                        <option value="other">その他</option>
+                    </select>
+                </div>
+                <div class="fg"><label>月次拠出額（円）</label><input type="number" id="s-i-monthly" placeholder="0"></div>
+                <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1"></div>
+            </div>
+            <div class="flex-gap" style="margin-top:10px;">
+                <button class="btn btn-p btn-sm" onclick="saveIdeco()">保存</button>
+                <button class="btn btn-s btn-sm" onclick="closeIdecoPanel()">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 口座管理 -->
+    <div id="set-accounts" class="sub-content">
+        <div class="sec-label">銀行口座</div>
+        <div class="tbl-wrap mb">
+            <table><thead><tr><th>口座名</th><th>メモ</th><th></th></tr></thead>
+            <tbody id="s-banks-table"></tbody></table>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openBankPanel()">+ 追加</button>
+        <div id="s-bank-panel" class="add-panel" style="max-width:480px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-bank-panel-title">銀行口座を追加</div>
+            <input type="hidden" id="s-bank-id">
+            <div class="fi">
+                <div class="fg"><label>口座名</label><input type="text" id="s-bank-name" placeholder="楽天銀行"></div>
+                <div class="fg"><label>メモ（任意）</label><input type="text" id="s-bank-note" placeholder="メイン口座"></div>
+            </div>
+            <div class="flex-gap" style="margin-top:8px;">
+                <button class="btn btn-p btn-sm" onclick="saveBank()">保存</button>
+                <button class="btn btn-s btn-sm" onclick="closeBankPanel()">キャンセル</button>
+            </div>
+        </div>
+
+        <div class="sec-label" style="margin-top:20px;">クレジットカード</div>
+        <div class="tbl-wrap mb">
+            <table><thead><tr><th>カード名</th><th>メモ</th><th></th></tr></thead>
+            <tbody id="s-cards-table"></tbody></table>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openCardPanel()">+ 追加</button>
+        <div id="s-card-panel" class="add-panel" style="max-width:480px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-card-panel-title">カードを追加</div>
+            <input type="hidden" id="s-card-id">
+            <div class="fi">
+                <div class="fg"><label>カード名</label><input type="text" id="s-card-name" placeholder="楽天カード"></div>
+                <div class="fg"><label>メモ（任意）</label><input type="text" id="s-card-note"></div>
+            </div>
+            <div class="flex-gap" style="margin-top:8px;">
+                <button class="btn btn-p btn-sm" onclick="saveCard()">保存</button>
+                <button class="btn btn-s btn-sm" onclick="closeCardPanel()">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 基本設定 -->
+    <div id="set-basic" class="sub-content">
+        <div class="sec-label">基本設定</div>
+        <div class="card" style="max-width:480px;margin-bottom:20px;">
+            <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000"></div>
+            <button class="btn btn-p btn-sm" onclick="saveBasic()">保存</button>
+        </div>
+        <div class="sec-label">データ管理</div>
+        <div class="card" style="max-width:480px;">
+            <div class="flex-gap">
+                <button class="btn btn-s" onclick="exportData()">JSONエクスポート</button>
+                <button class="btn btn-s" onclick="el('imp-file').click()">JSONインポート</button>
+                <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+<script src="app.js"></script>
+</body>
+</html>

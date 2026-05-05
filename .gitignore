@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# エディタ
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
+
+# バックアップ
+*.bak
+*.orig
