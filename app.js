@@ -391,7 +391,11 @@ function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return
 function renderAccTypesTable(){
     const accs=getAccounts();
     const all=[...Object.entries(BUILT_IN_ACCOUNTS).map(([id])=>({id,...accs[id],builtIn:true})),...(D.customAccounts||[]).map(a=>({...a,builtIn:false}))];
-    el('s-acctypes-table').innerHTML=all.map(a=>`<tr><td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`).join('');
+    el('s-acctypes-table').innerHTML=all.map(a=>{
+        const drag=a.builtIn?'':'draggable="true" data-id="'+a.id+'" data-group="acctype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
+        const handle=a.builtIn?'<td style="width:36px;color:var(--muted);text-align:center;font-size:11px;">―</td>':'<td class="drag-handle">⠿</td>';
+        return`<tr ${drag}>${handle}<td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
+    }).join('');
 }
 function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-panel-title').textContent='口座種別を追加';}el('s-acctype-panel').classList.add('open');}
 function closeAccTypePanel(){el('s-acctype-panel').classList.remove('open');}
@@ -407,7 +411,11 @@ function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(
 // 銘柄種別
 function renderAssetTypesTable(){
     const all=[...Object.entries(BUILT_IN_ASSET_TYPES).map(([id,t])=>({id,...t,builtIn:true})),...(D.customAssetTypes||[]).map(t=>({...t,builtIn:false}))];
-    el('s-assettypes-table').innerHTML=all.map(t=>`<tr><td>${t.label}</td><td style="text-align:right">${t.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAssetType('${t.id}')">削除</button></div>`}</td></tr>`).join('');
+    el('s-assettypes-table').innerHTML=all.map(t=>{
+        const drag=t.builtIn?'':'draggable="true" data-id="'+t.id+'" data-group="assettype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
+        const handle=t.builtIn?'<td style="width:36px;color:var(--muted);text-align:center;font-size:11px;">―</td>':'<td class="drag-handle">⠿</td>';
+        return`<tr ${drag}>${handle}<td>${t.label}</td><td style="text-align:right">${t.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAssetType('${t.id}')">削除</button></div>`}</td></tr>`;
+    }).join('');
 }
 function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}el('s-assettype-panel').classList.add('open');}
 function closeAssetTypePanel(){el('s-assettype-panel').classList.remove('open');}
@@ -421,7 +429,7 @@ function dragStart(e){dragId=e.currentTarget.dataset.id;dragGroup=e.currentTarge
 function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
 function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragEnd(e){e.currentTarget.classList.remove('dragging');}
-function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:dragGroup==='bank'?D.bankAccounts:dragGroup==='card'?D.creditCards:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else if(dragGroup==='bank'){renderBanksTable();renderBankInputs();}else if(dragGroup==='card'){renderCardsTable();renderCardInputs();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
+function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:dragGroup==='bank'?D.bankAccounts:dragGroup==='card'?D.creditCards:dragGroup==='acctype'?D.customAccounts:dragGroup==='assettype'?D.customAssetTypes:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else if(dragGroup==='bank'){renderBanksTable();renderBankInputs();}else if(dragGroup==='card'){renderCardsTable();renderCardInputs();}else if(dragGroup==='acctype'){renderAccTypesTable();}else if(dragGroup==='assettype'){renderAssetTypesTable();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
 
 // ===== データ管理 =====
 const today=()=>new Date().toISOString().slice(0,10);
