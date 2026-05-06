@@ -1,16 +1,19 @@
 // ===== 定数 =====
-const ACCOUNTS={
+const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#2563eb',badge:'b-blue'},
     'nisa-tsumitate': {label:'NISA積立',    color:'#7c3aed',badge:'b-purple'},
     'specific':       {label:'特定口座',     color:'#0891b2',badge:'b-teal'},
+    'old-nisa':       {label:'旧NISA',       color:'#dc2626',badge:'b-red'},
 };
 const IDECO_COLOR='#059669';
-const ASSET_TYPES={
+const BUILT_IN_ASSET_TYPES={
     'fund':           {label:'投資信託',badge:'b-gray'},
     'domestic-stock': {label:'国内株式',badge:'b-green'},
     'us-stock':       {label:'米国株式',badge:'b-orange'},
     'other':          {label:'その他',  badge:'b-gray'},
 };
+function getAccounts(){const r={...BUILT_IN_ACCOUNTS};(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
+function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray'};});return r;}
 
 function makeDefault(){
     return {
@@ -27,6 +30,8 @@ function makeDefault(){
             {id:'h-orukan',name:'eMAXIS Slim 全世界株式(オルカン)',  account:'nisa-tsumitate', assetType:'fund',monthlyAmount: 50000,spotAnnual:      0,dividendYield:0.2,order:2},
         ],
         idecoHoldings:[],
+        customAccounts:[],
+        customAssetTypes:[],
         current:{
             bankValues:   {'bank-1':0,'bank-2':0,'bank-3':0},
             cardValues:   {'card-1':0},
@@ -75,8 +80,10 @@ const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');el('last-updated').textContent=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
 function calcTotals(){const c=D.current;const cash=Object.values(c.bankValues).reduce((a,v)=>a+v,0);const inv=D.holdings.reduce((a,h)=>a+(c.holdingValues[h.id]?.value||0),0);const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);return{cash,inv,ideco,total:cash+inv+ideco};}
-function acBadge(acc){const a=ACCOUNTS[acc];return a?`<span class="badge ${a.badge}">${a.label}`:'';}
-function atBadge(type){const t=ASSET_TYPES[type];return t?`<span class="badge ${t.badge}">${t.label}</span>`:'';}
+function acBadge(acc){const a=getAccounts()[acc];return a?`<span class="badge ${a.badge}">${a.label}`:'';}
+function atBadge(type){const t=getAssetTypes()[type];return t?`<span class="badge ${t.badge}">${t.label}</span>`:'';}
+function buildAccountOptions(selId,val){el(selId).innerHTML=Object.entries(getAccounts()).map(([k,v])=>`<option value="${k}"${val===k?' selected':''}>${v.label}</option>`).join('');}
+function buildAssetTypeOptions(selId,val){el(selId).innerHTML=Object.entries(getAssetTypes()).map(([k,v])=>`<option value="${k}"${val===k?' selected':''}>${v.label}</option>`).join('');}
 function gainHtml(val,pri,size='11px'){if(!pri)return'';const g=val-pri,r=(g/pri*100),cls=g>=0?'positive':'negative',sign=g>=0?'+':'';return`<span class="${cls}" style="font-size:${size}">${sign}${fmt(g)}</span><span style="color:var(--muted);font-size:${size};margin-left:4px;">(${sign}${r.toFixed(2)}%)</span>`;}
 
 // ===== NISA バー =====
@@ -131,13 +138,14 @@ function renderDashboard(){
     renderAnalysisData();
     renderSCHDReinvest();
     renderDividendSim();
+    renderTrendChart();
     updateTs();
 }
 
 function renderPortfolio(totalInv){
     const c=D.current;
     const items=[
-        ...D.holdings.map(h=>({name:h.name,account:h.account,assetType:h.assetType,value:c.holdingValues[h.id]?.value||0,color:ACCOUNTS[h.account]?.color||'#9ca3af'})),
+        ...D.holdings.map(h=>({name:h.name,account:h.account,assetType:h.assetType,value:c.holdingValues[h.id]?.value||0,color:getAccounts()[h.account]?.color||'#9ca3af'})),
         ...D.idecoHoldings.map(h=>({name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,color:IDECO_COLOR})),
     ].filter(i=>i.value>0);
     const tbody=el('db-ptable');
@@ -170,15 +178,16 @@ function renderAnalysisData(){
 
     const byAcc={},byType={};
     allH.forEach(h=>{if(!byAcc[h.accKey])byAcc[h.accKey]={val:0,pri:0,label:h.acLabel};byAcc[h.accKey].val+=h.hv.value||0;byAcc[h.accKey].pri+=h.hv.principal||0;if(!byType[h.assetType])byType[h.assetType]={val:0,pri:0};byType[h.assetType].val+=h.hv.value||0;byType[h.assetType].pri+=h.hv.principal||0;});
-    const accOrder=['nisa-growth','nisa-tsumitate','specific','ideco'];
+    const accOrder=[...Object.keys(BUILT_IN_ACCOUNTS),'ideco'];
     function breakdownRow(label,d,totalVal,totalGain){const g=d.pri>0?d.val-d.pri:null;const gr=d.pri>0?(d.val-d.pri)/d.pri*100:null;const r=totalVal>0?((d.val/totalVal)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gr!==null?`<span class="${gr>=0?'positive':'negative'}">${gr>=0?'+':''}${gr.toFixed(2)}%</span>`:'--';return`<tr><td>${label}</td><td style="text-align:right">${fmt(d.val)}</td><td style="text-align:right">${gHtml}</td><td style="text-align:right">${grHtml}</td><td style="text-align:right">${r}%</td></tr>`;}
     const totalGainRate=totalPri>0?(totalGain/totalPri*100):null;
     const accFooter=`<tr style="border-top:2px solid var(--border);font-weight:700"><td>合計</td><td style="text-align:right">${fmt(totalVal)}</td><td style="text-align:right">${totalGain!==null?`<span class="${totalGain>=0?'positive':'negative'}">${totalGain>=0?'+':''}${fmt(totalGain)}</span>`:'--'}</td><td style="text-align:right">${totalGainRate!==null?`<span class="${totalGainRate>=0?'positive':'negative'}">${totalGainRate>=0?'+':''}${totalGainRate.toFixed(2)}%</span>`:'--'}</td><td></td></tr>`;
     el('an-by-account').innerHTML=Object.entries(byAcc).sort((a,b)=>accOrder.indexOf(a[0])-accOrder.indexOf(b[0])).filter(([,d])=>d.val>0).map(([,d])=>breakdownRow(d.label,d,totalVal,totalGain)).join('')+accFooter;
-    const typeOrder=['fund','domestic-stock','us-stock','other'];
-    el('an-by-type').innerHTML=Object.entries(byType).sort((a,b)=>typeOrder.indexOf(a[0])-typeOrder.indexOf(b[0])).filter(([,d])=>d.val>0).map(([k,d])=>breakdownRow(atBadge(k),d,totalVal,totalGain)).join('')+accFooter;
-    el('an-holdings').innerHTML=!allH.length?'<tr><td colspan="8" class="empty">データなし</td></tr>':allH.map(h=>{const v=h.hv.value||0,p=h.hv.principal||0,g=p>0?v-p:null,gRate=p>0?(v-p)/p*100:null;const r=totalInv>0?((v/totalInv)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gRate!==null?`<span class="${gRate>=0?'positive':'negative'}">${gRate>=0?'+':''}${gRate.toFixed(2)}%</span>`:'--';const accText=h.accKey==='ideco'?'iDeCo':(ACCOUNTS[h.accKey]?.label||h.accKey);const atText=ASSET_TYPES[h.assetType]?.label||h.assetType;return`<tr><td>${h.name}</td><td data-raw="${accText}">${h.acLabel}</td><td data-raw="${atText}">${atBadge(h.assetType)}</td><td data-raw="${v}" style="text-align:right">${fmt(v)}</td><td data-raw="${p}" style="text-align:right">${p>0?fmt(p):'--'}</td><td data-raw="${g??''}" style="text-align:right">${gHtml}</td><td data-raw="${gRate??''}" style="text-align:right">${grHtml}</td><td data-raw="${r}" style="text-align:right">${r}%</td></tr>`;}).join('');
-    xfBind('an-holdings','an-holdings');
+    const typeOrder=[...Object.keys(BUILT_IN_ASSET_TYPES)];
+    el('an-by-type').innerHTML=Object.entries(byType).sort((a,b)=>{const ai=typeOrder.indexOf(a[0]),bi=typeOrder.indexOf(b[0]);return(ai<0?999:ai)-(bi<0?999:bi);}).filter(([,d])=>d.val>0).map(([k,d])=>breakdownRow(atBadge(k),d,totalVal,totalGain)).join('')+accFooter;
+    const updateAnHoldingsFoot=(s)=>{const vis=s.rows.filter(r=>r.tr.style.display!=='none');const tot=(ci)=>vis.reduce((a,r)=>a+(parseFloat(r.cells[ci]?.raw)||0),0);const v=tot(3),p=tot(4),g=p>0?v-p:null,gr=p>0?(v-p)/p*100:null;const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gr!==null?`<span class="${gr>=0?'positive':'negative'}">${gr>=0?'+':''}${gr.toFixed(2)}%</span>`:'--';el('an-holdings-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="3">合計</td><td style="text-align:right">${fmt(v)}</td><td style="text-align:right">${p>0?fmt(p):'--'}</td><td style="text-align:right">${gHtml}</td><td style="text-align:right">${grHtml}</td><td></td></tr>`;};
+    el('an-holdings').innerHTML=!allH.length?'<tr><td colspan="8" class="empty">データなし</td></tr>':allH.map(h=>{const v=h.hv.value||0,p=h.hv.principal||0,g=p>0?v-p:null,gRate=p>0?(v-p)/p*100:null;const r=totalInv>0?((v/totalInv)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gRate!==null?`<span class="${gRate>=0?'positive':'negative'}">${gRate>=0?'+':''}${gRate.toFixed(2)}%</span>`:'--';const accText=h.accKey==='ideco'?'iDeCo':(getAccounts()[h.accKey]?.label||h.accKey);const atText=getAssetTypes()[h.assetType]?.label||h.assetType;return`<tr><td>${h.name}</td><td data-raw="${accText}">${h.acLabel}</td><td data-raw="${atText}">${atBadge(h.assetType)}</td><td data-raw="${v}" style="text-align:right">${fmt(v)}</td><td data-raw="${p}" style="text-align:right">${p>0?fmt(p):'--'}</td><td data-raw="${g??''}" style="text-align:right">${gHtml}</td><td data-raw="${gRate??''}" style="text-align:right">${grHtml}</td><td data-raw="${r}" style="text-align:right">${r}%</td></tr>`;}).join('');
+    xfBind('an-holdings','an-holdings',{afterFilter:updateAnHoldingsFoot});
 }
 
 function renderSCHDReinvest(){
@@ -210,11 +219,11 @@ function renderDividendSim(){
         const v=h.hv.value||0;
         const y=(h.dividendYield||0)/100;
         const before=v*y;
-        const isNisa=h.account==='nisa-growth'||h.account==='nisa-tsumitate';
+        const isNisa=h.account==='nisa-growth'||h.account==='nisa-tsumitate'||h.account==='old-nisa';
         const taxRate=isNisa||h.isIdeco?0:0.20315;
         const after=before*(1-taxRate);
         totalBefore+=before;totalAfter+=after;
-        const accText=h.isIdeco?'iDeCo':(ACCOUNTS[h.account]?.label||h.account);
+        const accText=h.isIdeco?'iDeCo':(getAccounts()[h.account]?.label||h.account);
         const accLabel=h.isIdeco?'<span class="badge b-green">iDeCo</span>':acBadge(h.account)+'</span>';
         const taxText=isNisa||h.isIdeco?'非課税':'課税';
         const taxLabel=isNisa||h.isIdeco?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
@@ -341,7 +350,7 @@ function loadSnap(month){
 }
 
 // ===== 設定タブ =====
-function renderSettings(){el('s-target').value=D.settings.scdTarget||10000000;renderBanksTable();renderCardsTable();renderHoldingsTable();renderIdecoTable();}
+function renderSettings(){el('s-target').value=D.settings.scdTarget||10000000;renderBanksTable();renderCardsTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();}
 function saveBasic(){D.settings.scdTarget=Number(el('s-target').value)||10000000;persist();renderDashboard();alert('保存しました');}
 
 // 銀行口座
@@ -362,19 +371,41 @@ function deleteCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)retur
 
 // 保有銘柄
 function renderHoldingsTable(){el('s-holdings-table').innerHTML=D.holdings.length===0?'<tr><td colspan="7" class="empty">銘柄なし</td></tr>':D.holdings.map(h=>`<tr draggable="true" data-id="${h.id}" data-group="regular" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${h.name}</td><td>${acBadge(h.account)}</span></td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${h.monthlyAmount>0?fmt(h.monthlyAmount)+'/月':'--'}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editHolding('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteHolding('${h.id}')">削除</button></div></td></tr>`).join('');}
-function openHoldingPanel(r=true){if(r){el('s-holding-id').value='';el('s-h-name').value='';el('s-h-monthly').value='';el('s-h-spot').value='';el('s-h-yield').value='';el('s-h-account').value='nisa-growth';el('s-h-type').value='fund';el('s-holding-panel-title').textContent='銘柄を追加';}el('s-holding-panel').classList.add('open');}
+function openHoldingPanel(r=true){if(r){el('s-holding-id').value='';el('s-h-name').value='';el('s-h-monthly').value='';el('s-h-spot').value='';el('s-h-yield').value='';el('s-holding-panel-title').textContent='銘柄を追加';buildAccountOptions('s-h-account','nisa-growth');buildAssetTypeOptions('s-h-type','fund');}el('s-holding-panel').classList.add('open');}
 function closeHoldingPanel(){el('s-holding-panel').classList.remove('open');el('s-holding-id').value='';}
-function editHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;el('s-holding-id').value=h.id;el('s-h-name').value=h.name;el('s-h-account').value=h.account;el('s-h-type').value=h.assetType;el('s-h-monthly').value=h.monthlyAmount||'';el('s-h-spot').value=h.spotAnnual||'';el('s-h-yield').value=h.dividendYield||'';el('s-holding-panel-title').textContent='銘柄を編集';openHoldingPanel(false);}
+function editHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;el('s-holding-id').value=h.id;el('s-h-name').value=h.name;buildAccountOptions('s-h-account',h.account);buildAssetTypeOptions('s-h-type',h.assetType);el('s-h-monthly').value=h.monthlyAmount||'';el('s-h-spot').value=h.spotAnnual||'';el('s-h-yield').value=h.dividendYield||'';el('s-holding-panel-title').textContent='銘柄を編集';openHoldingPanel(false);}
 function saveHolding(){const name=el('s-h-name').value.trim();if(!name){alert('銘柄名を入力してください');return;}const id=el('s-holding-id').value;const data={name,account:el('s-h-account').value,assetType:el('s-h-type').value,monthlyAmount:Number(el('s-h-monthly').value)||0,spotAnnual:Number(el('s-h-spot').value)||0,dividendYield:parseFloat(el('s-h-yield').value)||0};if(id){const h=D.holdings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.holdings.length};D.holdings.push(nh);if(!D.current.holdingValues[nh.id])D.current.holdingValues[nh.id]={value:0,principal:0};}persist();closeHoldingPanel();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
 function deleteHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;if(!confirm(`「${h.name}」を削除しますか？`))return;D.holdings=D.holdings.filter(h=>h.id!==id);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
 
 // iDeCo
 function renderIdecoTable(){el('s-ideco-table').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">銘柄なし</td></tr>':D.idecoHoldings.map(h=>`<tr draggable="true" data-id="${h.id}" data-group="ideco" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${h.name}</td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${h.monthlyAmount>0?fmt(h.monthlyAmount)+'/月':'--'}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editIdeco('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteIdeco('${h.id}')">削除</button></div></td></tr>`).join('');}
-function openIdecoPanel(r=true){if(r){el('s-ideco-id').value='';el('s-i-name').value='';el('s-i-type').value='fund';el('s-i-monthly').value='';el('s-i-yield').value='';el('s-ideco-panel-title').textContent='iDeCo銘柄を追加';}el('s-ideco-panel').classList.add('open');}
+function openIdecoPanel(r=true){if(r){el('s-ideco-id').value='';el('s-i-name').value='';el('s-i-monthly').value='';el('s-i-yield').value='';el('s-ideco-panel-title').textContent='iDeCo銘柄を追加';buildAssetTypeOptions('s-i-type','fund');}el('s-ideco-panel').classList.add('open');}
 function closeIdecoPanel(){el('s-ideco-panel').classList.remove('open');el('s-ideco-id').value='';}
-function editIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;el('s-ideco-id').value=h.id;el('s-i-name').value=h.name;el('s-i-type').value=h.assetType;el('s-i-monthly').value=h.monthlyAmount||'';el('s-i-yield').value=h.dividendYield||'';el('s-ideco-panel-title').textContent='iDeCo銘柄を編集';openIdecoPanel(false);}
+function editIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;el('s-ideco-id').value=h.id;el('s-i-name').value=h.name;buildAssetTypeOptions('s-i-type',h.assetType);el('s-i-monthly').value=h.monthlyAmount||'';el('s-i-yield').value=h.dividendYield||'';el('s-ideco-panel-title').textContent='iDeCo銘柄を編集';openIdecoPanel(false);}
 function saveIdeco(){const name=el('s-i-name').value.trim();if(!name){alert('銘柄名を入力してください');return;}const id=el('s-ideco-id').value;const data={name,assetType:el('s-i-type').value,monthlyAmount:Number(el('s-i-monthly').value)||0,dividendYield:parseFloat(el('s-i-yield').value)||0};if(id){const h=D.idecoHoldings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.idecoHoldings.length};D.idecoHoldings.push(nh);if(!D.current.idecoValues[nh.id])D.current.idecoValues[nh.id]={value:0,principal:0};}persist();closeIdecoPanel();renderIdecoTable();renderIdecoInputs();renderDashboard();}
 function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;if(!confirm(`「${h.name}」を削除しますか？`))return;D.idecoHoldings=D.idecoHoldings.filter(h=>h.id!==id);persist();renderIdecoTable();renderIdecoInputs();renderDashboard();}
+
+// 口座種別
+function renderAccTypesTable(){
+    const all=[...Object.entries(BUILT_IN_ACCOUNTS).map(([id,a])=>({id,...a,builtIn:true})),...(D.customAccounts||[]).map(a=>({...a,builtIn:false}))];
+    el('s-acctypes-table').innerHTML=all.map(a=>`<tr><td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right">${a.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAccType('${a.id}')">削除</button></div>`}</td></tr>`).join('');
+}
+function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-panel-title').textContent='口座種別を追加';}el('s-acctype-panel').classList.add('open');}
+function closeAccTypePanel(){el('s-acctype-panel').classList.remove('open');}
+function editAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;el('s-acctype-id').value=a.id;el('s-acctype-name').value=a.label;el('s-acctype-color').value=`${a.color}|${a.badge}`;el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);}
+function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;}}else{D.customAccounts.push({id:uid(),label:name,color,badge});}persist();closeAccTypePanel();renderAccTypesTable();}
+function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){alert('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
+
+// 銘柄種別
+function renderAssetTypesTable(){
+    const all=[...Object.entries(BUILT_IN_ASSET_TYPES).map(([id,t])=>({id,...t,builtIn:true})),...(D.customAssetTypes||[]).map(t=>({...t,builtIn:false}))];
+    el('s-assettypes-table').innerHTML=all.map(t=>`<tr><td>${t.label}</td><td style="text-align:right">${t.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAssetType('${t.id}')">削除</button></div>`}</td></tr>`).join('');
+}
+function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}el('s-assettype-panel').classList.add('open');}
+function closeAssetTypePanel(){el('s-assettype-panel').classList.remove('open');}
+function editAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;el('s-assettype-id').value=t.id;el('s-assettype-name').value=t.label;el('s-assettype-panel-title').textContent='銘柄種別を編集';openAssetTypePanel(false);}
+function saveAssetType(){const name=el('s-assettype-name').value.trim();if(!name){alert('種別名を入力してください');return;}if(!D.customAssetTypes)D.customAssetTypes=[];const id=el('s-assettype-id').value;if(id){const t=D.customAssetTypes.find(t=>t.id===id);if(t)t.label=name;}else{D.customAssetTypes.push({id:uid(),label:name,badge:'b-gray'});}persist();closeAssetTypePanel();renderAssetTypesTable();}
+function deleteAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;if([...D.holdings,...D.idecoHoldings].some(h=>h.assetType===id)){alert('この銘柄種別を使用している銘柄があります。先に銘柄の種別を変更してください。');return;}if(!confirm(`「${t.label}」を削除しますか？`))return;D.customAssetTypes=D.customAssetTypes.filter(t=>t.id!==id);persist();renderAssetTypesTable();}
 
 // ===== ドラッグ&ドロップ =====
 let dragId=null,dragGroup=null;
@@ -453,7 +484,7 @@ function xfOpen(tableId,colIdx,btn){
             <label class="xf-row"><input type="checkbox" ${!af?'checked':''} onchange="xfToggleAll('${tableId}',${colIdx},this)">（すべて選択）</label>
             ${values.map(v=>`<label class="xf-row"><input type="checkbox" value="${v.replace(/"/g,'&quot;')}" ${!af||af.has(v)?'checked':''} onchange="xfApplyFilter('${tableId}',${colIdx},this)">${v}</label>`).join('')}
         </div>
-        <div class="xf-actions"><button class="btn btn-s btn-sm" onclick="xfCloseAll()">閉じる</button></div>`;
+        <div class="xf-actions"><button class="btn btn-s btn-sm" onclick="xfApplyAndClose('${tableId}')">閉じる</button></div>`;
     (btn.closest('th')||btn).appendChild(dd);
     btn._xfOpen=true;
     setTimeout(()=>document.addEventListener('click',_xfOutside,{once:true}),0);
@@ -474,7 +505,6 @@ function xfToggleAll(tableId,colIdx,cb){
     dd.querySelectorAll('input[value]').forEach(c=>c.checked=cb.checked);
     if(cb.checked)delete XF[tableId].filters[colIdx];
     else XF[tableId].filters[colIdx]=new Set();
-    xfApply(tableId);xfUpdateBtnState(tableId);
 }
 
 function xfApplyFilter(tableId,colIdx,cb){
@@ -484,7 +514,6 @@ function xfApplyFilter(tableId,colIdx,cb){
     const allCb=dd.querySelector('input:not([value])');
     if(checked.length===allCbs.length){delete XF[tableId].filters[colIdx];if(allCb)allCb.checked=true;}
     else{XF[tableId].filters[colIdx]=new Set(checked);if(allCb)allCb.checked=false;}
-    xfApply(tableId);xfUpdateBtnState(tableId);
 }
 
 function xfSort(tableId,colIdx,dir,btn){
@@ -492,8 +521,9 @@ function xfSort(tableId,colIdx,dir,btn){
     s.sortCol=colIdx;s.sortDir=dir;
     const dd=btn.closest('.xf-dropdown');
     if(dd)dd.querySelectorAll('.xf-sort-btns button').forEach((b,i)=>b.classList.toggle('xf-sort-active',(i===0&&dir==='asc')||(i===1&&dir==='desc')));
-    xfApply(tableId);xfUpdateBtnState(tableId);
 }
+
+function xfApplyAndClose(tableId){xfApply(tableId);xfUpdateBtnState(tableId);xfCloseAll();}
 
 function xfApply(tableId){
     const s=XF[tableId];if(!s)return;

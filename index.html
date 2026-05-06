@@ -143,16 +143,16 @@
         </div>
     </div>
 
-    <!-- 分析折りたたみ -->
-    <hr class="an-divider" id="sec-trend">
+    <!-- 分析セクション -->
+    <hr class="an-divider">
 
-    <details class="an-block" id="det-trend" ontoggle="if(this.open)renderTrendChart()">
-        <summary>資産推移チャート</summary>
+    <div class="an-block" id="sec-trend">
+        <div class="an-summary">資産推移チャート</div>
         <div class="an-body"><div class="chart-wrap" style="height:300px;"><canvas id="trend-chart"></canvas></div></div>
-    </details>
+    </div>
 
-    <details class="an-block" id="sec-sim">
-        <summary>SCHD シミュレーション / 配当シミュレーション</summary>
+    <div class="an-block" id="sec-sim">
+        <div class="an-summary">SCHD シミュレーション / 配当シミュレーション</div>
         <div class="an-body">
             <div class="g2" style="margin-bottom:20px;">
                 <div>
@@ -198,10 +198,10 @@
                 </table>
             </div>
         </div>
-    </details>
+    </div>
 
-    <details class="an-block" id="sec-detail">
-        <summary>全銘柄詳細分析</summary>
+    <div class="an-block" id="sec-detail">
+        <div class="an-summary">全銘柄詳細分析</div>
         <div class="an-body">
             <div class="g4 mb">
                 <div class="card" style="padding:14px"><div class="clabel">総評価額</div><div class="cval" id="an-total-val">¥0</div></div>
@@ -235,10 +235,11 @@
                         <th style="text-align:right">比率 <button class="xf-btn" onclick="xfOpen('an-holdings',7,this)">▾</button></th>
                     </tr></thead>
                     <tbody id="an-holdings"><tr><td colspan="8" class="empty">データなし</td></tr></tbody>
+                    <tfoot id="an-holdings-foot"></tfoot>
                 </table>
             </div>
         </div>
-    </details>
+    </div>
 </div>
 
 <!-- ======= 記録タブ ======= -->
@@ -339,114 +340,153 @@
 
     <!-- 銘柄管理 -->
     <div id="set-holdings" class="sub-content active">
-        <div class="sec-label">保有銘柄（NISA・特定口座）</div>
-        <div class="tbl-wrap mb">
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>保有銘柄（NISA・特定口座）</span></div>
             <table>
                 <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">月次積立</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
                 <tbody id="s-holdings-table"></tbody>
             </table>
-        </div>
-        <button class="btn btn-s btn-sm" onclick="openHoldingPanel()">+ 追加</button>
-        <div id="s-holding-panel" class="add-panel" style="max-width:620px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-holding-panel-title">銘柄を追加</div>
-            <input type="hidden" id="s-holding-id">
-            <div class="fi">
-                <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-h-name"></div>
-                <div class="fg"><label>口座</label>
-                    <select id="s-h-account">
-                        <option value="nisa-growth">NISA成長投資</option>
-                        <option value="nisa-tsumitate">NISA積立</option>
-                        <option value="specific">特定口座</option>
-                    </select>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openHoldingPanel()">+ 追加</button>
+                <div id="s-holding-panel" class="add-panel" style="max-width:620px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-holding-panel-title">銘柄を追加</div>
+                    <input type="hidden" id="s-holding-id">
+                    <div class="fi">
+                        <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-h-name"></div>
+                        <div class="fg"><label>口座</label><select id="s-h-account"></select></div>
+                        <div class="fg"><label>種別</label><select id="s-h-type"></select></div>
+                    </div>
+                    <div class="fi" style="margin-top:8px;">
+                        <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0"></div>
+                        <div class="fg"><label>年間スポット額（円）</label><input type="number" id="s-h-spot" placeholder="0"></div>
+                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:10px;">
+                        <button class="btn btn-p btn-sm" onclick="saveHolding()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeHoldingPanel()">キャンセル</button>
+                    </div>
                 </div>
-                <div class="fg"><label>種別</label>
-                    <select id="s-h-type">
-                        <option value="fund">投資信託</option>
-                        <option value="domestic-stock">国内株式</option>
-                        <option value="us-stock">米国株式</option>
-                        <option value="other">その他</option>
-                    </select>
-                </div>
-            </div>
-            <div class="fi" style="margin-top:8px;">
-                <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0"></div>
-                <div class="fg"><label>年間スポット額（円）</label><input type="number" id="s-h-spot" placeholder="0"></div>
-                <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1"></div>
-            </div>
-            <div class="flex-gap" style="margin-top:10px;">
-                <button class="btn btn-p btn-sm" onclick="saveHolding()">保存</button>
-                <button class="btn btn-s btn-sm" onclick="closeHoldingPanel()">キャンセル</button>
             </div>
         </div>
 
-        <div class="sec-label" style="margin-top:20px;">iDeCo 銘柄</div>
-        <div class="tbl-wrap mb">
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>iDeCo 銘柄</span></div>
             <table>
                 <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th style="text-align:right">月次拠出</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
                 <tbody id="s-ideco-table"></tbody>
             </table>
-        </div>
-        <button class="btn btn-s btn-sm" onclick="openIdecoPanel()">+ 追加</button>
-        <div id="s-ideco-panel" class="add-panel" style="max-width:480px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-ideco-panel-title">iDeCo銘柄を追加</div>
-            <input type="hidden" id="s-ideco-id">
-            <div class="fi">
-                <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
-                <div class="fg"><label>種別</label>
-                    <select id="s-i-type">
-                        <option value="fund">投資信託</option>
-                        <option value="domestic-stock">国内株式</option>
-                        <option value="us-stock">米国株式</option>
-                        <option value="other">その他</option>
-                    </select>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openIdecoPanel()">+ 追加</button>
+                <div id="s-ideco-panel" class="add-panel" style="max-width:480px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-ideco-panel-title">iDeCo銘柄を追加</div>
+                    <input type="hidden" id="s-ideco-id">
+                    <div class="fi">
+                        <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
+                        <div class="fg"><label>種別</label><select id="s-i-type"></select></div>
+                        <div class="fg"><label>月次拠出額（円）</label><input type="number" id="s-i-monthly" placeholder="0"></div>
+                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:10px;">
+                        <button class="btn btn-p btn-sm" onclick="saveIdeco()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeIdecoPanel()">キャンセル</button>
+                    </div>
                 </div>
-                <div class="fg"><label>月次拠出額（円）</label><input type="number" id="s-i-monthly" placeholder="0"></div>
-                <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1"></div>
-            </div>
-            <div class="flex-gap" style="margin-top:10px;">
-                <button class="btn btn-p btn-sm" onclick="saveIdeco()">保存</button>
-                <button class="btn btn-s btn-sm" onclick="closeIdecoPanel()">キャンセル</button>
             </div>
         </div>
     </div>
 
     <!-- 口座管理 -->
     <div id="set-accounts" class="sub-content">
-        <div class="sec-label">銀行口座</div>
-        <div class="tbl-wrap mb">
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>銀行口座</span></div>
             <table><thead><tr><th>口座名</th><th>メモ</th><th></th></tr></thead>
             <tbody id="s-banks-table"></tbody></table>
-        </div>
-        <button class="btn btn-s btn-sm" onclick="openBankPanel()">+ 追加</button>
-        <div id="s-bank-panel" class="add-panel" style="max-width:480px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-bank-panel-title">銀行口座を追加</div>
-            <input type="hidden" id="s-bank-id">
-            <div class="fi">
-                <div class="fg"><label>口座名</label><input type="text" id="s-bank-name" placeholder="楽天銀行"></div>
-                <div class="fg"><label>メモ（任意）</label><input type="text" id="s-bank-note" placeholder="メイン口座"></div>
-            </div>
-            <div class="flex-gap" style="margin-top:8px;">
-                <button class="btn btn-p btn-sm" onclick="saveBank()">保存</button>
-                <button class="btn btn-s btn-sm" onclick="closeBankPanel()">キャンセル</button>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openBankPanel()">+ 追加</button>
+                <div id="s-bank-panel" class="add-panel" style="max-width:480px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-bank-panel-title">銀行口座を追加</div>
+                    <input type="hidden" id="s-bank-id">
+                    <div class="fi">
+                        <div class="fg"><label>口座名</label><input type="text" id="s-bank-name" placeholder="楽天銀行"></div>
+                        <div class="fg"><label>メモ（任意）</label><input type="text" id="s-bank-note" placeholder="メイン口座"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:8px;">
+                        <button class="btn btn-p btn-sm" onclick="saveBank()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeBankPanel()">キャンセル</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="sec-label" style="margin-top:20px;">クレジットカード</div>
-        <div class="tbl-wrap mb">
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>クレジットカード</span></div>
             <table><thead><tr><th>カード名</th><th>メモ</th><th></th></tr></thead>
             <tbody id="s-cards-table"></tbody></table>
-        </div>
-        <button class="btn btn-s btn-sm" onclick="openCardPanel()">+ 追加</button>
-        <div id="s-card-panel" class="add-panel" style="max-width:480px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-card-panel-title">カードを追加</div>
-            <input type="hidden" id="s-card-id">
-            <div class="fi">
-                <div class="fg"><label>カード名</label><input type="text" id="s-card-name" placeholder="楽天カード"></div>
-                <div class="fg"><label>メモ（任意）</label><input type="text" id="s-card-note"></div>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openCardPanel()">+ 追加</button>
+                <div id="s-card-panel" class="add-panel" style="max-width:480px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-card-panel-title">カードを追加</div>
+                    <input type="hidden" id="s-card-id">
+                    <div class="fi">
+                        <div class="fg"><label>カード名</label><input type="text" id="s-card-name" placeholder="楽天カード"></div>
+                        <div class="fg"><label>メモ（任意）</label><input type="text" id="s-card-note"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:8px;">
+                        <button class="btn btn-p btn-sm" onclick="saveCard()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeCardPanel()">キャンセル</button>
+                    </div>
+                </div>
             </div>
-            <div class="flex-gap" style="margin-top:8px;">
-                <button class="btn btn-p btn-sm" onclick="saveCard()">保存</button>
-                <button class="btn btn-s btn-sm" onclick="closeCardPanel()">キャンセル</button>
+        </div>
+
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>口座種別</span></div>
+            <table><thead><tr><th>種別名</th><th></th></tr></thead>
+            <tbody id="s-acctypes-table"></tbody></table>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openAccTypePanel()">+ 追加</button>
+                <div id="s-acctype-panel" class="add-panel" style="max-width:480px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-acctype-panel-title">口座種別を追加</div>
+                    <input type="hidden" id="s-acctype-id">
+                    <div class="fi">
+                        <div class="fg" style="flex:2"><label>種別名</label><input type="text" id="s-acctype-name"></div>
+                        <div class="fg"><label>色</label>
+                            <select id="s-acctype-color">
+                                <option value="#2563eb|b-blue">青</option>
+                                <option value="#7c3aed|b-purple">紫</option>
+                                <option value="#0891b2|b-teal">水色</option>
+                                <option value="#dc2626|b-red">赤</option>
+                                <option value="#059669|b-green">緑</option>
+                                <option value="#d97706|b-orange">オレンジ</option>
+                                <option value="#64748b|b-gray">グレー</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:10px;">
+                        <button class="btn btn-p btn-sm" onclick="saveAccType()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeAccTypePanel()">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rec-sec">
+            <div class="rec-sec-head"><span>銘柄種別</span></div>
+            <table><thead><tr><th>種別名</th><th></th></tr></thead>
+            <tbody id="s-assettypes-table"></tbody></table>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" onclick="openAssetTypePanel()">+ 追加</button>
+                <div id="s-assettype-panel" class="add-panel" style="max-width:480px;">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-assettype-panel-title">銘柄種別を追加</div>
+                    <input type="hidden" id="s-assettype-id">
+                    <div class="fi">
+                        <div class="fg"><label>種別名</label><input type="text" id="s-assettype-name"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:10px;">
+                        <button class="btn btn-p btn-sm" onclick="saveAssetType()">保存</button>
+                        <button class="btn btn-s btn-sm" onclick="closeAssetTypePanel()">キャンセル</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -98,14 +98,10 @@
         .chart-wrap{position:relative;height:220px;}
         .port-grid{display:grid;grid-template-columns:220px 1fr;gap:0;align-items:start;}
 
-        /* ===== 分析折りたたみ ===== */
-        .an-block{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
-        .an-block summary{list-style:none;padding:13px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;}
-        .an-block summary::-webkit-details-marker{display:none;}
-        .an-block summary::after{content:'▸';color:var(--muted);font-size:12px;transition:transform .2s;}
-        .an-block[open] summary::after{transform:rotate(90deg);}
-        .an-block summary:hover{background:var(--bg);}
-        .an-body{padding:16px 20px;border-top:1px solid var(--border);}
+        /* ===== 分析セクション ===== */
+        .an-block{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;}
+        .an-summary{padding:13px 20px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);}
+        .an-body{padding:16px 20px;}
         .an-divider{border:none;border-top:2px solid var(--border);margin:22px 0;}
 
         /* ===== テーブルフィルター ===== */
