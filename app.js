@@ -198,13 +198,14 @@ function renderSCHDReinvest(){
     const startVal=inputVal>0?inputVal:(scdV.value||0);
     const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
     const rows=[];let val=startVal,cumDiv=0;
-    rows.push({yr:0,val:startVal,div:0,cumDiv:0});
+    const startDiv=startVal*y;
+    rows.push({yr:0,val:startVal,div:startDiv,cumDiv:0});
     for(let yr=1;yr<=10;yr++){const div=val*y;cumDiv+=div;val+=div;rows.push({yr,val,div,cumDiv});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
         <td>${r.yr===0?'開始時':r.yr+'年後'}</td>
         <td style="text-align:right">${fmt(r.val)}</td>
-        <td style="text-align:right;color:var(--success);font-weight:600">${r.yr===0?'--':fmt(r.div)}</td>
-        <td style="text-align:right;color:var(--muted)">${r.yr===0?'--':fmt(r.div/12)}</td>
+        <td style="text-align:right;color:var(--success);font-weight:600">${fmt(r.div)}</td>
+        <td style="text-align:right;color:var(--muted)">${fmt(r.div/12)}</td>
         <td style="text-align:right">${r.yr===0?'--':fmt(r.cumDiv)}</td>
     </tr>`).join('');
 }
