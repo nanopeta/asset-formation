@@ -200,12 +200,14 @@ function renderSCHDReinvest(){
     const scdV=scdH?(D.current.holdingValues[scdH.id]||{}):{};
     const inputVal=parseFloat(el('schd-start-val')?.value)||0;
     const startVal=inputVal>0?inputVal:(scdV.value||0);
+    const inputPri=parseFloat(el('schd-start-principal')?.value)||0;
+    const startPrincipal=inputPri>0?inputPri:(scdV.principal||0);
     const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
     const years=parseInt(el('schd-years-sel')?.value||10);
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
     const noReinvest=el('schd-no-reinvest')?.checked||false;
     const rows=[];let val=startVal,cumDiv=0;
-    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);const principal=startVal+monthlyAdd*12*yr;rows.push({yr,val,div,cumDiv,principal});}
+    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);const principal=startPrincipal+monthlyAdd*12*yr;rows.push({yr,val,div,cumDiv,principal});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
         <td>${r.yr}年目</td>
         <td style="text-align:right">${fmt(r.principal)}</td>
