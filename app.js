@@ -205,9 +205,10 @@ function renderSCHDReinvest(){
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
     const noReinvest=el('schd-no-reinvest')?.checked||false;
     const rows=[];let val=startVal,cumDiv=0;
-    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);rows.push({yr,val,div,cumDiv});}
+    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);const principal=startVal+monthlyAdd*12*yr;rows.push({yr,val,div,cumDiv,principal});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
         <td>${r.yr}年目</td>
+        <td style="text-align:right">${fmt(r.principal)}</td>
         <td style="text-align:right">${fmt(r.val)}</td>
         <td style="text-align:right;color:var(--success);font-weight:600">${fmt(r.div)}</td>
         <td style="text-align:right;color:var(--muted)">${fmt(r.div/12)}</td>
