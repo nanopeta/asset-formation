@@ -22,9 +22,9 @@
 - 同じ `<canvas>` に複数回 `new Chart()` するとメモリリークとレイアウト崩れが起きる
 - **ルール**: `chartPortfolio` / `chartTrend` を再描画する前に `if(chart) chart.destroy()` を先に呼ぶ
 
-### 資産推移チャートは遅延レンダリングにする
-- `<details>` 内に `<canvas>` があるため、折りたたまれた状態でレンダリングするとサイズが 0 になる
-- **ルール**: `<details>` の `toggle` イベントで初めて `renderTrendChart()` を呼ぶ
+### 資産推移チャートは renderDashboard() から呼ぶ
+- 分析セクションは常時表示（`<details>` 廃止済み）のため、`renderDashboard()` 内で `renderTrendChart()` を直接呼ぶ
+- **ルール**: `<details>` の toggle イベントは使わない。チャートは `renderDashboard()` → `renderTrendChart()` の順で呼ぶ
 
 ---
 
@@ -87,7 +87,28 @@
 
 ---
 
+## フィルター実行タイミング
+
+### フィルターは「閉じるボタン」押下で実行する
+- チェックボックス変更・ソートボタン押下では即時適用しない（状態の更新のみ）
+- `xfApplyAndClose(tableId)` が `xfApply` + `xfUpdateBtnState` + `xfCloseAll` をまとめて実行する
+- **ルール**: `xfApplyFilter` / `xfToggleAll` / `xfSort` 内では `xfApply` を呼ばない。呼ぶのは `xfApplyAndClose` のみ
+
+---
+
+## 口座種別・銘柄種別の拡張
+
+### カスタム種別は D.customAccounts / D.customAssetTypes で管理する
+- `BUILT_IN_ACCOUNTS` / `BUILT_IN_ASSET_TYPES` は定数（変更不可）
+- カスタム追加は `D.customAccounts` / `D.customAssetTypes` に push して `persist()`
+- 動的に全種別を取得するには `getAccounts()` / `getAssetTypes()` を使う
+- select 要素への動的生成は `buildAccountOptions(selId, val)` / `buildAssetTypeOptions(selId, val)` を使う
+- **ルール**: 口座種別・銘柄種別を参照するときは定数直接参照（`BUILT_IN_ACCOUNTS[x]`）ではなく `getAccounts()[x]` を使う
+
+---
+
 ## 今後の注意点（未来の自分へ）
 
-- `ACCOUNTS` / `ASSET_TYPES` の定数を変更すると、既存の localStorage データとの互換性が壊れる。追加は OK、削除・リネームは慎重に。
+- `BUILT_IN_ACCOUNTS` / `BUILT_IN_ASSET_TYPES` の組み込み定数を削除・リネームすると既存 localStorage データとの互換性が壊れる。追加は OK、削除・リネームは慎重に。
 - `saveSnapshot()` は `D.current` を上書きしてからスナップショットを生成する。この順番を逆にすると現在値が更新されない。
+- 設定タブのセクションは `.rec-sec` / `.rec-sec-head` / `.rec-sec-body` の白カード構造を使う（`sec-label` + `tbl-wrap` の旧パターンは使わない）。
