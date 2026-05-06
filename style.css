@@ -120,7 +120,7 @@
         #tab-settings .sub-nav{position:sticky;top:91px;z-index:148;background:#fff;padding-top:8px;margin-bottom:12px;}
 
         /* ===== 設定タブ sub-content カードスタイル ===== */
-        #tab-settings .sub-content.active{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+        #tab-settings .sub-content.active{padding-top:8px;}
 
         /* ===== 記録 sticky bar ===== */
         .rec-sticky{background:#fff;border-bottom:2px solid var(--primary);padding:8px 24px;position:sticky;top:91px;z-index:150;margin:0 -24px 12px;}

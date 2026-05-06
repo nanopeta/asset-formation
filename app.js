@@ -231,8 +231,13 @@ function renderDividendSim(){
         </tr>`;
     });
     el('div-sim-body').innerHTML=rows.join('');
-    el('div-sim-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="5">合計</td><td style="text-align:right">${fmt(totalBefore)}</td><td style="text-align:right">${fmt(totalAfter)}</td><td style="text-align:right">${fmt(totalAfter/12)}</td></tr>`;
-    xfBind('div-sim','div-sim-body');
+    const updateDivSimFoot=(s)=>{
+        const vis=s.rows.filter(r=>r.tr.style.display!=='none');
+        const tot=(ci)=>vis.reduce((a,r)=>a+(parseFloat(r.cells[ci]?.raw)||0),0);
+        const b=tot(5),a=tot(6);
+        el('div-sim-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="5">合計</td><td style="text-align:right">${fmt(b)}</td><td style="text-align:right">${fmt(a)}</td><td style="text-align:right">${fmt(a/12)}</td></tr>`;
+    };
+    xfBind('div-sim','div-sim-body',{afterFilter:updateDivSimFoot});
 }
 
 let chartTrend=null;
@@ -290,7 +295,7 @@ function holdingRow(h,hv,prevHv,showAccount){
     const diffHtml=diff!==null?`<span class="${diff>=0?'positive':'negative'}">${diff>=0?'+':''}${fmt(diff)}</span>`:'<span class="neutral">--</span>';
     const accCell=showAccount?`<td>${acBadge(h.account)}</span></td>`:'';
     return`<tr draggable="true" data-id="${h.id}" data-group="${showAccount?'regular':'ideco'}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
-        <td class="drag-handle">⠿</td><td><strong>${h.name}</strong></td>${accCell}
+        <td class="drag-handle">⠿</td><td>${h.name}</td>${accCell}
         <td>${atBadge(h.assetType)}</td>
         <td class="itd"><input class="hi" type="number" id="hv-${h.id}" value="${hv?.value||''}" placeholder="0" oninput="markUnsaved()"></td>
         <td class="itd"><input class="hi" type="number" id="hp-${h.id}" value="${hv?.principal||''}" placeholder="0" oninput="markUnsaved()"></td>
@@ -410,7 +415,7 @@ function renderHistorySelect(){
 // ===== Excel風テーブルフィルター =====
 const XF={};
 
-function xfBind(tableId,tbodyId){
+function xfBind(tableId,tbodyId,opts){
     const tbody=el(tbodyId);if(!tbody)return;
     const prev=XF[tableId]||{sortCol:null,sortDir:'asc',filters:{}};
     XF[tableId]={
@@ -424,7 +429,8 @@ function xfBind(tableId,tbodyId){
         })),
         sortCol:prev.sortCol,
         sortDir:prev.sortDir,
-        filters:prev.filters
+        filters:prev.filters,
+        afterFilter:opts?.afterFilter||null,
     };
     xfApply(tableId);
     xfUpdateBtnState(tableId);
@@ -448,7 +454,7 @@ function xfOpen(tableId,colIdx,btn){
             ${values.map(v=>`<label class="xf-row"><input type="checkbox" value="${v.replace(/"/g,'&quot;')}" ${!af||af.has(v)?'checked':''} onchange="xfApplyFilter('${tableId}',${colIdx},this)">${v}</label>`).join('')}
         </div>
         <div class="xf-actions"><button class="btn btn-s btn-sm" onclick="xfCloseAll()">閉じる</button></div>`;
-    btn.appendChild(dd);
+    (btn.closest('th')||btn).appendChild(dd);
     btn._xfOpen=true;
     setTimeout(()=>document.addEventListener('click',_xfOutside,{once:true}),0);
 }
@@ -508,6 +514,7 @@ function xfApply(tableId){
         });
         vis.forEach(r=>tbody.appendChild(r.tr));
     }
+    if(s.afterFilter)s.afterFilter(s);
 }
 
 function xfUpdateBtnState(tableId){
