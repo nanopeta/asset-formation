@@ -177,7 +177,8 @@ function renderAnalysisData(){
     el('an-by-account').innerHTML=Object.entries(byAcc).sort((a,b)=>accOrder.indexOf(a[0])-accOrder.indexOf(b[0])).filter(([,d])=>d.val>0).map(([,d])=>breakdownRow(d.label,d,totalVal,totalGain)).join('')+accFooter;
     const typeOrder=['fund','domestic-stock','us-stock','other'];
     el('an-by-type').innerHTML=Object.entries(byType).sort((a,b)=>typeOrder.indexOf(a[0])-typeOrder.indexOf(b[0])).filter(([,d])=>d.val>0).map(([k,d])=>breakdownRow(atBadge(k),d,totalVal,totalGain)).join('')+accFooter;
-    el('an-holdings').innerHTML=!allH.length?'<tr><td colspan="8" class="empty">データなし</td></tr>':allH.map(h=>{const v=h.hv.value||0,p=h.hv.principal||0,g=p>0?v-p:null,gRate=p>0?(v-p)/p*100:null;const r=totalInv>0?((v/totalInv)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gRate!==null?`<span class="${gRate>=0?'positive':'negative'}">${gRate>=0?'+':''}${gRate.toFixed(2)}%</span>`:'--';return`<tr><td>${h.name}</td><td>${h.acLabel}</td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${fmt(v)}</td><td style="text-align:right">${p>0?fmt(p):'--'}</td><td style="text-align:right">${gHtml}</td><td style="text-align:right">${grHtml}</td><td style="text-align:right">${r}%</td></tr>`;}).join('');
+    el('an-holdings').innerHTML=!allH.length?'<tr><td colspan="8" class="empty">データなし</td></tr>':allH.map(h=>{const v=h.hv.value||0,p=h.hv.principal||0,g=p>0?v-p:null,gRate=p>0?(v-p)/p*100:null;const r=totalInv>0?((v/totalInv)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gRate!==null?`<span class="${gRate>=0?'positive':'negative'}">${gRate>=0?'+':''}${gRate.toFixed(2)}%</span>`:'--';const accText=h.accKey==='ideco'?'iDeCo':(ACCOUNTS[h.accKey]?.label||h.accKey);const atText=ASSET_TYPES[h.assetType]?.label||h.assetType;return`<tr><td>${h.name}</td><td data-raw="${accText}">${h.acLabel}</td><td data-raw="${atText}">${atBadge(h.assetType)}</td><td data-raw="${v}" style="text-align:right">${fmt(v)}</td><td data-raw="${p}" style="text-align:right">${p>0?fmt(p):'--'}</td><td data-raw="${g??''}" style="text-align:right">${gHtml}</td><td data-raw="${gRate??''}" style="text-align:right">${grHtml}</td><td data-raw="${r}" style="text-align:right">${r}%</td></tr>`;}).join('');
+    xfBind('an-holdings','an-holdings');
 }
 
 function renderSCHDReinvest(){
@@ -199,9 +200,10 @@ function renderSCHDReinvest(){
 
 function renderDividendSim(){
     const c=D.current;
+    // 配当利回りが設定されている銘柄のみ対象
     const allH=[
-        ...D.holdings.map(h=>({...h,hv:c.holdingValues[h.id]||{},isIdeco:false})),
-        ...D.idecoHoldings.map(h=>({...h,hv:c.idecoValues[h.id]||{},isIdeco:true})),
+        ...D.holdings.filter(h=>(h.dividendYield||0)>0).map(h=>({...h,hv:c.holdingValues[h.id]||{},isIdeco:false})),
+        ...D.idecoHoldings.filter(h=>(h.dividendYield||0)>0).map(h=>({...h,hv:c.idecoValues[h.id]||{},isIdeco:true})),
     ];
     let totalBefore=0,totalAfter=0;
     const rows=allH.map(h=>{
@@ -212,13 +214,25 @@ function renderDividendSim(){
         const taxRate=isNisa||h.isIdeco?0:0.20315;
         const after=before*(1-taxRate);
         totalBefore+=before;totalAfter+=after;
+        const accText=h.isIdeco?'iDeCo':(ACCOUNTS[h.account]?.label||h.account);
         const accLabel=h.isIdeco?'<span class="badge b-green">iDeCo</span>':acBadge(h.account)+'</span>';
-        const taxLabel=isNisa?'<span class="div-tax-free">非課税</span>':h.isIdeco?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
-        const yieldStr=y>0?(y*100).toFixed(2)+'%':'--';
-        return`<tr><td>${h.name}</td><td>${accLabel}</td><td>${taxLabel}</td><td style="text-align:right">${fmt(v)}</td><td style="text-align:right">${yieldStr}</td><td style="text-align:right">${y>0?fmt(before):'--'}</td><td style="text-align:right">${y>0?fmt(after):'--'}</td><td style="text-align:right">${y>0?fmt(after/12):'--'}</td></tr>`;
+        const taxText=isNisa||h.isIdeco?'非課税':'課税';
+        const taxLabel=isNisa||h.isIdeco?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
+        const yieldStr=(y*100).toFixed(2)+'%';
+        return`<tr>
+            <td>${h.name}</td>
+            <td data-raw="${accText}">${accLabel}</td>
+            <td data-raw="${taxText}">${taxLabel}</td>
+            <td data-raw="${v}" style="text-align:right">${fmt(v)}</td>
+            <td data-raw="${(y*100).toFixed(2)}" style="text-align:right">${yieldStr}</td>
+            <td data-raw="${Math.round(before)}" style="text-align:right">${fmt(before)}</td>
+            <td data-raw="${Math.round(after)}" style="text-align:right">${fmt(after)}</td>
+            <td data-raw="${Math.round(after/12)}" style="text-align:right">${fmt(after/12)}</td>
+        </tr>`;
     });
     el('div-sim-body').innerHTML=rows.join('');
-    el('div-sim-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="4">合計</td><td style="text-align:right">${fmt(totalBefore)}</td><td style="text-align:right">${fmt(totalAfter)}</td><td style="text-align:right">${fmt(totalAfter/12)}</td></tr>`;
+    el('div-sim-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="5">合計</td><td style="text-align:right">${fmt(totalBefore)}</td><td style="text-align:right">${fmt(totalAfter)}</td><td style="text-align:right">${fmt(totalAfter/12)}</td></tr>`;
+    xfBind('div-sim','div-sim-body');
 }
 
 let chartTrend=null;
@@ -391,6 +405,123 @@ function renderHistorySelect(){
     if(!sel)return;
     const snaps=D.snapshots.slice().sort((a,b)=>b.month.localeCompare(a.month));
     sel.innerHTML='<option value="">過去月を編集...</option>'+snaps.map(s=>`<option value="${s.month}">${s.month}</option>`).join('');
+}
+
+// ===== Excel風テーブルフィルター =====
+const XF={};
+
+function xfBind(tableId,tbodyId){
+    const tbody=el(tbodyId);if(!tbody)return;
+    const prev=XF[tableId]||{sortCol:null,sortDir:'asc',filters:{}};
+    XF[tableId]={
+        tbodyId,
+        rows:[...tbody.querySelectorAll('tr')].map(tr=>({
+            tr,
+            cells:[...tr.querySelectorAll('td')].map(td=>({
+                raw:td.dataset.raw!==undefined?td.dataset.raw:td.textContent.trim(),
+                text:td.textContent.trim()
+            }))
+        })),
+        sortCol:prev.sortCol,
+        sortDir:prev.sortDir,
+        filters:prev.filters
+    };
+    xfApply(tableId);
+    xfUpdateBtnState(tableId);
+}
+
+function xfOpen(tableId,colIdx,btn){
+    xfCloseAll();
+    const s=XF[tableId];if(!s)return;
+    const values=[...new Set(s.rows.map(r=>r.cells[colIdx]?.text||''))].filter(v=>v).sort((a,b)=>{const an=parseFloat(a.replace(/[¥,+%]/g,''));const bn=parseFloat(b.replace(/[¥,+%]/g,''));return(!isNaN(an)&&!isNaN(bn))?an-bn:a.localeCompare(b,'ja');});
+    const af=s.filters[colIdx]||null;
+    const dd=document.createElement('div');
+    dd.className='xf-dropdown';
+    dd.innerHTML=`
+        <div class="xf-sort-btns">
+            <button class="${s.sortCol===colIdx&&s.sortDir==='asc'?'xf-sort-active':''}" onclick="xfSort('${tableId}',${colIdx},'asc',this)">↑ 昇順</button>
+            <button class="${s.sortCol===colIdx&&s.sortDir==='desc'?'xf-sort-active':''}" onclick="xfSort('${tableId}',${colIdx},'desc',this)">↓ 降順</button>
+        </div>
+        <div class="xf-sep"></div>
+        <div class="xf-scroll">
+            <label class="xf-row"><input type="checkbox" ${!af?'checked':''} onchange="xfToggleAll('${tableId}',${colIdx},this)">（すべて選択）</label>
+            ${values.map(v=>`<label class="xf-row"><input type="checkbox" value="${v.replace(/"/g,'&quot;')}" ${!af||af.has(v)?'checked':''} onchange="xfApplyFilter('${tableId}',${colIdx},this)">${v}</label>`).join('')}
+        </div>
+        <div class="xf-actions"><button class="btn btn-s btn-sm" onclick="xfCloseAll()">閉じる</button></div>`;
+    btn.appendChild(dd);
+    btn._xfOpen=true;
+    setTimeout(()=>document.addEventListener('click',_xfOutside,{once:true}),0);
+}
+
+function _xfOutside(e){
+    if(!e.target.closest('.xf-dropdown')&&!e.target.closest('.xf-btn'))xfCloseAll();
+    else setTimeout(()=>document.addEventListener('click',_xfOutside,{once:true}),0);
+}
+
+function xfCloseAll(){
+    document.querySelectorAll('.xf-dropdown').forEach(d=>d.remove());
+    document.querySelectorAll('.xf-btn').forEach(b=>delete b._xfOpen);
+}
+
+function xfToggleAll(tableId,colIdx,cb){
+    const dd=cb.closest('.xf-dropdown');
+    dd.querySelectorAll('input[value]').forEach(c=>c.checked=cb.checked);
+    if(cb.checked)delete XF[tableId].filters[colIdx];
+    else XF[tableId].filters[colIdx]=new Set();
+    xfApply(tableId);xfUpdateBtnState(tableId);
+}
+
+function xfApplyFilter(tableId,colIdx,cb){
+    const dd=cb.closest('.xf-dropdown');
+    const allCbs=[...dd.querySelectorAll('input[value]')];
+    const checked=allCbs.filter(c=>c.checked).map(c=>c.value);
+    const allCb=dd.querySelector('input:not([value])');
+    if(checked.length===allCbs.length){delete XF[tableId].filters[colIdx];if(allCb)allCb.checked=true;}
+    else{XF[tableId].filters[colIdx]=new Set(checked);if(allCb)allCb.checked=false;}
+    xfApply(tableId);xfUpdateBtnState(tableId);
+}
+
+function xfSort(tableId,colIdx,dir,btn){
+    const s=XF[tableId];if(!s)return;
+    s.sortCol=colIdx;s.sortDir=dir;
+    const dd=btn.closest('.xf-dropdown');
+    if(dd)dd.querySelectorAll('.xf-sort-btns button').forEach((b,i)=>b.classList.toggle('xf-sort-active',(i===0&&dir==='asc')||(i===1&&dir==='desc')));
+    xfApply(tableId);xfUpdateBtnState(tableId);
+}
+
+function xfApply(tableId){
+    const s=XF[tableId];if(!s)return;
+    const tbody=el(s.tbodyId);if(!tbody)return;
+    // フィルター
+    s.rows.forEach(r=>{
+        const vis=Object.entries(s.filters).every(([ci,fset])=>!fset||fset.size===0||fset.has(r.cells[ci]?.text||''));
+        r.tr.style.display=vis?'':'none';
+    });
+    // ソート
+    if(s.sortCol!==null){
+        const vis=s.rows.filter(r=>r.tr.style.display!=='none');
+        vis.sort((a,b)=>{
+            const av=a.cells[s.sortCol]?.raw||'',bv=b.cells[s.sortCol]?.raw||'';
+            const an=parseFloat(av.replace(/[¥,+%]/g,'')),bn=parseFloat(bv.replace(/[¥,+%]/g,''));
+            if(!isNaN(an)&&!isNaN(bn))return s.sortDir==='asc'?an-bn:bn-an;
+            return s.sortDir==='asc'?av.localeCompare(bv,'ja'):bv.localeCompare(av,'ja');
+        });
+        vis.forEach(r=>tbody.appendChild(r.tr));
+    }
+}
+
+function xfUpdateBtnState(tableId){
+    const s=XF[tableId];if(!s)return;
+    // onclick="xfOpen('div-sim',3,this)" から colIdx を正規表現で取得
+    const re=new RegExp(`xfOpen\\('${tableId}',(\\d+),`);
+    document.querySelectorAll('.xf-btn').forEach(btn=>{
+        const m=btn.getAttribute('onclick').match(re);
+        if(!m)return;
+        const colIdx=parseInt(m[1]);
+        const hasFilter=!!(s.filters[colIdx]&&s.filters[colIdx].size>0);
+        const hasSort=s.sortCol===colIdx;
+        btn.classList.toggle('xf-active',hasFilter||hasSort);
+    });
 }
 
 // ===== タブ切り替え =====

@@ -180,11 +180,19 @@
             </div>
 
             <!-- 全銘柄配当シミュレーション -->
-            <div style="font-size:13px;font-weight:700;margin-bottom:8px;padding-top:16px;border-top:1px solid var(--border);">全銘柄 配当シミュレーション</div>
-            <input type="text" class="tbl-filter" id="div-filter" placeholder="銘柄名で絞り込み..." oninput="filterTable('div-sim-body',this.value)">
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;padding-top:16px;border-top:1px solid var(--border);">全銘柄 配当シミュレーション（配当あり銘柄のみ）</div>
             <div class="tbl-wrap">
                 <table>
-                    <thead><tr><th>銘柄名</th><th>口座</th><th>課税</th><th style="text-align:right">評価額</th><th style="text-align:right">利回り%</th><th style="text-align:right">年間(税前)</th><th style="text-align:right">年間(税後)</th><th style="text-align:right">月換算(税後)</th></tr></thead>
+                    <thead><tr>
+                        <th>銘柄名 <button class="xf-btn" onclick="xfOpen('div-sim',0,this)">▾</button></th>
+                        <th>口座 <button class="xf-btn" onclick="xfOpen('div-sim',1,this)">▾</button></th>
+                        <th>課税 <button class="xf-btn" onclick="xfOpen('div-sim',2,this)">▾</button></th>
+                        <th style="text-align:right">評価額 <button class="xf-btn" onclick="xfOpen('div-sim',3,this)">▾</button></th>
+                        <th style="text-align:right">利回り% <button class="xf-btn" onclick="xfOpen('div-sim',4,this)">▾</button></th>
+                        <th style="text-align:right">年間(税前) <button class="xf-btn" onclick="xfOpen('div-sim',5,this)">▾</button></th>
+                        <th style="text-align:right">年間(税後) <button class="xf-btn" onclick="xfOpen('div-sim',6,this)">▾</button></th>
+                        <th style="text-align:right">月換算(税後) <button class="xf-btn" onclick="xfOpen('div-sim',7,this)">▾</button></th>
+                    </tr></thead>
                     <tbody id="div-sim-body"></tbody>
                     <tfoot id="div-sim-foot"></tfoot>
                 </table>
@@ -214,12 +222,18 @@
                 </div>
             </div>
             <div class="tbl-wrap">
-                <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
-                    <span>銘柄別一覧</span>
-                    <input type="text" class="tbl-filter" style="width:200px;margin:0;" id="holdings-filter" placeholder="絞り込み..." oninput="filterTable('an-holdings',this.value)">
-                </div>
+                <div class="tbl-head">銘柄別一覧</div>
                 <table>
-                    <thead><tr><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">元本</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <thead><tr>
+                        <th>銘柄名 <button class="xf-btn" onclick="xfOpen('an-holdings',0,this)">▾</button></th>
+                        <th>口座 <button class="xf-btn" onclick="xfOpen('an-holdings',1,this)">▾</button></th>
+                        <th>種別 <button class="xf-btn" onclick="xfOpen('an-holdings',2,this)">▾</button></th>
+                        <th style="text-align:right">評価額 <button class="xf-btn" onclick="xfOpen('an-holdings',3,this)">▾</button></th>
+                        <th style="text-align:right">元本 <button class="xf-btn" onclick="xfOpen('an-holdings',4,this)">▾</button></th>
+                        <th style="text-align:right">含み損益 <button class="xf-btn" onclick="xfOpen('an-holdings',5,this)">▾</button></th>
+                        <th style="text-align:right">損益率 <button class="xf-btn" onclick="xfOpen('an-holdings',6,this)">▾</button></th>
+                        <th style="text-align:right">比率 <button class="xf-btn" onclick="xfOpen('an-holdings',7,this)">▾</button></th>
+                    </tr></thead>
                     <tbody id="an-holdings"><tr><td colspan="8" class="empty">データなし</td></tr></tbody>
                 </table>
             </div>
