@@ -12,7 +12,7 @@ const BUILT_IN_ASSET_TYPES={
     'us-stock':       {label:'米国株式',badge:'b-orange'},
     'other':          {label:'その他',  badge:'b-gray'},
 };
-function getAccounts(){const r={...BUILT_IN_ACCOUNTS};(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
+function getAccounts(){const r={...BUILT_IN_ACCOUNTS};Object.entries(D.accountTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
 function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray'};});return r;}
 
 function makeDefault(){
@@ -32,6 +32,7 @@ function makeDefault(){
         idecoHoldings:[],
         customAccounts:[],
         customAssetTypes:[],
+        accountTypeOverrides:{},
         current:{
             bankValues:   {'bank-1':0,'bank-2':0,'bank-3':0},
             cardValues:   {'card-1':0},
@@ -193,17 +194,18 @@ function renderAnalysisData(){
 function renderSCHDReinvest(){
     const scdH=D.holdings.find(h=>h.id==='h-schd')||D.holdings[0];
     const scdV=scdH?(D.current.holdingValues[scdH.id]||{}):{};
-    const target=D.settings.scdTarget||10000000;
-    const startVal=Math.max(scdV.value||0,target);
+    const inputVal=parseFloat(el('schd-start-val')?.value)||0;
+    const startVal=inputVal>0?inputVal:(scdV.value||0);
     const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
     const rows=[];let val=startVal,cumDiv=0;
+    rows.push({yr:0,val:startVal,div:0,cumDiv:0});
     for(let yr=1;yr<=10;yr++){const div=val*y;cumDiv+=div;val+=div;rows.push({yr,val,div,cumDiv});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
-        <td>${r.yr}年後</td>
+        <td>${r.yr===0?'開始時':r.yr+'年後'}</td>
         <td style="text-align:right">${fmt(r.val)}</td>
-        <td style="text-align:right;color:var(--success);font-weight:600">${fmt(r.div)}</td>
-        <td style="text-align:right;color:var(--muted)">${fmt(r.div/12)}</td>
-        <td style="text-align:right">${fmt(r.cumDiv)}</td>
+        <td style="text-align:right;color:var(--success);font-weight:600">${r.yr===0?'--':fmt(r.div)}</td>
+        <td style="text-align:right;color:var(--muted)">${r.yr===0?'--':fmt(r.div/12)}</td>
+        <td style="text-align:right">${r.yr===0?'--':fmt(r.cumDiv)}</td>
     </tr>`).join('');
 }
 
@@ -354,7 +356,7 @@ function renderSettings(){el('s-target').value=D.settings.scdTarget||10000000;re
 function saveBasic(){D.settings.scdTarget=Number(el('s-target').value)||10000000;persist();renderDashboard();alert('保存しました');}
 
 // 銀行口座
-function renderBanksTable(){el('s-banks-table').innerHTML=D.bankAccounts.length===0?'<tr><td colspan="3" class="empty">口座なし</td></tr>':D.bankAccounts.map(b=>`<tr><td>${b.name}</td><td style="color:var(--muted)">${b.note||''}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editBank('${b.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteBank('${b.id}')">削除</button></div></td></tr>`).join('');}
+function renderBanksTable(){el('s-banks-table').innerHTML=D.bankAccounts.length===0?'<tr><td colspan="3" class="empty">口座なし</td></tr>':D.bankAccounts.map(b=>`<tr draggable="true" data-id="${b.id}" data-group="bank" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${b.name}</td><td style="color:var(--muted)">${b.note||''}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editBank('${b.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteBank('${b.id}')">削除</button></div></td></tr>`).join('');}
 function openBankPanel(r=true){if(r){el('s-bank-id').value='';el('s-bank-name').value='';el('s-bank-note').value='';el('s-bank-panel-title').textContent='銀行口座を追加';}el('s-bank-panel').classList.add('open');}
 function closeBankPanel(){el('s-bank-panel').classList.remove('open');el('s-bank-id').value='';}
 function editBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;el('s-bank-id').value=b.id;el('s-bank-name').value=b.name;el('s-bank-note').value=b.note||'';el('s-bank-panel-title').textContent='銀行口座を編集';openBankPanel(false);}
@@ -362,7 +364,7 @@ function saveBank(){const name=el('s-bank-name').value.trim();if(!name){alert('�
 function deleteBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;if(!confirm(`「${b.name}」を削除しますか？`))return;D.bankAccounts=D.bankAccounts.filter(b=>b.id!==id);persist();renderBanksTable();renderDashboard();renderBankInputs();}
 
 // クレジットカード
-function renderCardsTable(){el('s-cards-table').innerHTML=D.creditCards.length===0?'<tr><td colspan="3" class="empty">カードなし</td></tr>':D.creditCards.map(cd=>`<tr><td>${cd.name}</td><td style="color:var(--muted)">${cd.note||''}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editCard('${cd.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteCard('${cd.id}')">削除</button></div></td></tr>`).join('');}
+function renderCardsTable(){el('s-cards-table').innerHTML=D.creditCards.length===0?'<tr><td colspan="3" class="empty">カードなし</td></tr>':D.creditCards.map(cd=>`<tr draggable="true" data-id="${cd.id}" data-group="card" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${cd.name}</td><td style="color:var(--muted)">${cd.note||''}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editCard('${cd.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteCard('${cd.id}')">削除</button></div></td></tr>`).join('');}
 function openCardPanel(r=true){if(r){el('s-card-id').value='';el('s-card-name').value='';el('s-card-note').value='';el('s-card-panel-title').textContent='カードを追加';}el('s-card-panel').classList.add('open');}
 function closeCardPanel(){el('s-card-panel').classList.remove('open');el('s-card-id').value='';}
 function editCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;el('s-card-id').value=cd.id;el('s-card-name').value=cd.name;el('s-card-note').value=cd.note||'';el('s-card-panel-title').textContent='カードを編集';openCardPanel(false);}
@@ -387,13 +389,19 @@ function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return
 
 // 口座種別
 function renderAccTypesTable(){
-    const all=[...Object.entries(BUILT_IN_ACCOUNTS).map(([id,a])=>({id,...a,builtIn:true})),...(D.customAccounts||[]).map(a=>({...a,builtIn:false}))];
-    el('s-acctypes-table').innerHTML=all.map(a=>`<tr><td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right">${a.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAccType('${a.id}')">削除</button></div>`}</td></tr>`).join('');
+    const accs=getAccounts();
+    const all=[...Object.entries(BUILT_IN_ACCOUNTS).map(([id])=>({id,...accs[id],builtIn:true})),...(D.customAccounts||[]).map(a=>({...a,builtIn:false}))];
+    el('s-acctypes-table').innerHTML=all.map(a=>`<tr><td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`).join('');
 }
 function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-panel-title').textContent='口座種別を追加';}el('s-acctype-panel').classList.add('open');}
 function closeAccTypePanel(){el('s-acctype-panel').classList.remove('open');}
-function editAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;el('s-acctype-id').value=a.id;el('s-acctype-name').value=a.label;el('s-acctype-color').value=`${a.color}|${a.badge}`;el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);}
-function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;}}else{D.customAccounts.push({id:uid(),label:name,color,badge});}persist();closeAccTypePanel();renderAccTypesTable();}
+function editAccType(id,builtIn=false){
+    const accs=getAccounts();const a=accs[id];if(!a)return;
+    el('s-acctype-id').value=id;el('s-acctype-builtin').value=builtIn?'1':'';
+    el('s-acctype-name').value=a.label;el('s-acctype-color').value=`${a.color}|${a.badge}`;
+    el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);
+}
+function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;}}else{D.customAccounts.push({id:uid(),label:name,color,badge});}persist();closeAccTypePanel();renderAccTypesTable();}
 function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){alert('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
 
 // 銘柄種別
@@ -413,7 +421,7 @@ function dragStart(e){dragId=e.currentTarget.dataset.id;dragGroup=e.currentTarge
 function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
 function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragEnd(e){e.currentTarget.classList.remove('dragging');}
-function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
+function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:dragGroup==='bank'?D.bankAccounts:dragGroup==='card'?D.creditCards:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else if(dragGroup==='bank'){renderBanksTable();renderBankInputs();}else if(dragGroup==='card'){renderCardsTable();renderCardInputs();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
 
 // ===== データ管理 =====
 const today=()=>new Date().toISOString().slice(0,10);
@@ -438,21 +446,16 @@ function _exportCsv(snaps,filename){
     const csv='﻿'+[header,...rows].map(r=>_csvRow(r)).join('\n');
     const b=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=filename;a.click();
 }
-function exportCsvYear(){
-    const year=el('csv-year-sel').value;if(!year)return;
-    const snaps=D.snapshots.filter(s=>s.month.startsWith(year)).sort((a,b)=>a.month.localeCompare(b.month));
-    if(!snaps.length){alert('該当年の記録がありません');return;}
-    _exportCsv(snaps,`asset-records-${year}.csv`);
-}
-function exportCsvAll(){
-    const snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+function exportCsvSelected(){
+    const val=el('csv-year-sel').value;if(!val)return;
+    const snaps=(val==='all'?D.snapshots.slice():D.snapshots.filter(s=>s.month.startsWith(val))).sort((a,b)=>a.month.localeCompare(b.month));
     if(!snaps.length){alert('記録がありません');return;}
-    _exportCsv(snaps,'asset-records-all.csv');
+    _exportCsv(snaps,val==='all'?'asset-records-all.csv':`asset-records-${val}.csv`);
 }
 function renderCsvYearSel(){
     const sel=el('csv-year-sel');if(!sel)return;
     const years=[...new Set(D.snapshots.map(s=>s.month.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
-    sel.innerHTML=years.length?years.map(y=>`<option value="${y}">${y}年</option>`).join(''):'<option value="">記録なし</option>';
+    sel.innerHTML=years.length?'<option value="all">全期間</option>'+years.map(y=>`<option value="${y}">${y}年</option>`).join(''):'<option value="">記録なし</option>';
 }
 
 // ===== クイックナビ =====
@@ -521,7 +524,11 @@ function xfOpen(tableId,colIdx,btn){
             ${values.map(v=>`<label class="xf-row"><input type="checkbox" value="${v.replace(/"/g,'&quot;')}" ${!af||af.has(v)?'checked':''} onchange="xfApplyFilter('${tableId}',${colIdx},this)">${v}</label>`).join('')}
         </div>
         <div class="xf-actions"><button class="btn btn-s btn-sm" onclick="xfApplyAndClose('${tableId}')">閉じる</button></div>`;
-    (btn.closest('th')||btn).appendChild(dd);
+    const rect=btn.getBoundingClientRect();
+    dd.style.position='fixed';
+    dd.style.top=(rect.bottom+2)+'px';
+    dd.style.left=Math.min(rect.left,window.innerWidth-230)+'px';
+    document.body.appendChild(dd);
     btn._xfOpen=true;
     setTimeout(()=>document.addEventListener('click',_xfOutside,{once:true}),0);
 }

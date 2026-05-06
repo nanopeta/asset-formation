@@ -185,7 +185,7 @@
         .xf-btn{background:none;border:none;cursor:pointer;font-size:10px;color:var(--muted);padding:0 2px;border-radius:3px;line-height:1;vertical-align:middle;}
         .xf-btn:hover,.xf-btn.xf-active{color:var(--primary);}
         .xf-btn.xf-active{background:#dbeafe;}
-        .xf-dropdown{position:absolute;top:calc(100% + 2px);left:0;z-index:500;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:170px;max-width:220px;}
+        .xf-dropdown{z-index:9999;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:170px;max-width:220px;}
         .xf-sort-btns{display:flex;gap:4px;padding:8px 8px 4px;}
         .xf-sort-btns button{flex:1;padding:5px 4px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;color:var(--text);}
         .xf-sort-btns button:hover{background:var(--bg);}
