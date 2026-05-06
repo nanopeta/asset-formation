@@ -75,6 +75,16 @@
 - `tfoot` の合計行は `xfBind` が `tbody.querySelectorAll('tr')` で収集するため自動的に除外される
 - `tfoot` の colspan は列数に合わせて正確に設定する
 
+### xf-dropdown は button の外（th内）に appendChild する
+- `button` 内に `div.xf-dropdown` を入れると、「閉じる」ボタンのクリックが外側の `xf-btn` に伝播して `xfOpen` が再実行されてしまう
+- また `button` 内に `label > input[checkbox]` を置くのはHTML仕様上インタラクティブ要素のネストで動作が不安定
+- **ルール**: `btn.closest('th').appendChild(dd)` にする。`th{position:relative}` で位置決めは正常に機能する
+
+### フィルター後の合計行は afterFilter コールバックで更新する
+- `xfBind(tableId, tbodyId, {afterFilter: fn})` の第3引数でコールバックを渡す
+- `xfApply` の末尾で `if(s.afterFilter)s.afterFilter(s)` を呼ぶ
+- コールバック内で `s.rows.filter(r=>r.tr.style.display!=='none')` から可視行のみ集計して tfoot を書き換える
+
 ---
 
 ## 今後の注意点（未来の自分へ）
