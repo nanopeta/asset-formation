@@ -13,7 +13,7 @@ const BUILT_IN_ASSET_TYPES={
     'other':          {label:'その他',  badge:'b-gray'},
 };
 function getAccounts(){const r={...BUILT_IN_ACCOUNTS};Object.entries(D.accountTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
-function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray'};});return r;}
+function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};Object.entries(D.assetTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray'};});return r;}
 
 function getScdHolding(){const id=D.settings.scdHoldingId;return(id&&D.holdings.find(h=>h.id===id))||D.holdings[0];}
 
@@ -35,6 +35,7 @@ function makeDefault(){
         customAccounts:[],
         customAssetTypes:[],
         accountTypeOverrides:{},
+        assetTypeOverrides:{},
         current:{
             bankValues:   {'bank-1':0,'bank-2':0,'bank-3':0},
             cardValues:   {'card-1':0},
@@ -49,7 +50,7 @@ function makeDefault(){
 function load(){
     try{
         const r=localStorage.getItem('asset-v3');
-        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';return d;}
+        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};return d;}
         const v2=localStorage.getItem('asset-v2');
         if(v2)return migrateV2(JSON.parse(v2));
     }catch{}
@@ -202,8 +203,9 @@ function renderSCHDReinvest(){
     const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
     const years=parseInt(el('schd-years-sel')?.value||10);
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
+    const noReinvest=el('schd-no-reinvest')?.checked||false;
     const rows=[];let val=startVal,cumDiv=0;
-    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=div+monthlyAdd*12;rows.push({yr,val,div,cumDiv});}
+    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);rows.push({yr,val,div,cumDiv});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
         <td>${r.yr}年目</td>
         <td style="text-align:right">${fmt(r.val)}</td>
@@ -468,17 +470,18 @@ function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(
 
 // 銘柄種別
 function renderAssetTypesTable(){
-    const all=[...Object.entries(BUILT_IN_ASSET_TYPES).map(([id,t])=>({id,...t,builtIn:true})),...(D.customAssetTypes||[]).map(t=>({...t,builtIn:false}))];
+    const types=getAssetTypes();
+    const all=[...Object.entries(BUILT_IN_ASSET_TYPES).map(([id])=>({id,...types[id],builtIn:true})),...(D.customAssetTypes||[]).map(t=>({...t,builtIn:false}))];
     el('s-assettypes-table').innerHTML=all.map(t=>{
         const drag=t.builtIn?'':'draggable="true" data-id="'+t.id+'" data-group="assettype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
         const handle=t.builtIn?'<td style="width:36px;color:var(--muted);text-align:center;font-size:11px;">―</td>':'<td class="drag-handle">⠿</td>';
-        return`<tr ${drag}>${handle}<td>${t.label}</td><td style="text-align:right">${t.builtIn?'<span style="font-size:11px;color:var(--muted)">組み込み</span>':`<div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteAssetType('${t.id}')">削除</button></div>`}</td></tr>`;
+        return`<tr ${drag}>${handle}<td>${t.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}',${t.builtIn})">編集</button>${t.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAssetType(\''+t.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
-function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}el('s-assettype-panel').classList.add('open');}
+function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-builtin').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}el('s-assettype-panel').classList.add('open');}
 function closeAssetTypePanel(){el('s-assettype-panel').classList.remove('open');}
-function editAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;el('s-assettype-id').value=t.id;el('s-assettype-name').value=t.label;el('s-assettype-panel-title').textContent='銘柄種別を編集';openAssetTypePanel(false);}
-function saveAssetType(){const name=el('s-assettype-name').value.trim();if(!name){alert('種別名を入力してください');return;}if(!D.customAssetTypes)D.customAssetTypes=[];const id=el('s-assettype-id').value;if(id){const t=D.customAssetTypes.find(t=>t.id===id);if(t)t.label=name;}else{D.customAssetTypes.push({id:uid(),label:name,badge:'b-gray'});}persist();closeAssetTypePanel();renderAssetTypesTable();}
+function editAssetType(id,builtIn=false){const types=getAssetTypes();const t=types[id];if(!t)return;el('s-assettype-id').value=id;el('s-assettype-builtin').value=builtIn?'1':'';el('s-assettype-name').value=t.label;el('s-assettype-panel-title').textContent='銘柄種別を編集';openAssetTypePanel(false);}
+function saveAssetType(){const name=el('s-assettype-name').value.trim();if(!name){alert('種別名を入力してください');return;}if(!D.customAssetTypes)D.customAssetTypes=[];const id=el('s-assettype-id').value;const isBuiltIn=el('s-assettype-builtin').value==='1';if(isBuiltIn){if(!D.assetTypeOverrides)D.assetTypeOverrides={};D.assetTypeOverrides[id]={label:name};}else if(id){const t=D.customAssetTypes.find(t=>t.id===id);if(t)t.label=name;}else{D.customAssetTypes.push({id:uid(),label:name,badge:'b-gray'});}persist();closeAssetTypePanel();renderAssetTypesTable();}
 function deleteAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;if([...D.holdings,...D.idecoHoldings].some(h=>h.assetType===id)){alert('この銘柄種別を使用している銘柄があります。先に銘柄の種別を変更してください。');return;}if(!confirm(`「${t.label}」を削除しますか？`))return;D.customAssetTypes=D.customAssetTypes.filter(t=>t.id!==id);persist();renderAssetTypesTable();}
 
 // ===== ドラッグ&ドロップ =====
