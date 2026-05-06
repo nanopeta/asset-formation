@@ -211,6 +211,10 @@
         .div-tax-free{color:var(--success);font-size:11px;font-weight:600;}
         .div-tax{color:var(--warning);font-size:11px;font-weight:600;}
 
+        /* スクロールテーブル */
+        .tbl-scroll{max-height:380px;overflow-y:auto;}
+        .tbl-scroll thead tr th{position:sticky;top:0;background:#fff;z-index:1;}
+
         @media(max-width:768px){
             .g2,.g3,.g4{grid-template-columns:1fr;}
             .port-grid{grid-template-columns:1fr;}

@@ -1,9 +1,9 @@
 // ===== 定数 =====
 const BUILT_IN_ACCOUNTS={
-    'nisa-growth':    {label:'NISA成長投資',color:'#2563eb',badge:'b-blue'},
-    'nisa-tsumitate': {label:'NISA積立',    color:'#7c3aed',badge:'b-purple'},
-    'specific':       {label:'特定口座',     color:'#0891b2',badge:'b-teal'},
-    'old-nisa':       {label:'旧NISA',       color:'#dc2626',badge:'b-red'},
+    'nisa-growth':    {label:'NISA成長投資',color:'#2563eb',badge:'b-blue',   taxFree:true},
+    'nisa-tsumitate': {label:'NISA積立',    color:'#7c3aed',badge:'b-purple', taxFree:true},
+    'specific':       {label:'特定口座',     color:'#0891b2',badge:'b-teal',   taxFree:false},
+    'old-nisa':       {label:'旧NISA',       color:'#dc2626',badge:'b-red',    taxFree:true},
 };
 const IDECO_COLOR='#059669';
 const BUILT_IN_ASSET_TYPES={
@@ -142,6 +142,7 @@ function renderDashboard(){
     renderSCHDReinvest();
     renderDividendSim();
     renderTrendChart();
+    renderFire();
     updateTs();
 }
 
@@ -200,8 +201,9 @@ function renderSCHDReinvest(){
     const startVal=inputVal>0?inputVal:(scdV.value||0);
     const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
     const years=parseInt(el('schd-years-sel')?.value||10);
+    const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
     const rows=[];let val=startVal,cumDiv=0;
-    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=div;rows.push({yr,val,div,cumDiv});}
+    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=div+monthlyAdd*12;rows.push({yr,val,div,cumDiv});}
     el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
         <td>${r.yr}年目</td>
         <td style="text-align:right">${fmt(r.val)}</td>
@@ -223,14 +225,14 @@ function renderDividendSim(){
         const v=h.hv.value||0;
         const y=(h.dividendYield||0)/100;
         const before=v*y;
-        const isNisa=h.account==='nisa-growth'||h.account==='nisa-tsumitate'||h.account==='old-nisa';
-        const taxRate=isNisa||h.isIdeco?0:0.20315;
+        const isTaxFree=(getAccounts()[h.account]?.taxFree)||h.isIdeco;
+        const taxRate=isTaxFree?0:0.20315;
         const after=before*(1-taxRate);
         totalBefore+=before;totalAfter+=after;
         const accText=h.isIdeco?'iDeCo':(getAccounts()[h.account]?.label||h.account);
         const accLabel=h.isIdeco?'<span class="badge b-green">iDeCo</span>':acBadge(h.account)+'</span>';
-        const taxText=isNisa||h.isIdeco?'非課税':'課税';
-        const taxLabel=isNisa||h.isIdeco?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
+        const taxText=isTaxFree?'非課税':'課税';
+        const taxLabel=isTaxFree?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
         const yieldStr=(y*100).toFixed(2)+'%';
         return`<tr>
             <td>${h.name}</td>
@@ -251,6 +253,46 @@ function renderDividendSim(){
         el('div-sim-foot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td colspan="5">合計</td><td style="text-align:right">${fmt(b)}</td><td style="text-align:right">${fmt(a)}</td><td style="text-align:right">${fmt(a/12)}</td></tr>`;
     };
     xfBind('div-sim','div-sim-body',{afterFilter:updateDivSimFoot});
+}
+
+function renderFire(){
+    const{total}=calcTotals();
+    const desired=parseFloat(el('fire-monthly')?.value)||0;
+    const rate=parseFloat(el('fire-rate')?.value||4)/100;
+    const ret=parseFloat(el('fire-return')?.value||4)/100;
+    const autoContrib=D.holdings.reduce((a,h)=>a+(h.monthlyAmount||0),0)+D.idecoHoldings.reduce((a,h)=>a+(h.monthlyAmount||0),0);
+    const contrib=parseFloat(el('fire-contrib')?.value)||autoContrib;
+    const res=el('fire-result');if(!res)return;
+    if(desired<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0;">希望月収を入力するとシミュレーションが表示されます</div>';return;}
+    const target=desired*12/rate;
+    const nowMonthly=total*rate/12;
+    const nowPct=Math.min(100,total/target*100);
+    // 達成年数計算（年次複利）
+    let v=total,yrs=0;
+    const annualContrib=contrib*12;
+    if(v>=target){yrs=0;}else{while(v<target&&yrs<100){v=v*(1+ret)+annualContrib;yrs++;}}
+    const achieved=v>=target||total>=target;
+    const eta=new Date();eta.setFullYear(eta.getFullYear()+yrs);
+    res.innerHTML=`
+        <div class="g3 mb">
+            <div class="card" style="padding:14px">
+                <div class="clabel">FIRE必要資産</div>
+                <div class="cval">${fmt(target)}</div>
+                <div style="font-size:11px;color:var(--muted)">${fmt(desired)}/月 ÷ ${(rate*100).toFixed(1)}%</div>
+            </div>
+            <div class="card" style="padding:14px">
+                <div class="clabel">現在の取り崩し可能月額</div>
+                <div class="cval ${nowMonthly>=desired?'positive':''}">${fmt(nowMonthly)}</div>
+                <div style="font-size:11px;color:var(--muted)">目標の ${nowPct.toFixed(1)}%</div>
+            </div>
+            <div class="card" style="padding:14px">
+                <div class="clabel">FIRE達成予想</div>
+                <div class="cval" style="color:var(--primary)">${total>=target?'達成済み':achieved?eta.getFullYear()+'年'+( eta.getMonth()+1)+'月':'100年超'}</div>
+                <div style="font-size:11px;color:var(--muted)">${total>=target?'おめでとうございます':achieved?'約'+yrs+'年後':'積立額を増やしましょう'}</div>
+            </div>
+        </div>
+        <div class="pb" style="margin-bottom:4px"><div class="pb-fill fill-blue" style="width:${nowPct.toFixed(1)}%"></div></div>
+        <div style="font-size:11px;color:var(--muted)">${fmt(total)} / ${fmt(target)}（${nowPct.toFixed(1)}%）　月次積立: ${fmt(contrib)}/月</div>`;
 }
 
 let chartTrend=null;
@@ -408,18 +450,20 @@ function renderAccTypesTable(){
     el('s-acctypes-table').innerHTML=all.map(a=>{
         const drag=a.builtIn?'':'draggable="true" data-id="'+a.id+'" data-group="acctype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
         const handle=a.builtIn?'<td style="width:36px;color:var(--muted);text-align:center;font-size:11px;">―</td>':'<td class="drag-handle">⠿</td>';
-        return`<tr ${drag}>${handle}<td><span class="dot" style="background:${a.color}"></span>${a.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
+        const taxBadge=a.taxFree?'<span class="badge b-green" style="font-size:10px;">非課税</span>':'';
+        return`<tr ${drag}>${handle}<td><span class="dot" style="background:${a.color}"></span>${a.label} ${taxBadge}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
-function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-panel-title').textContent='口座種別を追加';}el('s-acctype-panel').classList.add('open');}
+function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-taxfree').checked=false;el('s-acctype-panel-title').textContent='口座種別を追加';}el('s-acctype-panel').classList.add('open');}
 function closeAccTypePanel(){el('s-acctype-panel').classList.remove('open');}
 function editAccType(id,builtIn=false){
     const accs=getAccounts();const a=accs[id];if(!a)return;
     el('s-acctype-id').value=id;el('s-acctype-builtin').value=builtIn?'1':'';
     el('s-acctype-name').value=a.label;el('s-acctype-color').value=`${a.color}|${a.badge}`;
+    el('s-acctype-taxfree').checked=!!a.taxFree;
     el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);
 }
-function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;}}else{D.customAccounts.push({id:uid(),label:name,color,badge});}persist();closeAccTypePanel();renderAccTypesTable();}
+function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');const taxFree=el('s-acctype-taxfree').checked;if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge,taxFree};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;a.taxFree=taxFree;}}else{D.customAccounts.push({id:uid(),label:name,color,badge,taxFree});}persist();closeAccTypePanel();renderAccTypesTable();}
 function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){alert('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
 
 // 銘柄種別

@@ -28,6 +28,7 @@
     <span class="qnav-sep">｜</span>
     <button class="qnav-pill" onclick="qScroll('sec-trend')">資産推移</button>
     <button class="qnav-pill" onclick="qScroll('sec-sim')">シミュレーション</button>
+    <button class="qnav-pill" onclick="qScroll('sec-fire')">FIRE</button>
     <button class="qnav-pill" onclick="qScroll('sec-detail')">詳細分析</button>
 </div>
 
@@ -168,10 +169,11 @@
                     </table>
                 </div>
                 <div>
-                    <div style="font-size:13px;font-weight:700;margin-bottom:12px;">SCHD 分配金再投資シミュレーション</div>
+                    <div style="font-size:13px;font-weight:700;margin-bottom:12px;">分配金再投資シミュレーション</div>
                     <div class="fi" style="margin-bottom:8px;">
-                        <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在のSCHD評価額）" oninput="renderSCHDReinvest()"></div>
+                        <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在の評価額）" oninput="renderSCHDReinvest()"></div>
                         <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.5" step="0.1" oninput="renderSCHDReinvest()"></div>
+                        <div class="fg"><label>毎月積立（円）</label><input type="number" id="schd-monthly-add" placeholder="0" oninput="renderSCHDReinvest()"></div>
                         <div class="fg"><label>年数</label><select id="schd-years-sel" onchange="renderSCHDReinvest()"><option value="5">5年</option><option value="10" selected>10年</option><option value="20">20年</option><option value="30">30年</option></select></div>
                     </div>
                     <div class="schd-scroll-wrap">
@@ -201,6 +203,19 @@
                     <tfoot id="div-sim-foot"></tfoot>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <div class="an-block" id="sec-fire">
+        <div class="an-summary">FIRE達成シミュレーション</div>
+        <div class="an-body">
+            <div class="fi" style="margin-bottom:16px;">
+                <div class="fg"><label>希望月収（円）</label><input type="number" id="fire-monthly" placeholder="300000" oninput="renderFire()"></div>
+                <div class="fg"><label>取り崩し率（%）</label><input type="number" id="fire-rate" value="4" step="0.1" oninput="renderFire()"></div>
+                <div class="fg"><label>想定年利（%）</label><input type="number" id="fire-return" value="4" step="0.1" oninput="renderFire()"></div>
+                <div class="fg"><label>月次積立（円）</label><input type="number" id="fire-contrib" placeholder="設定から自動取得" oninput="renderFire()"></div>
+            </div>
+            <div id="fire-result"><div style="color:var(--muted);font-size:13px;padding:8px 0;">希望月収を入力するとシミュレーションが表示されます</div></div>
         </div>
     </div>
 
@@ -325,7 +340,7 @@
 
     <div style="margin-top:24px;">
         <div class="sec-label">過去の記録</div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap tbl-scroll">
             <table>
                 <thead><tr><th>月</th><th style="text-align:right">総資産</th><th style="text-align:right">投資</th><th style="text-align:right">iDeCo</th><th style="text-align:right">現金</th><th style="text-align:right">SCHD元本</th><th></th></tr></thead>
                 <tbody id="rec-history"><tr><td colspan="7" class="empty">記録なし</td></tr></tbody>
@@ -467,6 +482,9 @@
                                     <option value="#d97706|b-orange">オレンジ</option>
                                     <option value="#64748b|b-gray">グレー</option>
                                 </select>
+                            </div>
+                            <div class="fg" style="justify-content:flex-end;padding-top:20px;">
+                                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="s-acctype-taxfree"> 非課税口座</label>
                             </div>
                         </div>
                         <div class="flex-gap" style="margin-top:10px;">
