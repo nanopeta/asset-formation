@@ -500,14 +500,14 @@ const today=()=>new Date().toISOString().slice(0,10);
 
 // 全体バックアップ
 function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`asset-backup-${today()}.json`;a.click();}
-function importAll(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
 
 // 設定のみ（記録は保持）
 function exportSettings(){
     const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],current:D.current};
     const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`asset-settings-${today()}.json`;a.click();
 }
-function importSettings(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();alert('設定をインポートしました（記録は変更されていません）');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();alert('設定をインポートしました（記録は変更されていません）');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
 
 // CSV エクスポート
 function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
@@ -664,12 +664,8 @@ function xfApply(tableId){
 
 function xfUpdateBtnState(tableId){
     const s=XF[tableId];if(!s)return;
-    // onclick="xfOpen('div-sim',3,this)" から colIdx を正規表現で取得
-    const re=new RegExp(`xfOpen\\('${tableId}',(\\d+),`);
-    document.querySelectorAll('.xf-btn').forEach(btn=>{
-        const m=btn.getAttribute('onclick').match(re);
-        if(!m)return;
-        const colIdx=parseInt(m[1]);
+    document.querySelectorAll(`.xf-btn[data-xf-table="${tableId}"]`).forEach(btn=>{
+        const colIdx=parseInt(btn.dataset.xfCol);
         const hasFilter=!!(s.filters[colIdx]&&s.filters[colIdx].size>0);
         const hasSort=s.sortCol===colIdx;
         btn.classList.toggle('xf-active',hasFilter||hasSort);
@@ -702,7 +698,108 @@ function init(){
     const now=new Date();
     el('rec-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const qnav=el('dash-qnav');
-    if(qnav)qnav.style.display='flex'; // ダッシュボードが初期表示なので即表示
+    if(qnav)qnav.style.display='flex';
+
+    // メインタブ
+    document.querySelectorAll('.main-nav button[data-tab]').forEach(btn=>{
+        btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
+    });
+
+    // クイックナビ
+    document.querySelectorAll('.qnav-pill[data-scroll]').forEach(btn=>{
+        btn.addEventListener('click',()=>qScroll(btn.dataset.scroll));
+    });
+
+    // 記録サブタブ
+    document.querySelectorAll('#rec-sub-nav button[data-subtab]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            const[group,name]=btn.dataset.subtab.split('-');
+            switchSubTab(group,name);
+        });
+    });
+
+    // 設定サブタブ
+    document.querySelectorAll('#set-sub-nav button[data-subtab]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            const[group,name]=btn.dataset.subtab.split('-');
+            switchSubTab(group,name);
+        });
+    });
+
+    // 記録sticky
+    el('rec-month').addEventListener('change',markUnsaved);
+    el('rec-past-select').addEventListener('change',function(){if(this.value){loadSnap(this.value);this.value='';}});
+    el('btn-save-snapshot').addEventListener('click',saveSnapshot);
+
+    // 記録タブ内ボタン
+    el('btn-to-holdings').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
+    el('btn-to-ideco').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
+    el('btn-auto-nisa').addEventListener('click',autoFillNisa);
+
+    // NISA入力欄
+    ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>{
+        el(id).addEventListener('input',markUnsaved);
+    });
+
+    // XFフィルターボタン（静的HTML）
+    document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{
+        btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));
+    });
+
+    // SCHDシミュレーション入力
+    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-monthly-add'].forEach(id=>{
+        el(id).addEventListener('input',renderSCHDReinvest);
+    });
+    el('schd-years-sel').addEventListener('change',renderSCHDReinvest);
+    el('schd-no-reinvest').addEventListener('change',renderSCHDReinvest);
+
+    // FIREシミュレーション入力
+    ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>{
+        el(id).addEventListener('input',renderFire);
+    });
+
+    // 設定タブ：保有銘柄
+    el('btn-open-holding').addEventListener('click',openHoldingPanel);
+    el('btn-save-holding').addEventListener('click',saveHolding);
+    el('btn-close-holding').addEventListener('click',closeHoldingPanel);
+
+    // 設定タブ：iDeCo
+    el('btn-open-ideco').addEventListener('click',openIdecoPanel);
+    el('btn-save-ideco').addEventListener('click',saveIdeco);
+    el('btn-close-ideco').addEventListener('click',closeIdecoPanel);
+
+    // 設定タブ：銀行口座
+    el('btn-open-bank').addEventListener('click',openBankPanel);
+    el('btn-save-bank').addEventListener('click',saveBank);
+    el('btn-close-bank').addEventListener('click',closeBankPanel);
+
+    // 設定タブ：クレジットカード
+    el('btn-open-card').addEventListener('click',openCardPanel);
+    el('btn-save-card').addEventListener('click',saveCard);
+    el('btn-close-card').addEventListener('click',closeCardPanel);
+
+    // 設定タブ：口座種別
+    el('btn-open-acctype').addEventListener('click',openAccTypePanel);
+    el('btn-save-acctype').addEventListener('click',saveAccType);
+    el('btn-close-acctype').addEventListener('click',closeAccTypePanel);
+
+    // 設定タブ：銘柄種別
+    el('btn-open-assettype').addEventListener('click',openAssetTypePanel);
+    el('btn-save-assettype').addEventListener('click',saveAssetType);
+    el('btn-close-assettype').addEventListener('click',closeAssetTypePanel);
+
+    // 設定タブ：基本設定
+    el('btn-save-basic').addEventListener('click',saveBasic);
+
+    // データ管理
+    el('btn-export-all').addEventListener('click',exportAll);
+    el('btn-import-all-trigger').addEventListener('click',()=>el('imp-all').click());
+    el('imp-all').addEventListener('change',importAll);
+    el('btn-export-settings').addEventListener('click',exportSettings);
+    el('btn-import-settings-trigger').addEventListener('click',()=>el('imp-settings').click());
+    el('imp-settings').addEventListener('change',importSettings);
+    el('btn-export-csv').addEventListener('click',exportCsvSelected);
+
     renderDashboard();
     renderRecordTab();
 }
