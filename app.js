@@ -350,7 +350,7 @@ function loadSnap(month){
 }
 
 // ===== 設定タブ =====
-function renderSettings(){el('s-target').value=D.settings.scdTarget||10000000;renderBanksTable();renderCardsTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();}
+function renderSettings(){el('s-target').value=D.settings.scdTarget||10000000;renderBanksTable();renderCardsTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();}
 function saveBasic(){D.settings.scdTarget=Number(el('s-target').value)||10000000;persist();renderDashboard();alert('保存しました');}
 
 // 銀行口座
@@ -416,8 +416,44 @@ function dragEnd(e){e.currentTarget.classList.remove('dragging');}
 function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
 
 // ===== データ管理 =====
-function exportData(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`asset-${new Date().toISOString().slice(0,10)}.json`;a.click();}
-function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+const today=()=>new Date().toISOString().slice(0,10);
+
+// 全体バックアップ
+function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`asset-backup-${today()}.json`;a.click();}
+function importAll(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+
+// 設定のみ（記録は保持）
+function exportSettings(){
+    const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],current:D.current};
+    const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`asset-settings-${today()}.json`;a.click();
+}
+function importSettings(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();alert('設定をインポートしました（記録は変更されていません）');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+
+// CSV エクスポート
+function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
+function _exportCsv(snaps,filename){
+    const scdH=D.holdings.find(h=>h.id==='h-schd')||D.holdings[0];
+    const header=['月','総資産','投資','iDeCo','現金','SCHD元本'];
+    const rows=snaps.map(s=>[s.month,Math.round(s.total||0),Math.round(s.investment||0),Math.round(s.idecoTotal||0),Math.round(s.cash||0),Math.round(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)]);
+    const csv='﻿'+[header,...rows].map(r=>_csvRow(r)).join('\n');
+    const b=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=filename;a.click();
+}
+function exportCsvYear(){
+    const year=el('csv-year-sel').value;if(!year)return;
+    const snaps=D.snapshots.filter(s=>s.month.startsWith(year)).sort((a,b)=>a.month.localeCompare(b.month));
+    if(!snaps.length){alert('該当年の記録がありません');return;}
+    _exportCsv(snaps,`asset-records-${year}.csv`);
+}
+function exportCsvAll(){
+    const snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+    if(!snaps.length){alert('記録がありません');return;}
+    _exportCsv(snaps,'asset-records-all.csv');
+}
+function renderCsvYearSel(){
+    const sel=el('csv-year-sel');if(!sel)return;
+    const years=[...new Set(D.snapshots.map(s=>s.month.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
+    sel.innerHTML=years.length?years.map(y=>`<option value="${y}">${y}年</option>`).join(''):'<option value="">記録なし</option>';
+}
 
 // ===== クイックナビ =====
 function qScroll(id){
