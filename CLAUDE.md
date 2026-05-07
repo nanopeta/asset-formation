@@ -7,6 +7,15 @@
 | `app.js` | ロジック全般・レンダリング | ~818行 |
 | `style.css` | スタイル | ~268行 |
 
+## キャッシュバスター（重要）
+`index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
+**`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
+```html
+<link rel="stylesheet" href="style.css?v=7">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=7"></script>             <!-- app.js変更時に上げる -->
+```
+片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
+
 ## データ構造（localStorage: `asset-v3`）
 ```js
 D = {
