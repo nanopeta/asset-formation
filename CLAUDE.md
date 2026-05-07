@@ -58,7 +58,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 メインタブ: dashboard / record / settings
   dashboard → （サブタブなし）
     セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio,
-                  sec-trend, sec-sim, sec-fire, sec-detail
+                  sec-trend, sec-sim, sec-reinvest, sec-div-sim, sec-fire, sec-detail
   record    → rec-banks / rec-holdings
   settings  → set-holdings / set-accounts / set-basic
 ```
