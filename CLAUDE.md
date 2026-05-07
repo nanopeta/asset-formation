@@ -16,6 +16,14 @@
 ```
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
+## 過去に起きた重大バグ（再発防止）
+
+### uid() 未定義バグ（2026-05-07）
+`load()` 内でマイグレーションコードに `uid()` を使ったところ、`uid` の定義が `let D=load()` より後にあるため
+`ReferenceError: uid is not defined` が発生。try/catch に捕まり `makeDefault()` が返り、**ユーザーデータが全消去される**事象が発生。
+
+**対策**: `load()` 内では `uid()` を使わず、`'sp'+Date.now()+index` 等のインラインIDを使うこと。
+
 ## データ構造（localStorage: `asset-v3`）
 ```js
 D = {
