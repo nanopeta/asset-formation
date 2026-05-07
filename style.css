@@ -286,6 +286,18 @@
             .an-summary{padding:10px 14px;}
         }
 
+        /* ===== 月次サマリーモーダル ===== */
+        .snap-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;}
+        .snap-modal-card{background:#fff;border-radius:14px;padding:20px 24px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.22);}
+        .snap-modal-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text);}
+        .snap-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+        .snap-row:last-child{border-bottom:none;}
+        .snap-row span{color:var(--muted);}
+        /* ===== 目標配分 ===== */
+        .alloc-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+        .alloc-table{width:100%;font-size:12px;border-collapse:collapse;}
+        .alloc-table th{color:var(--muted);font-weight:500;padding:3px 4px;}
+        .alloc-table td{padding:4px 4px;border-top:1px solid var(--border);}
         /* ===== トースト通知 ===== */
         .toast{position:fixed;bottom:24px;right:20px;padding:10px 16px;border-radius:8px;background:#1e293b;color:#fff;font-size:13px;z-index:10000;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none;}
         .toast.toast-show{opacity:1;transform:translateY(0);}
