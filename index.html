@@ -153,43 +153,44 @@
     </div>
 
     <div class="an-block" id="sec-sim">
-        <div class="an-summary">SCHD シミュレーション / 配当シミュレーション</div>
+        <div class="an-summary">SCHD 到達シミュレーション</div>
         <div class="an-body">
-            <div class="sim-grid">
-                <div class="sim-left">
-                    <div class="sec-title">SCHD 到達シミュレーション</div>
-                    <table>
-                        <tr><td style="color:var(--muted)">現在の元本</td><td style="text-align:right;font-weight:600" id="sim-cur">¥0</td></tr>
-                        <tr><td style="color:var(--muted)">目標元本</td><td style="text-align:right">¥10,000,000</td></tr>
-                        <tr><td style="color:var(--muted)">月次積立</td><td style="text-align:right" id="sim-m">--</td></tr>
-                        <tr><td style="color:var(--muted)">年間スポット</td><td style="text-align:right" id="sim-sp">--</td></tr>
-                        <tr><td style="color:var(--muted)">残り元本</td><td style="text-align:right" id="sim-rem">¥0</td></tr>
-                        <tr><td style="color:var(--muted)">予想到達月</td><td style="text-align:right;font-weight:700;color:var(--primary)" id="sim-eta">--</td></tr>
-                        <tr><td style="color:var(--muted)">残り期間</td><td style="text-align:right" id="sim-months">--</td></tr>
-                    </table>
-                </div>
-                <div class="sim-right">
-                    <div class="sec-title">分配金再投資シミュレーション</div>
-                    <div class="fi fi-wrap" style="margin-bottom:8px;">
-                        <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在の評価額）"></div>
-                        <div class="fg"><label>開始時元本（円）</label><input type="number" id="schd-start-principal" placeholder="自動（現在の元本）"></div>
-                        <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.5" step="0.1"></div>
-                        <div class="fg"><label>毎月積立（円）</label><input type="number" id="schd-monthly-add" placeholder="0"></div>
-                        <div class="fg"><label>年数</label><select id="schd-years-sel"><option value="5">5年</option><option value="10" selected>10年</option><option value="20">20年</option><option value="30">30年</option></select></div>
-                        <div class="cb-end"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-no-reinvest">再投資なし</label></div>
-                    </div>
-                    <div class="schd-scroll-wrap">
-                        <table>
-                            <thead><tr><th>経過年</th><th style="text-align:right">元本</th><th style="text-align:right">評価額</th><th style="text-align:right">年間分配金</th><th style="text-align:right">月換算</th><th style="text-align:right">累計分配金</th></tr></thead>
-                            <tbody id="schd-reinvest-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <table>
+                <tr><td style="color:var(--muted)">現在の元本</td><td style="text-align:right;font-weight:600" id="sim-cur">¥0</td></tr>
+                <tr><td style="color:var(--muted)">目標元本</td><td style="text-align:right">¥10,000,000</td></tr>
+                <tr><td style="color:var(--muted)">月次積立</td><td style="text-align:right" id="sim-m">--</td></tr>
+                <tr><td style="color:var(--muted)">年間スポット</td><td style="text-align:right" id="sim-sp">--</td></tr>
+                <tr><td style="color:var(--muted)">残り元本</td><td style="text-align:right" id="sim-rem">¥0</td></tr>
+                <tr><td style="color:var(--muted)">予想到達月</td><td style="text-align:right;font-weight:700;color:var(--primary)" id="sim-eta">--</td></tr>
+                <tr><td style="color:var(--muted)">残り期間</td><td style="text-align:right" id="sim-months">--</td></tr>
+            </table>
+        </div>
+    </div>
 
-            <!-- 全銘柄配当シミュレーション -->
-            <div class="div-sim-head">全銘柄 配当シミュレーション（配当あり銘柄のみ）</div>
-            <div class="tbl-wrap">
+    <div class="an-block" id="sec-reinvest">
+        <div class="an-summary">分配金再投資シミュレーション</div>
+        <div class="an-body">
+            <div class="fi fi-wrap" style="margin-bottom:8px;">
+                <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在の評価額）"></div>
+                <div class="fg"><label>開始時元本（円）</label><input type="number" id="schd-start-principal" placeholder="自動（現在の元本）"></div>
+                <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.5" step="0.1"></div>
+                <div class="fg"><label>毎月積立（円）</label><input type="number" id="schd-monthly-add" placeholder="0"></div>
+                <div class="fg"><label>年数</label><select id="schd-years-sel"><option value="5">5年</option><option value="10" selected>10年</option><option value="20">20年</option><option value="30">30年</option></select></div>
+                <div class="cb-end"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-no-reinvest">再投資なし</label></div>
+            </div>
+            <div class="tbl-wrap tbl-scroll">
+                <table>
+                    <thead><tr><th>経過年</th><th style="text-align:right">元本</th><th style="text-align:right">評価額</th><th style="text-align:right">年間分配金</th><th style="text-align:right">月換算</th><th style="text-align:right">累計分配金</th></tr></thead>
+                    <tbody id="schd-reinvest-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-block" id="sec-div-sim">
+        <div class="an-summary">全銘柄 配当シミュレーション（配当あり銘柄のみ）</div>
+        <div class="an-body">
+            <div class="tbl-wrap tbl-scroll">
                 <table>
                     <thead><tr>
                         <th>銘柄名 <button class="xf-btn" data-xf-table="div-sim" data-xf-col="0">▾</button></th>
@@ -242,7 +243,7 @@
                     <tbody id="an-by-type"></tbody></table>
                 </div>
             </div>
-            <div class="tbl-wrap">
+            <div class="tbl-wrap tbl-scroll">
                 <div class="tbl-head">銘柄別一覧</div>
                 <table>
                     <thead><tr>

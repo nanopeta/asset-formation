@@ -108,9 +108,7 @@
         .tbl-filter{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:8px;}
         .tbl-filter:focus{outline:none;border-color:var(--primary);}
 
-        /* ===== SCHDテーブル sticky head ===== */
-        .schd-scroll-wrap{overflow-y:auto;max-height:200px;}
-        .schd-scroll-wrap thead th{position:sticky;top:0;background:#fff;z-index:1;box-shadow:0 1px 0 var(--border);}
+        /* ===== SCHDテーブル（tbl-wrap tbl-scroll に統合済み） ===== */
 
         /* ===== 設定サブタブ sticky ===== */
         #tab-settings .sub-nav{position:sticky;top:91px;z-index:148;background:#fff;padding-top:8px;margin-bottom:12px;}
@@ -226,14 +224,9 @@
         .port-chart-pane{padding:16px;border-right:1px solid var(--border);}
         .port-table-pane{overflow:auto;max-height:280px;}
 
-        /* ===== シミュレーショングリッド ===== */
-        .sim-grid{display:grid;grid-template-columns:1fr 2fr;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-        .sim-left{padding:16px;border-right:2px solid var(--border);background:#fafafa;}
-        .sim-right{padding:16px;}
-        .sec-title{font-size:13px;font-weight:700;margin-bottom:12px;}
+        /* ===== シミュレーション入力フォーム ===== */
         .fi-wrap{flex-wrap:wrap;}
         .cb-end{display:flex;align-items:flex-end;padding-bottom:8px;flex-shrink:0;}
-        .div-sim-head{font-size:13px;font-weight:700;margin-bottom:8px;padding-top:16px;border-top:1px solid var(--border);}
 
         /* ===== グラフ ===== */
         .chart-h300{height:300px;}
@@ -250,8 +243,6 @@
 
         @media(max-width:768px){
             .g2,.g3,.g4{grid-template-columns:1fr;}
-            .sim-grid{grid-template-columns:1fr;}
-            .sim-left{border-right:none;border-bottom:2px solid var(--border);}
             .port-grid{grid-template-columns:1fr;}
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
             main{padding:14px;}
@@ -260,7 +251,8 @@
             /* テーブル横スクロール */
             .rec-sec{overflow-x:auto;}
             .tbl-wrap{overflow-x:auto;}
-            .schd-scroll-wrap{overflow-x:auto;}
+            /* モバイルでは縦スクロール無効（2方向スクロールを避ける） */
+            .tbl-scroll{max-height:none;}
         }
 
         @media(max-width:480px){
