@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <header>
@@ -311,7 +311,10 @@
         <div class="rec-sec">
             <div class="rec-sec-head">
                 <span>iDeCo</span>
-                <button class="btn btn-s btn-sm" id="btn-to-ideco">銘柄管理</button>
+                <div class="flex-gap">
+                    <button class="btn-auto" id="btn-auto-ideco">累計拠出を推計</button>
+                    <button class="btn btn-s btn-sm" id="btn-to-ideco">銘柄管理</button>
+                </div>
             </div>
             <table>
                 <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">スイッチング後元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
@@ -321,7 +324,7 @@
                 <div class="fg" style="max-width:320px;">
                     <label>累計拠出元本（スイッチング前からの実拠出総額）</label>
                     <input type="number" id="rec-ideco-actual-pri" placeholder="0" oninput="markUnsaved()">
-                    <div style="font-size:11px;color:var(--muted);margin-top:3px;">スイッチングで元本がリセットされた場合、実際に拠出した累計額を入力してください。ダッシュボードの損益・率はこの値を使って計算されます。</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:3px;">「累計拠出を推計」ボタンで開始月×月次拠出合計から自動計算できます。スイッチングしている場合はこの値で損益・率を計算します。</div>
                 </div>
             </div>
         </div>
@@ -537,6 +540,7 @@
                 <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000"></div>
                 <div class="fg"><label>SCHD 対象銘柄</label><select id="s-scd-holding"></select></div>
                 <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0"></div>
+                <div class="fg"><label>iDeCo 開始月</label><input type="month" id="s-ideco-start"></div>
             </div>
             <button class="btn btn-p btn-sm" id="btn-save-basic">保存</button>
         </div>
@@ -578,6 +582,6 @@
 </div>
 
 </main>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

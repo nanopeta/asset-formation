@@ -19,7 +19,7 @@ function getScdHolding(){const id=D.settings.scdHoldingId;return(id&&D.holdings.
 
 function makeDefault(){
     return {
-        settings:{scdTarget:10000000,scdHoldingId:'h-schd',idecoMonthlyTotal:0},
+        settings:{scdTarget:10000000,scdHoldingId:'h-schd',idecoMonthlyTotal:0,idecoStartMonth:''},
         bankAccounts:[
             {id:'bank-1',name:'楽天銀行',              note:'メイン',       order:0},
             {id:'bank-2',name:'あおぞら銀行 BANK支店', note:'現金バッファ', order:1},
@@ -50,7 +50,7 @@ function makeDefault(){
 function load(){
     try{
         const r=localStorage.getItem('asset-v3');
-        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};return d;}
+        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};if(!d.settings.idecoStartMonth)d.settings.idecoStartMonth='';return d;}
         const v2=localStorage.getItem('asset-v2');
         if(v2)return migrateV2(JSON.parse(v2));
     }catch{}
@@ -84,6 +84,7 @@ const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');el('last-updated').textContent=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
 function calcTotals(){const c=D.current;const cash=Object.values(c.bankValues).reduce((a,v)=>a+v,0)-Object.values(c.cardValues).reduce((a,v)=>a+v,0);const inv=D.holdings.reduce((a,h)=>a+(c.holdingValues[h.id]?.value||0),0);const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);return{cash,inv,ideco,total:cash+inv+ideco};}
+function calcIdecoEstimatedPri(){const{idecoStartMonth,idecoMonthlyTotal}=D.settings;if(!idecoStartMonth||!idecoMonthlyTotal)return 0;const[sy,sm]=idecoStartMonth.split('-').map(Number);const now=new Date();const months=(now.getFullYear()-sy)*12+(now.getMonth()+1-sm)+1;return Math.max(0,months)*idecoMonthlyTotal;}
 function acBadge(acc){const a=getAccounts()[acc];return a?`<span class="badge ${a.badge}">${a.label}`:'';}
 function atBadge(type){const t=getAssetTypes()[type];return t?`<span class="badge ${t.badge}">${t.label}</span>`:'';}
 function buildAccountOptions(selId,val){el(selId).innerHTML=Object.entries(getAccounts()).map(([k,v])=>`<option value="${k}"${val===k?' selected':''}>${v.label}</option>`).join('');}
@@ -102,7 +103,8 @@ function renderDashboard(){
     const invPri=D.holdings.reduce((a,h)=>a+(c.holdingValues[h.id]?.principal||0),0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
     const idecoActualPri=c.idecoActualPrincipal||0;
-    const effectiveIdecoPri=idecoActualPri||idecoPri;
+    const idecoEstPri=calcIdecoEstimatedPri();
+    const effectiveIdecoPri=idecoActualPri||idecoEstPri||idecoPri;
     const totalPri=invPri+effectiveIdecoPri;
 
     el('db-total').textContent=fmt(total);
@@ -115,7 +117,7 @@ function renderDashboard(){
     el('db-cash').textContent=fmt(cash);
     el('db-inv-gain').innerHTML=gainHtml(inv,invPri);
     el('db-ideco-gain').innerHTML=gainHtml(ideco,effectiveIdecoPri);
-    const apEl=el('db-ideco-actual-pri');if(apEl)apEl.textContent=idecoActualPri>0?`本来の元本: ${fmt(idecoActualPri)}`:'';
+    const apEl=el('db-ideco-actual-pri');if(apEl)apEl.textContent=idecoActualPri>0?`本来の元本: ${fmt(idecoActualPri)}`:idecoEstPri>0?`推計元本: ${fmt(idecoEstPri)}`:'';
 
     // 現金内訳（カード内）
     const cards=D.creditCards;
@@ -410,6 +412,7 @@ function loadSnap(month){
 function renderSettings(){
     el('s-target').value=D.settings.scdTarget||10000000;
     el('s-ideco-monthly').value=D.settings.idecoMonthlyTotal||'';
+    el('s-ideco-start').value=D.settings.idecoStartMonth||'';
     const scdSel=el('s-scd-holding');
     if(scdSel)scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${h.id===D.settings.scdHoldingId?' selected':''}>${h.name}</option>`).join('')||'<option value="">銘柄なし</option>';
     renderBanksTable();renderCardsTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();
@@ -417,6 +420,7 @@ function renderSettings(){
 function saveBasic(){
     D.settings.scdTarget=Number(el('s-target').value)||10000000;
     D.settings.idecoMonthlyTotal=Number(el('s-ideco-monthly').value)||0;
+    D.settings.idecoStartMonth=el('s-ideco-start').value||'';
     const scdSel=el('s-scd-holding');
     if(scdSel&&scdSel.value)D.settings.scdHoldingId=scdSel.value;
     persist();renderDashboard();alert('保存しました');
@@ -742,6 +746,7 @@ function init(){
     el('btn-to-holdings').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
     el('btn-to-ideco').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
     el('btn-auto-nisa').addEventListener('click',autoFillNisa);
+    el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){alert('基本設定でiDeCo開始月と月次拠出合計を設定してください');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
 
     // NISA入力欄
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>{
