@@ -402,7 +402,7 @@
         <div class="rec-sec">
             <div class="rec-sec-head"><span>iDeCo 銘柄</span></div>
             <table>
-                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th style="text-align:right">月次拠出</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th style="text-align:right">配分比率</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
                 <tbody id="s-ideco-table"></tbody>
             </table>
             <div class="rec-sec-body">
@@ -413,7 +413,7 @@
                     <div class="fi">
                         <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
                         <div class="fg"><label>種別</label><select id="s-i-type"></select></div>
-                        <div class="fg"><label>月次拠出額（円）</label><input type="number" id="s-i-monthly" placeholder="0"></div>
+                        <div class="fg"><label>配分比率（%）</label><input type="number" id="s-i-monthly" placeholder="0" min="0" max="100" step="1"></div>
                         <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1"></div>
                     </div>
                     <div class="flex-gap" style="margin-top:10px;">
@@ -536,6 +536,7 @@
             <div class="fi">
                 <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000"></div>
                 <div class="fg"><label>SCHD 対象銘柄</label><select id="s-scd-holding"></select></div>
+                <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0"></div>
             </div>
             <button class="btn btn-p btn-sm" id="btn-save-basic">保存</button>
         </div>

@@ -19,7 +19,7 @@ function getScdHolding(){const id=D.settings.scdHoldingId;return(id&&D.holdings.
 
 function makeDefault(){
     return {
-        settings:{scdTarget:10000000,scdHoldingId:'h-schd'},
+        settings:{scdTarget:10000000,scdHoldingId:'h-schd',idecoMonthlyTotal:0},
         bankAccounts:[
             {id:'bank-1',name:'楽天銀行',              note:'メイン',       order:0},
             {id:'bank-2',name:'あおぞら銀行 BANK支店', note:'現金バッファ', order:1},
@@ -269,7 +269,7 @@ function renderFire(){
     const desired=parseFloat(el('fire-monthly')?.value)||0;
     const rate=parseFloat(el('fire-rate')?.value||4)/100;
     const ret=parseFloat(el('fire-return')?.value||4)/100;
-    const autoContrib=D.holdings.reduce((a,h)=>a+(h.monthlyAmount||0),0)+D.idecoHoldings.reduce((a,h)=>a+(h.monthlyAmount||0),0);
+    const autoContrib=D.holdings.reduce((a,h)=>a+(h.monthlyAmount||0),0)+(D.settings.idecoMonthlyTotal||0);
     const contrib=parseFloat(el('fire-contrib')?.value)||autoContrib;
     const res=el('fire-result');if(!res)return;
     if(desired<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0;">希望月収を入力するとシミュレーションが表示されます</div>';return;}
@@ -409,12 +409,14 @@ function loadSnap(month){
 // ===== 設定タブ =====
 function renderSettings(){
     el('s-target').value=D.settings.scdTarget||10000000;
+    el('s-ideco-monthly').value=D.settings.idecoMonthlyTotal||'';
     const scdSel=el('s-scd-holding');
     if(scdSel)scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${h.id===D.settings.scdHoldingId?' selected':''}>${h.name}</option>`).join('')||'<option value="">銘柄なし</option>';
     renderBanksTable();renderCardsTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();
 }
 function saveBasic(){
     D.settings.scdTarget=Number(el('s-target').value)||10000000;
+    D.settings.idecoMonthlyTotal=Number(el('s-ideco-monthly').value)||0;
     const scdSel=el('s-scd-holding');
     if(scdSel&&scdSel.value)D.settings.scdHoldingId=scdSel.value;
     persist();renderDashboard();alert('保存しました');
@@ -446,7 +448,7 @@ function saveHolding(){const name=el('s-h-name').value.trim();if(!name){alert('�
 function deleteHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;if(!confirm(`「${h.name}」を削除しますか？`))return;D.holdings=D.holdings.filter(h=>h.id!==id);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
 
 // iDeCo
-function renderIdecoTable(){el('s-ideco-table').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">銘柄なし</td></tr>':D.idecoHoldings.map(h=>`<tr draggable="true" data-id="${h.id}" data-group="ideco" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${h.name}</td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${h.monthlyAmount>0?fmt(h.monthlyAmount)+'/月':'--'}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editIdeco('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteIdeco('${h.id}')">削除</button></div></td></tr>`).join('');}
+function renderIdecoTable(){el('s-ideco-table').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">銘柄なし</td></tr>':D.idecoHoldings.map(h=>`<tr draggable="true" data-id="${h.id}" data-group="ideco" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td>${h.name}</td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${h.monthlyAmount>0?h.monthlyAmount+'%':'--'}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editIdeco('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteIdeco('${h.id}')">削除</button></div></td></tr>`).join('');}
 function openIdecoPanel(r=true){if(r){el('s-ideco-id').value='';el('s-i-name').value='';el('s-i-monthly').value='';el('s-i-yield').value='';el('s-ideco-panel-title').textContent='iDeCo銘柄を追加';buildAssetTypeOptions('s-i-type','fund');}el('s-ideco-panel').classList.add('open');}
 function closeIdecoPanel(){el('s-ideco-panel').classList.remove('open');el('s-ideco-id').value='';}
 function editIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;el('s-ideco-id').value=h.id;el('s-i-name').value=h.name;buildAssetTypeOptions('s-i-type',h.assetType);el('s-i-monthly').value=h.monthlyAmount||'';el('s-i-yield').value=h.dividendYield||'';el('s-ideco-panel-title').textContent='iDeCo銘柄を編集';openIdecoPanel(false);}
