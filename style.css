@@ -211,9 +211,12 @@
         .spot-badge{display:inline-block;margin-left:4px;padding:1px 5px;border-radius:99px;font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;}
         .spot-badge.spot-done{background:#dcfce7;color:#15803d;}
         .spot-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-        .spot-row .spot-amount{flex:1;min-width:0;}
-        .spot-check{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;cursor:pointer;color:var(--muted);padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;}
-        .spot-check input{cursor:pointer;accent-color:var(--success);}
+        .spot-yen{font-size:13px;color:var(--muted);flex-shrink:0;}
+        .spot-amount{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;}
+        .spot-amount:focus{outline:none;border-color:var(--primary);}
+        .spot-check{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;cursor:pointer;color:var(--text);padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;flex-shrink:0;}
+        .spot-check input{cursor:pointer;accent-color:var(--success);width:15px;height:15px;}
+        .spot-del{flex-shrink:0;}
         .tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;}
 
         /* 配当シミュレーション */
