@@ -73,7 +73,7 @@ function migrateV2(old){
     return d;
 }
 
-function persist(){localStorage.setItem('asset-v3',JSON.stringify(D));localStorage.setItem('asset-v3-ts',new Date().toISOString());updateTs();}
+function persist(){try{localStorage.setItem('asset-v3',JSON.stringify(D));localStorage.setItem('asset-v3-ts',new Date().toISOString());updateTs();}catch(e){toast('保存に失敗しました（ストレージ容量不足の可能性があります）','error');}}
 let D=load();
 
 // ===== ユーティリティ =====
@@ -92,6 +92,8 @@ function buildAssetTypeOptions(selId,val){el(selId).innerHTML=Object.entries(get
 function spotTotal(h){return(h.spotList||[]).reduce((a,s)=>a+(s.amount||0),0);}
 function spotDone(h){return(h.spotList||[]).filter(s=>s.done).reduce((a,s)=>a+(s.amount||0),0);}
 function gainHtml(val,pri,size='11px'){if(!pri)return'';const g=val-pri,r=(g/pri*100),cls=g>=0?'positive':'negative',sign=g>=0?'+':'';return`<span class="${cls}" style="font-size:${size}">${sign}${fmt(g)}</span><span style="color:var(--muted);font-size:${size};margin-left:4px;">(${sign}${r.toFixed(2)}%)</span>`;}
+
+function toast(msg,type='info'){const t=document.createElement('div');t.className='toast toast-'+type;t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('toast-show'));setTimeout(()=>{t.classList.remove('toast-show');t.addEventListener('transitionend',()=>t.remove(),{once:true});},3200);}
 
 // ===== NISA バー =====
 function renderNisaBar(prefix,used,max){const p=pct(used,max);el(`ns-${prefix}-bar`).style.width=p+'%';el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';el(`ns-${prefix}-rem`).textContent=fmt(max-used);}
@@ -359,7 +361,7 @@ function autoFillNisa(){
     const prevSL=prev?prev.nisa?.seichouLifetimeUsed||0:0;
     el('rec-seichou-lifetime').value=prevSL+seichou;
     markUnsaved();
-    alert(`${now.getFullYear()}年${monthsElapsed}月分（${monthsElapsed}ヶ月）の積立額で推計しました。スポット投資がある場合は手動で加算してください。`);
+    toast(`${now.getFullYear()}年${monthsElapsed}月分（${monthsElapsed}ヶ月）の積立額で推計しました。スポット投資がある場合は手動で加算してください。`);
 }
 
 // ===== 記録タブ =====
@@ -370,14 +372,14 @@ function clearUnsaved(){_unsaved=false;el('rec-unsaved').style.display='none';}
 function renderRecordTab(){renderBankInputs();renderCardInputs();renderHoldingInputs();renderIdecoInputs();renderHistoryTable();}
 
 function renderBankInputs(){
-    const c=D.current;
+    const c=D.current,prev=prevSnap();
     const grid=el('rec-banks-grid');grid.className=`g${Math.min(4,D.bankAccounts.length)}`;
-    grid.innerHTML=D.bankAccounts.map(b=>`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="0" oninput="markUnsaved()"></div>`).join('');
+    grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderCardInputs(){
-    const c=D.current;el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
+    const c=D.current,prev=prevSnap();el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
     const grid=el('rec-cards-grid');grid.className=`g${Math.min(4,D.creditCards.length)}`;
-    grid.innerHTML=D.creditCards.map(cd=>`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="0" oninput="markUnsaved()"></div>`).join('');
+    grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
 }
 
 function prevSnap(){return D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month)).pop();}
@@ -397,7 +399,7 @@ function renderHoldingInputs(){const c=D.current,prev=prevSnap();el('rec-holding
 function renderIdecoInputs(){const c=D.current,prev=prevSnap();el('rec-ideco-body').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">iDeCo銘柄が登録されていません</td></tr>':D.idecoHoldings.map(h=>holdingRow(h,c.idecoValues[h.id],prev?.idecoValues?.[h.id],false)).join('');const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=c.idecoActualPrincipal||'';}
 
 function saveSnapshot(){
-    const month=el('rec-month').value;if(!month){alert('記録月を選択してください');return;}
+    const month=el('rec-month').value;if(!month){toast('記録月を選択してください','error');return;}
     const c=D.current;
     D.bankAccounts.forEach(b=>c.bankValues[b.id]=Number(el(`rb-${b.id}`)?.value)||0);
     D.creditCards.forEach(cd=>c.cardValues[cd.id]=Number(el(`rc-${cd.id}`)?.value)||0);
@@ -410,7 +412,7 @@ function saveSnapshot(){
     const idx=D.snapshots.findIndex(s=>s.month===month);
     if(idx>=0)D.snapshots[idx]=snap;else D.snapshots.push(snap);
     persist();clearUnsaved();renderDashboard();renderHistoryTable();renderHoldingInputs();renderIdecoInputs();
-    alert(`${month} の記録を保存しました`);
+    toast(`${month} の記録を保存しました`,'success');
 }
 
 function renderHistoryTable(){
@@ -459,7 +461,7 @@ function renderBanksTable(){el('s-banks-table').innerHTML=D.bankAccounts.length=
 function openBankPanel(r=true){if(r){el('s-bank-id').value='';el('s-bank-name').value='';el('s-bank-note').value='';el('s-bank-panel-title').textContent='銀行口座を追加';}el('s-bank-panel').classList.add('open');}
 function closeBankPanel(){el('s-bank-panel').classList.remove('open');el('s-bank-id').value='';}
 function editBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;el('s-bank-id').value=b.id;el('s-bank-name').value=b.name;el('s-bank-note').value=b.note||'';el('s-bank-panel-title').textContent='銀行口座を編集';openBankPanel(false);}
-function saveBank(){const name=el('s-bank-name').value.trim();if(!name){alert('口座名を入力してください');return;}const id=el('s-bank-id').value;if(id){const b=D.bankAccounts.find(b=>b.id===id);if(b){b.name=name;b.note=el('s-bank-note').value.trim();}}else{const nb={id:uid(),name,note:el('s-bank-note').value.trim(),order:D.bankAccounts.length};D.bankAccounts.push(nb);if(!D.current.bankValues[nb.id])D.current.bankValues[nb.id]=0;}persist();closeBankPanel();renderBanksTable();renderDashboard();renderBankInputs();}
+function saveBank(){const name=el('s-bank-name').value.trim();if(!name){toast('口座名を入力してください','error');return;}const id=el('s-bank-id').value;if(id){const b=D.bankAccounts.find(b=>b.id===id);if(b){b.name=name;b.note=el('s-bank-note').value.trim();}}else{const nb={id:uid(),name,note:el('s-bank-note').value.trim(),order:D.bankAccounts.length};D.bankAccounts.push(nb);if(!D.current.bankValues[nb.id])D.current.bankValues[nb.id]=0;}persist();closeBankPanel();renderBanksTable();renderDashboard();renderBankInputs();}
 function deleteBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;if(!confirm(`「${b.name}」を削除しますか？`))return;D.bankAccounts=D.bankAccounts.filter(b=>b.id!==id);persist();renderBanksTable();renderDashboard();renderBankInputs();}
 
 // クレジットカード
@@ -468,7 +470,7 @@ function _buildCardBankOptions(val){const s=el('s-card-bank');if(!s)return;s.inn
 function openCardPanel(r=true){if(r){el('s-card-id').value='';el('s-card-name').value='';el('s-card-note').value='';el('s-card-panel-title').textContent='カードを追加';_buildCardBankOptions('');}el('s-card-panel').classList.add('open');}
 function closeCardPanel(){el('s-card-panel').classList.remove('open');el('s-card-id').value='';}
 function editCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;el('s-card-id').value=cd.id;el('s-card-name').value=cd.name;el('s-card-note').value=cd.note||'';_buildCardBankOptions(cd.bankId||'');el('s-card-panel-title').textContent='カードを編集';openCardPanel(false);}
-function saveCard(){const name=el('s-card-name').value.trim();if(!name){alert('カード名を入力してください');return;}const id=el('s-card-id').value;const bankId=el('s-card-bank')?.value||'';if(id){const cd=D.creditCards.find(cd=>cd.id===id);if(cd){cd.name=name;cd.note=el('s-card-note').value.trim();cd.bankId=bankId;}}else{const nc={id:uid(),name,note:el('s-card-note').value.trim(),bankId,order:D.creditCards.length};D.creditCards.push(nc);if(!D.current.cardValues[nc.id])D.current.cardValues[nc.id]=0;}persist();closeCardPanel();renderCardsTable();renderCardInputs();}
+function saveCard(){const name=el('s-card-name').value.trim();if(!name){toast('カード名を入力してください','error');return;}const id=el('s-card-id').value;const bankId=el('s-card-bank')?.value||'';if(id){const cd=D.creditCards.find(cd=>cd.id===id);if(cd){cd.name=name;cd.note=el('s-card-note').value.trim();cd.bankId=bankId;}}else{const nc={id:uid(),name,note:el('s-card-note').value.trim(),bankId,order:D.creditCards.length};D.creditCards.push(nc);if(!D.current.cardValues[nc.id])D.current.cardValues[nc.id]=0;}persist();closeCardPanel();renderCardsTable();renderCardInputs();}
 function deleteCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;if(!confirm(`「${cd.name}」を削除しますか？`))return;D.creditCards=D.creditCards.filter(cd=>cd.id!==id);persist();renderCardsTable();renderCardInputs();}
 
 // 保有銘柄
@@ -479,7 +481,7 @@ function getSpotListFromPanel(){return[...el('s-h-spot-list').querySelectorAll('
 function openHoldingPanel(r=true){if(r){el('s-holding-id').value='';el('s-h-name').value='';el('s-h-monthly').value='';el('s-h-yield').value='';renderSpotListPanel([]);el('s-holding-panel-title').textContent='銘柄を追加';buildAccountOptions('s-h-account','nisa-growth');buildAssetTypeOptions('s-h-type','fund');}el('s-holding-panel').classList.add('open');}
 function closeHoldingPanel(){el('s-holding-panel').classList.remove('open');el('s-holding-id').value='';}
 function editHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;el('s-holding-id').value=h.id;el('s-h-name').value=h.name;buildAccountOptions('s-h-account',h.account);buildAssetTypeOptions('s-h-type',h.assetType);el('s-h-monthly').value=h.monthlyAmount||'';el('s-h-yield').value=h.dividendYield||'';renderSpotListPanel(h.spotList||[]);el('s-holding-panel-title').textContent='銘柄を編集';openHoldingPanel(false);}
-function saveHolding(){const name=el('s-h-name').value.trim();if(!name){alert('銘柄名を入力してください');return;}const id=el('s-holding-id').value;const data={name,account:el('s-h-account').value,assetType:el('s-h-type').value,monthlyAmount:Number(el('s-h-monthly').value)||0,spotList:getSpotListFromPanel(),dividendYield:parseFloat(el('s-h-yield').value)||0};if(id){const h=D.holdings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.holdings.length};D.holdings.push(nh);if(!D.current.holdingValues[nh.id])D.current.holdingValues[nh.id]={value:0,principal:0};}persist();closeHoldingPanel();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
+function saveHolding(){const name=el('s-h-name').value.trim();if(!name){toast('銘柄名を入力してください','error');return;}const id=el('s-holding-id').value;const data={name,account:el('s-h-account').value,assetType:el('s-h-type').value,monthlyAmount:Number(el('s-h-monthly').value)||0,spotList:getSpotListFromPanel(),dividendYield:parseFloat(el('s-h-yield').value)||0};if(id){const h=D.holdings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.holdings.length};D.holdings.push(nh);if(!D.current.holdingValues[nh.id])D.current.holdingValues[nh.id]={value:0,principal:0};}persist();closeHoldingPanel();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
 function deleteHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;if(!confirm(`「${h.name}」を削除しますか？`))return;D.holdings=D.holdings.filter(h=>h.id!==id);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
 
 // iDeCo
@@ -487,7 +489,7 @@ function renderIdecoTable(){el('s-ideco-table').innerHTML=D.idecoHoldings.length
 function openIdecoPanel(r=true){if(r){el('s-ideco-id').value='';el('s-i-name').value='';el('s-i-monthly').value='';el('s-i-yield').value='';el('s-ideco-panel-title').textContent='iDeCo銘柄を追加';buildAssetTypeOptions('s-i-type','fund');}el('s-ideco-panel').classList.add('open');}
 function closeIdecoPanel(){el('s-ideco-panel').classList.remove('open');el('s-ideco-id').value='';}
 function editIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;el('s-ideco-id').value=h.id;el('s-i-name').value=h.name;buildAssetTypeOptions('s-i-type',h.assetType);el('s-i-monthly').value=h.monthlyAmount||'';el('s-i-yield').value=h.dividendYield||'';el('s-ideco-panel-title').textContent='iDeCo銘柄を編集';openIdecoPanel(false);}
-function saveIdeco(){const name=el('s-i-name').value.trim();if(!name){alert('銘柄名を入力してください');return;}const id=el('s-ideco-id').value;const data={name,assetType:el('s-i-type').value,monthlyAmount:Number(el('s-i-monthly').value)||0,dividendYield:parseFloat(el('s-i-yield').value)||0};if(id){const h=D.idecoHoldings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.idecoHoldings.length};D.idecoHoldings.push(nh);if(!D.current.idecoValues[nh.id])D.current.idecoValues[nh.id]={value:0,principal:0};}persist();closeIdecoPanel();renderIdecoTable();renderIdecoInputs();renderDashboard();}
+function saveIdeco(){const name=el('s-i-name').value.trim();if(!name){toast('銘柄名を入力してください','error');return;}const id=el('s-ideco-id').value;const data={name,assetType:el('s-i-type').value,monthlyAmount:Number(el('s-i-monthly').value)||0,dividendYield:parseFloat(el('s-i-yield').value)||0};if(id){const h=D.idecoHoldings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.idecoHoldings.length};D.idecoHoldings.push(nh);if(!D.current.idecoValues[nh.id])D.current.idecoValues[nh.id]={value:0,principal:0};}persist();closeIdecoPanel();renderIdecoTable();renderIdecoInputs();renderDashboard();}
 function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;if(!confirm(`「${h.name}」を削除しますか？`))return;D.idecoHoldings=D.idecoHoldings.filter(h=>h.id!==id);persist();renderIdecoTable();renderIdecoInputs();renderDashboard();}
 
 // 口座種別
@@ -510,8 +512,8 @@ function editAccType(id,builtIn=false){
     el('s-acctype-taxfree').checked=!!a.taxFree;
     el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);
 }
-function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){alert('種別名を入力してください');return;}const[color,badge]=el('s-acctype-color').value.split('|');const taxFree=el('s-acctype-taxfree').checked;if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge,taxFree};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;a.taxFree=taxFree;}}else{D.customAccounts.push({id:uid(),label:name,color,badge,taxFree});}persist();closeAccTypePanel();renderAccTypesTable();}
-function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){alert('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
+function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){toast('種別名を入力してください','error');return;}const[color,badge]=el('s-acctype-color').value.split('|');const taxFree=el('s-acctype-taxfree').checked;if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge,taxFree};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;a.taxFree=taxFree;}}else{D.customAccounts.push({id:uid(),label:name,color,badge,taxFree});}persist();closeAccTypePanel();renderAccTypesTable();}
+function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){toast('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。','error');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
 
 // 銘柄種別
 function renderAssetTypesTable(){
@@ -526,8 +528,8 @@ function renderAssetTypesTable(){
 function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-builtin').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}el('s-assettype-panel').classList.add('open');}
 function closeAssetTypePanel(){el('s-assettype-panel').classList.remove('open');}
 function editAssetType(id,builtIn=false){const types=getAssetTypes();const t=types[id];if(!t)return;el('s-assettype-id').value=id;el('s-assettype-builtin').value=builtIn?'1':'';el('s-assettype-name').value=t.label;el('s-assettype-panel-title').textContent='銘柄種別を編集';openAssetTypePanel(false);}
-function saveAssetType(){const name=el('s-assettype-name').value.trim();if(!name){alert('種別名を入力してください');return;}if(!D.customAssetTypes)D.customAssetTypes=[];const id=el('s-assettype-id').value;const isBuiltIn=el('s-assettype-builtin').value==='1';if(isBuiltIn){if(!D.assetTypeOverrides)D.assetTypeOverrides={};D.assetTypeOverrides[id]={label:name};}else if(id){const t=D.customAssetTypes.find(t=>t.id===id);if(t)t.label=name;}else{D.customAssetTypes.push({id:uid(),label:name,badge:'b-gray'});}persist();closeAssetTypePanel();renderAssetTypesTable();}
-function deleteAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;if([...D.holdings,...D.idecoHoldings].some(h=>h.assetType===id)){alert('この銘柄種別を使用している銘柄があります。先に銘柄の種別を変更してください。');return;}if(!confirm(`「${t.label}」を削除しますか？`))return;D.customAssetTypes=D.customAssetTypes.filter(t=>t.id!==id);persist();renderAssetTypesTable();}
+function saveAssetType(){const name=el('s-assettype-name').value.trim();if(!name){toast('種別名を入力してください','error');return;}if(!D.customAssetTypes)D.customAssetTypes=[];const id=el('s-assettype-id').value;const isBuiltIn=el('s-assettype-builtin').value==='1';if(isBuiltIn){if(!D.assetTypeOverrides)D.assetTypeOverrides={};D.assetTypeOverrides[id]={label:name};}else if(id){const t=D.customAssetTypes.find(t=>t.id===id);if(t)t.label=name;}else{D.customAssetTypes.push({id:uid(),label:name,badge:'b-gray'});}persist();closeAssetTypePanel();renderAssetTypesTable();}
+function deleteAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id);if(!t)return;if([...D.holdings,...D.idecoHoldings].some(h=>h.assetType===id)){toast('この銘柄種別を使用している銘柄があります。先に銘柄の種別を変更してください。','error');return;}if(!confirm(`「${t.label}」を削除しますか？`))return;D.customAssetTypes=D.customAssetTypes.filter(t=>t.id!==id);persist();renderAssetTypesTable();}
 
 // ===== ドラッグ&ドロップ =====
 let dragId=null,dragGroup=null;
@@ -556,14 +558,14 @@ async function _triggerExport(blob,filename,btnId){
     if(btnId)_flashBtn(btnId);
 }
 function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`,'btn-export-all');}
-function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();toast('インポート完了しました','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
 
 // 設定のみ（記録は保持）
 function exportSettings(){
     const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],current:D.current};
     const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});_triggerExport(b,`asset-settings-${today()}.json`,'btn-export-settings');
 }
-function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();alert('設定をインポートしました（記録は変更されていません）');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
+function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();toast('設定をインポートしました（記録は変更されていません）','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
 
 // CSV エクスポート
 function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
@@ -577,7 +579,7 @@ function _exportCsv(snaps,filename){
 function exportCsvSelected(){
     const val=el('csv-year-sel').value;if(!val)return;
     const snaps=(val==='all'?D.snapshots.slice():D.snapshots.filter(s=>s.month.startsWith(val))).sort((a,b)=>a.month.localeCompare(b.month));
-    if(!snaps.length){alert('記録がありません');return;}
+    if(!snaps.length){toast('記録がありません','error');return;}
     _exportCsv(snaps,val==='all'?'asset-records-all.csv':`asset-records-${val}.csv`);
 }
 function renderCsvYearSel(){
@@ -731,6 +733,10 @@ function xfUpdateBtnState(tableId){
 // ===== タブ切り替え =====
 const TABS=['dashboard','record','settings'];
 function switchTab(name){
+    if(name!=='record'&&_unsaved){
+        if(!confirm('保存されていない変更があります。このまま移動しますか？'))return;
+        clearUnsaved();
+    }
     TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));
     document.querySelectorAll('.main-nav button').forEach((b,i)=>b.classList.toggle('active',TABS[i]===name));
     const qnav=el('dash-qnav');
@@ -784,14 +790,14 @@ function init(){
 
     // 記録sticky
     el('rec-month').addEventListener('change',markUnsaved);
-    el('rec-past-select').addEventListener('change',function(){if(this.value){loadSnap(this.value);this.value='';}});
+    el('rec-past-select').addEventListener('change',function(){if(this.value){if(_unsaved&&!confirm('保存されていない変更があります。読み込みますか？')){this.value='';return;}loadSnap(this.value);this.value='';}});
     el('btn-save-snapshot').addEventListener('click',saveSnapshot);
 
     // 記録タブ内ボタン
     el('btn-to-holdings').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
     el('btn-to-ideco').addEventListener('click',()=>{switchTab('settings');switchSubTab('set','holdings');});
     el('btn-auto-nisa').addEventListener('click',autoFillNisa);
-    el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){alert('基本設定でiDeCo開始月と月次拠出合計を設定してください');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
+    el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){toast('基本設定でiDeCo開始月と月次拠出合計を設定してください','error');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
 
     // NISA入力欄
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>{
