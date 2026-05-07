@@ -259,7 +259,6 @@
             .hero-value{font-size:36px;}
             /* テーブル横スクロール */
             .rec-sec{overflow-x:auto;}
-            .sim-grid{overflow:visible;}
             .tbl-wrap{overflow-x:auto;}
             .schd-scroll-wrap{overflow-x:auto;}
         }
