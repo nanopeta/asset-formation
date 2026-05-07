@@ -541,25 +541,27 @@ function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over'
 const today=()=>new Date().toISOString().slice(0,10);
 
 // 全体バックアップ
-async function _triggerExport(blob,filename){
+function _flashBtn(id){const b=el(id);if(!b)return;const t=b.textContent;b.textContent='✓ 完了';b.classList.add('btn-saved');setTimeout(()=>{b.textContent=t;b.classList.remove('btn-saved');},2000);}
+async function _triggerExport(blob,filename,btnId){
     // iOS Safari はa.download非対応 → Web Share API（ファイル共有）を優先使用
     const file=new File([blob],filename,{type:blob.type});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-        try{await navigator.share({files:[file]});return;}catch(e){if(e.name==='AbortError')return;}
+        try{await navigator.share({files:[file]});if(btnId)_flashBtn(btnId);return;}catch(e){if(e.name==='AbortError')return;}
     }
     // デスクトップ / フォールバック
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename;
     document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+    if(btnId)_flashBtn(btnId);
 }
-function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`);}
+function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`,'btn-export-all');}
 function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);persist();renderSettings();renderDashboard();renderRecordTab();alert('インポート完了しました');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
 
 // 設定のみ（記録は保持）
 function exportSettings(){
     const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],current:D.current};
-    const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});_triggerExport(b,`asset-settings-${today()}.json`);
+    const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});_triggerExport(b,`asset-settings-${today()}.json`,'btn-export-settings');
 }
 function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();alert('設定をインポートしました（記録は変更されていません）');}catch{alert('ファイルの形式が正しくありません');}};r.readAsText(f);}
 
@@ -570,7 +572,7 @@ function _exportCsv(snaps,filename){
     const header=['月','総資産','投資','iDeCo','現金','SCHD元本'];
     const rows=snaps.map(s=>[s.month,Math.round(s.total||0),Math.round(s.investment||0),Math.round(s.idecoTotal||0),Math.round(s.cash||0),Math.round(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)]);
     const csv='﻿'+[header,...rows].map(r=>_csvRow(r)).join('\n');
-    const b=new Blob([csv],{type:'text/csv;charset=utf-8'});_triggerExport(b,filename);
+    const b=new Blob([csv],{type:'text/csv;charset=utf-8'});_triggerExport(b,filename,'btn-export-csv');
 }
 function exportCsvSelected(){
     const val=el('csv-year-sel').value;if(!val)return;
