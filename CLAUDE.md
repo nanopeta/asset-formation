@@ -3,16 +3,18 @@
 ## ファイル構成（3ファイル）
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~595行 |
-| `app.js` | ロジック全般・レンダリング | ~690行 |
-| `style.css` | スタイル | ~230行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~587行 |
+| `app.js` | ロジック全般・レンダリング | ~818行 |
+| `style.css` | スタイル | ~268行 |
 
 ## データ構造（localStorage: `asset-v3`）
 ```js
 D = {
   settings: {
-    scdTarget: 10000000,   // 目標元本
-    scdHoldingId: 'h-schd' // 対象銘柄ID（getScdHolding()で取得）
+    scdTarget: 10000000,      // 目標元本
+    scdHoldingId: 'h-schd',   // 対象銘柄ID（getScdHolding()で取得）
+    idecoStartMonth: '',       // iDeCo開始月（YYYY-MM形式）
+    idecoMonthlyTotal: 0,      // iDeCo月次拠出合計（円）
   },
   bankAccounts: [ {id, name, note, order} ],
   creditCards:  [ {id, name, note, bankId, order} ],  // bankId: 引き落とし口座ID（任意）
@@ -78,6 +80,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `renderTrendChart()` | 資産推移折れ線チャート |
 | `renderRecordTab()` | 記録タブ全体 |
 | `renderSettings()` | 設定タブ全体 |
+| `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
 
 ### 設定タブ CRUD パターン（銀行・カード・銘柄・iDeCo・口座種別・銘柄種別で共通）
 ```
