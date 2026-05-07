@@ -101,7 +101,8 @@ function renderDashboard(){
     const{cash,inv,ideco,total}=calcTotals();
     const invPri=D.holdings.reduce((a,h)=>a+(c.holdingValues[h.id]?.principal||0),0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
-    const totalPri=invPri+idecoPri;
+    const idecoActualPri=c.idecoActualPrincipal||0;
+    const totalPri=invPri+(idecoActualPri||idecoPri);
 
     el('db-total').textContent=fmt(total);
     el('db-total-gain').innerHTML=gainHtml(inv+ideco,totalPri,'14px');
@@ -112,7 +113,7 @@ function renderDashboard(){
     el('db-ideco').textContent=fmt(ideco);
     el('db-cash').textContent=fmt(cash);
     el('db-inv-gain').innerHTML=gainHtml(inv,invPri);
-    el('db-ideco-gain').innerHTML=gainHtml(ideco,idecoPri);
+    {const pri=idecoActualPri||idecoPri;el('db-ideco-gain').innerHTML=gainHtml(ideco,pri);const apEl=el('db-ideco-actual-pri');if(apEl)apEl.textContent=idecoActualPri>0?`本来の元本: ${fmt(idecoActualPri)}`:'';}
 
     // 現金内訳（カード内）
     el('db-bank-mini').innerHTML=D.bankAccounts.map(b=>`<div class="bank-mini-row"><span>${b.name}${b.note?` (${b.note})`:''}</span><span>${fmt(c.bankValues[b.id]||0)}</span></div>`).join('');
@@ -362,7 +363,7 @@ function holdingRow(h,hv,prevHv,showAccount){
         <td style="text-align:right">${diffHtml}</td></tr>`;
 }
 function renderHoldingInputs(){const c=D.current,prev=prevSnap();el('rec-holdings-body').innerHTML=D.holdings.length===0?'<tr><td colspan="7" class="empty">銘柄が登録されていません</td></tr>':D.holdings.map(h=>holdingRow(h,c.holdingValues[h.id],prev?.holdingValues?.[h.id],true)).join('');}
-function renderIdecoInputs(){const c=D.current,prev=prevSnap();el('rec-ideco-body').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">iDeCo銘柄が登録されていません</td></tr>':D.idecoHoldings.map(h=>holdingRow(h,c.idecoValues[h.id],prev?.idecoValues?.[h.id],false)).join('');}
+function renderIdecoInputs(){const c=D.current,prev=prevSnap();el('rec-ideco-body').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">iDeCo銘柄が登録されていません</td></tr>':D.idecoHoldings.map(h=>holdingRow(h,c.idecoValues[h.id],prev?.idecoValues?.[h.id],false)).join('');const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=c.idecoActualPrincipal||'';}
 
 function saveSnapshot(){
     const month=el('rec-month').value;if(!month){alert('記録月を選択してください');return;}
@@ -371,11 +372,12 @@ function saveSnapshot(){
     D.creditCards.forEach(cd=>c.cardValues[cd.id]=Number(el(`rc-${cd.id}`)?.value)||0);
     D.holdings.forEach(h=>{const v=Number(el(`hv-${h.id}`)?.value)||0,p=Number(el(`hp-${h.id}`)?.value)||0;c.holdingValues[h.id]={value:v,principal:p||c.holdingValues[h.id]?.principal||0};});
     D.idecoHoldings.forEach(h=>{const v=Number(el(`hv-${h.id}`)?.value)||0,p=Number(el(`hp-${h.id}`)?.value)||0;c.idecoValues[h.id]={value:v,principal:p||c.idecoValues[h.id]?.principal||0};});
+    const idecoActualPri=Number(el('rec-ideco-actual-pri')?.value)||0;c.idecoActualPrincipal=idecoActualPri||c.idecoActualPrincipal||0;
     c.nisa.seichouUsed=Number(el('rec-seichou').value)||0;c.nisa.tsumitateUsed=Number(el('rec-tsumitate').value)||0;c.nisa.lifetimeUsed=Number(el('rec-lifetime').value)||0;c.nisa.seichouLifetimeUsed=Number(el('rec-seichou-lifetime').value)||0;
     const cash=Object.values(c.bankValues).reduce((a,v)=>a+v,0);
     const inv=D.holdings.reduce((a,h)=>a+(c.holdingValues[h.id]?.value||0),0);
     const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);
-    const snap={month,bankValues:{...c.bankValues},cardValues:{...c.cardValues},holdingValues:JSON.parse(JSON.stringify(c.holdingValues)),idecoValues:JSON.parse(JSON.stringify(c.idecoValues)),nisa:{...c.nisa},cash,investment:inv,idecoTotal:ideco,total:cash+inv+ideco};
+    const snap={month,bankValues:{...c.bankValues},cardValues:{...c.cardValues},holdingValues:JSON.parse(JSON.stringify(c.holdingValues)),idecoValues:JSON.parse(JSON.stringify(c.idecoValues)),idecoActualPrincipal:c.idecoActualPrincipal,nisa:{...c.nisa},cash,investment:inv,idecoTotal:ideco,total:cash+inv+ideco};
     const idx=D.snapshots.findIndex(s=>s.month===month);
     if(idx>=0)D.snapshots[idx]=snap;else D.snapshots.push(snap);
     persist();clearUnsaved();renderDashboard();renderHistoryTable();renderHoldingInputs();renderIdecoInputs();
@@ -398,6 +400,7 @@ function loadSnap(month){
     D.creditCards.forEach(cd=>{const e=el(`rc-${cd.id}`);if(e)e.value=s.cardValues?.[cd.id]||'';});
     D.holdings.forEach(h=>{const hv=s.holdingValues?.[h.id];const ev=el(`hv-${h.id}`);if(ev)ev.value=hv?.value||'';const ep=el(`hp-${h.id}`);if(ep)ep.value=hv?.principal||'';});
     D.idecoHoldings.forEach(h=>{const hv=s.idecoValues?.[h.id];const ev=el(`hv-${h.id}`);if(ev)ev.value=hv?.value||'';const ep=el(`hp-${h.id}`);if(ep)ep.value=hv?.principal||'';});
+    const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=s.idecoActualPrincipal||'';
     el('rec-seichou').value=s.nisa?.seichouUsed||'';el('rec-tsumitate').value=s.nisa?.tsumitateUsed||'';el('rec-lifetime').value=s.nisa?.lifetimeUsed||'';el('rec-seichou-lifetime').value=s.nisa?.seichouLifetimeUsed||'';
     switchTab('record');clearUnsaved();
 }

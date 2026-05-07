@@ -57,6 +57,7 @@
         <div class="sum-card">
             <div class="sum-label">iDeCo</div>
             <div class="sum-val" id="db-ideco">¥0</div>
+            <div id="db-ideco-actual-pri" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
             <div class="sum-gain" id="db-ideco-gain"></div>
         </div>
         <div class="sum-card">
@@ -313,9 +314,16 @@
                 <button class="btn btn-s btn-sm" id="btn-to-ideco">銘柄管理</button>
             </div>
             <table>
-                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">スイッチング後元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
                 <tbody id="rec-ideco-body"></tbody>
             </table>
+            <div class="rec-sec-body" style="padding-top:8px;">
+                <div class="fg" style="max-width:320px;">
+                    <label>累計拠出元本（スイッチング前からの実拠出総額）</label>
+                    <input type="number" id="rec-ideco-actual-pri" placeholder="0" oninput="markUnsaved()">
+                    <div style="font-size:11px;color:var(--muted);margin-top:3px;">スイッチングで元本がリセットされた場合、実際に拠出した累計額を入力してください。ダッシュボードの損益・率はこの値を使って計算されます。</div>
+                </div>
+            </div>
         </div>
     </div>
 
