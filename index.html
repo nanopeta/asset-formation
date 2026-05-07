@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 <header>
@@ -126,6 +126,10 @@
                 </div>
                 <div class="pb"><div class="pb-fill fill-orange" id="ns-sl-bar" style="width:0%"></div></div>
                 <div class="nisa-sub text-warning"><span id="ns-sl-pct">0%</span>　残り <span id="ns-sl-rem">¥12,000,000</span></div>
+            </div>
+            <div class="nisa-sep" id="nisa-plan-section" style="display:none">
+                <div class="plan-label">今年の投資計画</div>
+                <div id="nisa-plan-rows"></div>
             </div>
         </div>
 

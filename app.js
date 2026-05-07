@@ -134,7 +134,7 @@ function renderDashboard(){
     // NISA（principals から自動計算）
     const now=new Date();
     const mo=now.getMonth()+1; // 経過月数
-    const seichouAnnual  =D.holdings.filter(h=>h.account==='nisa-growth'   ).reduce((a,h)=>a+(h.monthlyAmount||0)*mo+(h.spotAnnual||0),0);
+    const seichouAnnual  =D.holdings.filter(h=>h.account==='nisa-growth'   ).reduce((a,h)=>a+(h.monthlyAmount||0)*mo,0);
     const tsumitateAnnual=D.holdings.filter(h=>h.account==='nisa-tsumitate').reduce((a,h)=>a+(h.monthlyAmount||0)*mo,0);
     const seichouLifetime=D.holdings.filter(h=>h.account==='nisa-growth'   ).reduce((a,h)=>a+(c.holdingValues[h.id]?.principal||0),0);
     const totalLifetime  =D.holdings.filter(h=>h.account==='nisa-growth'||h.account==='nisa-tsumitate').reduce((a,h)=>a+(c.holdingValues[h.id]?.principal||0),0);
@@ -143,6 +143,21 @@ function renderDashboard(){
     renderNisaBar('t', tsumitateAnnual, 1200000);
     renderNisaBar('l', totalLifetime,   18000000);
     renderNisaBar('sl',seichouLifetime, 12000000);
+
+    // 今年の投資計画
+    const planSeichouM =D.holdings.filter(h=>h.account==='nisa-growth'   ).reduce((a,h)=>a+(h.monthlyAmount||0),0);
+    const planSeichouSp=D.holdings.filter(h=>h.account==='nisa-growth'   ).reduce((a,h)=>a+(h.spotAnnual||0),0);
+    const planTsumM    =D.holdings.filter(h=>h.account==='nisa-tsumitate').reduce((a,h)=>a+(h.monthlyAmount||0),0);
+    const planIdecoM   =D.settings.idecoMonthlyTotal||0;
+    const planEl=el('nisa-plan-rows'),planSect=el('nisa-plan-section');
+    if(planEl){
+        const rows=[];
+        if(planSeichouM>0||planSeichouSp>0){const sp=planSeichouSp>0?` + スポット${fmt(planSeichouSp)}`:'';rows.push(`<div class="plan-row"><span>成長投資枠</span><span>${fmt(planSeichouM)}/月×12${sp} = <strong>${fmt(planSeichouM*12+planSeichouSp)}</strong></span></div>`);}
+        if(planTsumM>0){rows.push(`<div class="plan-row"><span>積立投資枠</span><span>${fmt(planTsumM)}/月×12 = <strong>${fmt(planTsumM*12)}</strong></span></div>`);}
+        if(planIdecoM>0){rows.push(`<div class="plan-row"><span>iDeCo</span><span>${fmt(planIdecoM)}/月×12 = <strong>${fmt(planIdecoM*12)}</strong></span></div>`);}
+        if(rows.length){rows.push(`<div class="plan-row plan-total"><span>NISA合計</span><strong>${fmt(planSeichouM*12+planSeichouSp+planTsumM*12)}</strong></div>`);planEl.innerHTML=rows.join('');if(planSect)planSect.style.display='';}
+        else{planEl.innerHTML='';if(planSect)planSect.style.display='none';}
+    }
 
     renderPortfolio(inv+ideco);
     renderAnalysisData();
