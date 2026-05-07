@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <header>
@@ -380,7 +380,7 @@
         <div class="rec-sec">
             <div class="rec-sec-head"><span>保有銘柄（NISA・特定口座）</span></div>
             <table>
-                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">月次積立</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
+                <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th style="text-align:right">月次積立</th><th style="text-align:right">スポット</th><th style="text-align:right">配当利回り</th><th></th></tr></thead>
                 <tbody id="s-holdings-table"></tbody>
             </table>
             <div class="rec-sec-body">
@@ -395,8 +395,12 @@
                     </div>
                     <div class="fi" style="margin-top:8px;">
                         <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0"></div>
-                        <div class="fg"><label>年間スポット額（円）</label><input type="number" id="s-h-spot" placeholder="0"></div>
                         <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1"></div>
+                    </div>
+                    <div class="fg" style="margin-top:8px;">
+                        <label>スポット購入計画</label>
+                        <div id="s-h-spot-list" style="margin-top:4px;"></div>
+                        <button class="btn btn-s btn-sm" type="button" onclick="addSpotRow()" style="margin-top:6px;">+ スポットを追加</button>
                     </div>
                     <div class="flex-gap" style="margin-top:10px;">
                         <button class="btn btn-p btn-sm" id="btn-save-holding">保存</button>
@@ -586,6 +590,6 @@
 </div>
 
 </main>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>
