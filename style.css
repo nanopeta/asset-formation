@@ -250,7 +250,23 @@
 
         @media(max-width:768px){
             .g2,.g3,.g4{grid-template-columns:1fr;}
+            .sim-grid{grid-template-columns:1fr;}
+            .sim-left{border-right:none;border-bottom:2px solid var(--border);}
             .port-grid{grid-template-columns:1fr;}
+            .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
             main{padding:14px;}
+            .rec-sticky{margin:0 -14px 12px;padding:8px 14px;}
             .hero-value{font-size:36px;}
+        }
+
+        @media(max-width:480px){
+            main{padding:10px;}
+            .rec-sticky{margin:0 -10px 12px;padding:8px 10px;}
+            .rec-sticky-inner{flex-wrap:wrap;}
+            .dash-qnav{padding:5px 10px;}
+            .hero{padding:18px 20px;}
+            .hero-value{font-size:26px;}
+            .main-nav button{padding:8px 10px;}
+            .an-body{padding:12px;}
+            .an-summary{padding:10px 14px;}
         }
