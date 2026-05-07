@@ -3,16 +3,16 @@
 ## ファイル構成（3ファイル）
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~587行 |
-| `app.js` | ロジック全般・レンダリング | ~818行 |
-| `style.css` | スタイル | ~268行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~600行 |
+| `app.js` | ロジック全般・レンダリング | ~850行 |
+| `style.css` | スタイル | ~290行 |
 
 ## キャッシュバスター（重要）
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=7">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=7"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=12">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=12"></script>             <!-- app.js変更時に上げる -->
 ```
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
@@ -35,7 +35,9 @@ D = {
   },
   bankAccounts: [ {id, name, note, order} ],
   creditCards:  [ {id, name, note, bankId, order} ],  // bankId: 引き落とし口座ID（任意）
-  holdings:     [ {id, name, account, assetType, monthlyAmount, spotAnnual, dividendYield, order} ],
+  holdings:     [ {id, name, account, assetType, monthlyAmount, spotList, dividendYield, order} ],
+  //  spotList: [{id, amount, done}]  ← 複数スポット購入計画。done=true のみNISA年間バーに加算
+  //  （旧 spotAnnual は load() 時に spotList へ自動マイグレーション済み）
   idecoHoldings:[ {id, name, assetType, monthlyAmount, dividendYield, order} ],
   customAccounts:   [ {id, label, color, badge, taxFree} ],  // taxFree: 配当非課税フラグ
   customAssetTypes: [ {id, label, badge} ],
@@ -99,6 +101,19 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `renderSettings()` | 設定タブ全体 |
 | `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
 
+### NISAカード「今年の投資計画」
+`renderDashboard()` 内で計算・描画。
+- NISA年間バーは `monthlyAmount × 経過月数 + spotDone(h)` で計算（未済スポットは含めない）
+- 投資計画セクションは `成長投資枠 → 積立投資枠 → NISA合計 → iDeCo` の順で表示
+- スポット件数バッジ: 未完了=黄色、全完了=緑
+
+### スポット購入パネル関数
+```js
+addSpotRow(s)             // スポット行をパネルに追加（s省略時は空行）
+renderSpotListPanel(spots) // 銘柄編集パネルにspotListを描画
+getSpotListFromPanel()    // パネルからspotListを読み取り配列で返す
+```
+
 ### 設定タブ CRUD パターン（銀行・カード・銘柄・iDeCo・口座種別・銘柄種別で共通）
 ```
 render〇〇Table()      → テーブル再描画
@@ -125,16 +140,20 @@ xfApply(tableId)                         // フィルター＆ソート適用
 ```js
 fmt(n)            // ¥1,234,567 形式
 el(id)            // document.getElementById 省略形
-uid()             // ユニークID生成
+uid()             // ユニークID生成（※load()内では使用不可→インラインIDを使うこと）
 persist()         // D を localStorage に保存
 calcTotals()      // {cash, inv, ideco, total} を返す（cash = 銀行合計 - カード合計）
 getScdHolding()   // 設定で選択された対象銘柄を返す
+spotTotal(h)      // holding の spotList 全件合計金額
+spotDone(h)       // holding の spotList のうち done=true の合計金額
 acBadge(acc)      // 口座種別バッジHTML
 atBadge(type)     // 銘柄種別バッジHTML
 buildAccountOptions(selId, val)    // select要素に口座種別を動的生成
 buildAssetTypeOptions(selId, val)  // select要素に銘柄種別を動的生成
 deleteSnap(month) // 指定月のスナップショット削除
 _buildCardBankOptions(val) // カード設定パネルの引き落とし口座セレクトを生成
+_flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
+_triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
 ```
 
 ## HTML パターン
@@ -164,11 +183,14 @@ _buildCardBankOptions(val) // カード設定パネルの引き落とし口座�
 |---|---|
 | `.rec-sec` / `.rec-sec-head` / `.rec-sec-body` | 記録・設定タブの白カードセクション |
 | `.an-block` / `.an-summary` / `.an-body` | ダッシュボード分析セクション |
-| `.tbl-wrap` | テーブルを角丸枠で囲む |
+| `.tbl-wrap` | テーブルを角丸枠で囲む（overflow-x:auto） |
 | `.tbl-wrap.tbl-scroll` | スクロール固定テーブル（max-height:380px・sticky thead） |
 | `.add-panel` / `.add-panel.open` | 追加/編集フォームパネル |
 | `.xf-btn` / `.xf-active` | フィルターボタン（▾） |
 | `.g2` `.g3` `.g4` | 2/3/4カラムグリッド |
+| `.plan-row` / `.plan-total` / `.plan-ideco` | 投資計画表示行 |
+| `.spot-row` / `.spot-check` / `.spot-badge` | スポット購入パネル行 |
+| `.btn-saved` | 保存完了フラッシュ（緑） |
 
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
