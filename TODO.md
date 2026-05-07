@@ -3,9 +3,9 @@
 ## ファイル構成
 ```
 asset-formation/
-├── index.html   (461行) — マークアップのみ
-├── style.css    (200行) — スタイル
-├── app.js       (371行) — ロジック
+├── index.html   (587行) — マークアップのみ
+├── style.css    (268行) — スタイル
+├── app.js       (818行) — ロジック
 └── TODO.md
 ```
 
@@ -51,6 +51,8 @@ asset-formation/
 - [x] iDeCo 銘柄 CRUD
 - [x] 銀行口座 CRUD
 - [x] クレジットカード CRUD
+- [x] 基本設定：iDeCo 開始月・月次拠出合計フィールド追加
+- [x] iDeCo 累計拠出元本の自動推計（記録タブ「累計拠出を推計」ボタン）
 
 ---
 
