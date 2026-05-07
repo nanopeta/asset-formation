@@ -8,10 +8,7 @@
 ## 未完了 📋
 
 ### 優先度：中
-- [x] モバイル表示の最適化
-  - `sim-grid` / `port-chart-pane` / `rec-sticky-inner` のモバイル対応
-  - `768px`: `.sim-grid` 1列化・ボーダー方向修正・`rec-sticky` パディング調整
-  - `480px`: `rec-sticky-inner` wrap・ヒーローフォント縮小・余白削減
+（なし）
 
 ### 優先度：低（次フェーズ）
 - [ ] 楽天ポイント管理機能
@@ -89,9 +86,20 @@
 
 ### モバイル対応
 - [x] 768px / 480px ブレークポイント追加（sim-grid 1列化・rec-sticky 調整・余白削減）
-- [x] テーブル横スクロール対応（.rec-sec / .tbl-wrap に overflow-x:auto）
+- [x] テーブル横スクロール対応（.tbl-wrap に overflow-x:auto をデフォルト適用）
 - [x] シミュレーションを3カードに分割（SCHD到達 / 再投資 / 配当シミュ）
 - [x] 縦スクロール（sticky ヘッダー）をデスクトップのみ適用（再投資・配当シミュ・銘柄別一覧）
+- [x] カードが横に切れる問題を修正（.an-body に overflow-x:auto、900px で g4 → 2列化）
+- [x] iOS エクスポート対応（Web Share API + _triggerExport() ヘルパー）
+
+### スポット購入
+- [x] スポット購入を複数登録可能に（spotList: [{id, amount, done}]）
+- [x] 済チェックボックスで NISA 年間バーに反映（未済スポットは除外）
+- [x] NISA 投資計画セクションに年間計画額を表示（成長枠→積立枠→NISA合計→iDeCo の順）
+
+### UX 改善
+- [x] 基本設定「保存」ボタンにフラッシュフィードバック（alert() 廃止）
+- [x] エクスポートボタン3つに完了フラッシュフィードバック（_flashBtn()）
 
 ### GitHub
 - [x] GitHub リポジトリ作成・プッシュ

@@ -14,13 +14,14 @@
 
 ```
 asset-formation/
-├── index.html        マークアップ（~587行）
-├── style.css         スタイル（~268行）
-├── app.js            ロジック（~818行）
+├── index.html        マークアップ（~595行）
+├── style.css         スタイル（~287行）
+├── app.js            ロジック（~863行）
 ├── CLAUDE.md         AI向けコードベース概要
 ├── README.md         このファイル
+├── TODO.md           機能一覧・完了タスク（概要）
 └── tasks/
-    ├── todo.md       現行タスク管理
+    ├── todo.md       現行タスク管理（詳細）
     └── lessons.md    教訓・注意事項
 ```
 
