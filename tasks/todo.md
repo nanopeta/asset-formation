@@ -81,6 +81,12 @@
 - [x] XFフィルターボタンを data-xf-table/data-xf-col 属性ベースに変換
 - [x] xfUpdateBtnState の onclick 正規表現パースを廃止
 
+### モバイル対応
+- [x] 768px / 480px ブレークポイント追加（sim-grid 1列化・rec-sticky 調整・余白削減）
+- [x] テーブル横スクロール対応（.rec-sec / .tbl-wrap に overflow-x:auto）
+- [x] シミュレーションを3カードに分割（SCHD到達 / 再投資 / 配当シミュ）
+- [x] 縦スクロール（sticky ヘッダー）をデスクトップのみ適用（再投資・配当シミュ・銘柄別一覧）
+
 ### GitHub
 - [x] GitHub リポジトリ作成・プッシュ
 - [x] GitHub Pages 有効化（https://nanopeta.github.io/asset-formation/）
