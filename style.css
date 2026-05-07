@@ -298,6 +298,21 @@
         .alloc-table{width:100%;font-size:12px;border-collapse:collapse;}
         .alloc-table th{color:var(--muted);font-weight:500;padding:3px 4px;}
         .alloc-table td{padding:4px 4px;border-top:1px solid var(--border);}
+        /* ===== 含み損ハイライト (C-5) ===== */
+        .hi-warn{background:#fef9c3!important;border-color:#fbbf24!important;}
+        /* ===== 配当月チェックボックス (C-3) ===== */
+        .div-months-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+        .div-month-cb{display:flex;align-items:center;gap:4px;padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;user-select:none;}
+        .div-month-cb:hover{background:var(--bg);}
+        .div-month-cb input{cursor:pointer;accent-color:var(--primary);width:13px;height:13px;}
+        /* ===== 配当カレンダー棒グラフ ===== */
+        .div-cal-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;height:130px;align-items:end;}
+        .div-cal-col{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;}
+        .div-cal-val{font-size:9px;color:var(--success);font-weight:600;white-space:nowrap;min-height:11px;text-align:center;}
+        .div-cal-bar-wrap{flex:1;display:flex;align-items:flex-end;width:100%;background:var(--bg);border-radius:3px 3px 0 0;}
+        .div-cal-bar{width:100%;background:var(--success);border-radius:3px 3px 0 0;transition:height .4s ease;}
+        .div-cal-label{font-size:10px;color:var(--muted);font-weight:500;white-space:nowrap;}
+        @media(max-width:600px){.div-cal-grid{grid-template-columns:repeat(6,1fr);height:110px;}}
         /* ===== トースト通知 ===== */
         .toast{position:fixed;bottom:24px;right:20px;padding:10px 16px;border-radius:8px;background:#1e293b;color:#fff;font-size:13px;z-index:10000;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none;}
         .toast.toast-show{opacity:1;transform:translateY(0);}

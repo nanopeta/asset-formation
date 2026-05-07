@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 <header>
@@ -28,6 +28,7 @@
     <span class="qnav-sep">｜</span>
     <button class="qnav-pill" data-scroll="sec-trend">資産推移</button>
     <button class="qnav-pill" data-scroll="sec-sim">シミュレーション</button>
+    <button class="qnav-pill" data-scroll="sec-div-cal">配当カレンダー</button>
     <button class="qnav-pill" data-scroll="sec-fire">FIRE</button>
     <button class="qnav-pill" data-scroll="sec-detail">詳細分析</button>
 </div>
@@ -191,6 +192,11 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <div class="an-block" id="sec-div-cal">
+        <div class="an-summary">月別配当受取予定カレンダー</div>
+        <div class="an-body" id="div-cal-body"></div>
     </div>
 
     <div class="an-block" id="sec-div-sim">
@@ -400,6 +406,23 @@
                         <div class="fg"><label>通貨</label><select id="s-h-currency"><option value="jpy">JPY（円）</option><option value="usd">USD（ドル）</option></select></div>
                     </div>
                     <div class="fg" style="margin-top:8px;">
+                        <label>配当月（支払月・複数選択可）</label>
+                        <div id="s-h-div-months" class="div-months-grid">
+                            <label class="div-month-cb"><input type="checkbox" value="1"><span>1月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="2"><span>2月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="3"><span>3月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="4"><span>4月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="5"><span>5月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="6"><span>6月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="7"><span>7月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="8"><span>8月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="9"><span>9月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="10"><span>10月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="11"><span>11月</span></label>
+                            <label class="div-month-cb"><input type="checkbox" value="12"><span>12月</span></label>
+                        </div>
+                    </div>
+                    <div class="fg" style="margin-top:8px;">
                         <label>スポット購入計画</label>
                         <div id="s-h-spot-list" style="margin-top:4px;"></div>
                         <button class="btn btn-s btn-sm" type="button" onclick="addSpotRow()" style="margin-top:6px;">+ スポットを追加</button>
@@ -606,6 +629,6 @@
 </div>
 
 </main>
-<script src="app.js?v=14"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>
