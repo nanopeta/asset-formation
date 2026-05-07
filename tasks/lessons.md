@@ -125,6 +125,22 @@
 
 ---
 
+## モバイル対応
+
+### overflow:hidden な親要素はテーブル横スクロールをブロックしない
+- `.rec-sec{overflow:hidden}` の親がある場合、子の `overflow-x:auto` は機能する
+- ただし `display:block; overflow-x:auto` を `table` 要素に直接適用しても機能しない
+- **正解パターン**: メディアクエリ内で `.rec-sec{overflow-x:auto}` と `.tbl-wrap{overflow-x:auto}` を追加
+- **禁止**: `overflow:visible` を grid/flex コンテナに設定する → 子要素が画面外に飛び出す
+
+### 横スクロール対応の確認はJSで行う
+- `el.scrollWidth > el.clientWidth` で横スクロールが必要かを確認
+- `document.body.scrollWidth > window.innerWidth` でページ全体の横オーバーフローを確認
+- `getComputedStyle(el).overflowX` で実際に適用されているスタイルを確認
+- ブラウザの resize_window は最大化状態では効かないため、Preview MCP を使う
+
+---
+
 ## 今後の注意点（未来の自分へ）
 
 - `BUILT_IN_ACCOUNTS` / `BUILT_IN_ASSET_TYPES` の組み込み定数を削除・リネームすると既存 localStorage データとの互換性が壊れる。追加は OK、削除・リネームは慎重に。
