@@ -74,6 +74,12 @@
 - [x] 設定のみ JSON エクスポート / インポート（記録保持）
 - [x] 記録 CSV エクスポート（全期間・年別）
 
+### コード品質
+- [x] インラインスタイルをCSSクラスに分離（`.sim-grid`、`.nisa-head`、`.card-sm` 等12クラス追加）
+- [x] HTML の onclick/oninput/onchange を削除し addEventListener に移行
+- [x] XFフィルターボタンを data-xf-table/data-xf-col 属性ベースに変換
+- [x] xfUpdateBtnState の onclick 正規表現パースを廃止
+
 ### GitHub
 - [x] GitHub リポジトリ作成・プッシュ
 - [x] GitHub Pages 有効化（https://nanopeta.github.io/asset-formation/）

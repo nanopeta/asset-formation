@@ -107,6 +107,24 @@
 
 ---
 
+## イベントハンドラの分離
+
+### onclick/oninput はHTMLに書かない
+- すべての静的要素のイベントは `init()` 内で `addEventListener` を使って紐づける
+- **ルール**: 新しいボタンを追加したら、HTMLには `id="btn-xxx"` だけ書いて、`init()` に `el('btn-xxx').addEventListener('click', fn)` を追加する
+
+### XFフィルターボタンは data属性で管理する
+- `onclick="xfOpen('tableId', colIdx, this)"` の代わりに `data-xf-table="tableId" data-xf-col="colIdx"` を使う
+- `xfUpdateBtnState` は `.xf-btn[data-xf-table="..."]` で取得し `btn.dataset.xfCol` で列インデックスを読む
+- **ルール**: 新しいテーブルにXFフィルターを追加する場合は必ず data属性方式を使う
+
+### インラインスタイルはCSSクラスに
+- 繰り返し使うスタイルは `style.css` にクラスとして定義する
+- 動的に変わる値（`style="width:XX%"` など）はJSから `.style` で直接操作してよい
+- **ルール**: 同じインラインスタイルが2箇所以上に出たらCSSクラス化を検討する
+
+---
+
 ## 今後の注意点（未来の自分へ）
 
 - `BUILT_IN_ACCOUNTS` / `BUILT_IN_ASSET_TYPES` の組み込み定数を削除・リネームすると既存 localStorage データとの互換性が壊れる。追加は OK、削除・リネームは慎重に。
