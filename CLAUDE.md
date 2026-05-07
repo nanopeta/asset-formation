@@ -3,8 +3,8 @@
 ## ファイル構成（3ファイル）
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~590行 |
-| `app.js` | ロジック全般・レンダリング | ~680行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~595行 |
+| `app.js` | ロジック全般・レンダリング | ~690行 |
 | `style.css` | スタイル | ~230行 |
 
 ## データ構造（localStorage: `asset-v3`）
@@ -15,7 +15,7 @@ D = {
     scdHoldingId: 'h-schd' // 対象銘柄ID（getScdHolding()で取得）
   },
   bankAccounts: [ {id, name, note, order} ],
-  creditCards:  [ {id, name, note, order} ],
+  creditCards:  [ {id, name, note, bankId, order} ],  // bankId: 引き落とし口座ID（任意）
   holdings:     [ {id, name, account, assetType, monthlyAmount, spotAnnual, dividendYield, order} ],
   idecoHoldings:[ {id, name, assetType, monthlyAmount, dividendYield, order} ],
   customAccounts:   [ {id, label, color, badge, taxFree} ],  // taxFree: 配当非課税フラグ
@@ -27,9 +27,10 @@ D = {
     cardValues:    { [id]: 数値 },
     holdingValues: { [id]: {value, principal} },
     idecoValues:   { [id]: {value, principal} },
+    idecoActualPrincipal: 数値,  // iDeCo累計拠出元本（スイッチング前からの実拠出総額）
     nisa: { year, seichouUsed, tsumitateUsed, lifetimeUsed, seichouLifetimeUsed }
   },
-  snapshots: [ {month, bankValues, cardValues, holdingValues, idecoValues, nisa, cash, investment, idecoTotal, total} ]
+  snapshots: [ {month, bankValues, cardValues, holdingValues, idecoValues, idecoActualPrincipal, nisa, cash, investment, idecoTotal, total} ]
 }
 ```
 
@@ -106,13 +107,14 @@ fmt(n)            // ¥1,234,567 形式
 el(id)            // document.getElementById 省略形
 uid()             // ユニークID生成
 persist()         // D を localStorage に保存
-calcTotals()      // {cash, inv, ideco, total} を返す
+calcTotals()      // {cash, inv, ideco, total} を返す（cash = 銀行合計 - カード合計）
 getScdHolding()   // 設定で選択された対象銘柄を返す
 acBadge(acc)      // 口座種別バッジHTML
 atBadge(type)     // 銘柄種別バッジHTML
 buildAccountOptions(selId, val)    // select要素に口座種別を動的生成
 buildAssetTypeOptions(selId, val)  // select要素に銘柄種別を動的生成
 deleteSnap(month) // 指定月のスナップショット削除
+_buildCardBankOptions(val) // カード設定パネルの引き落とし口座セレクトを生成
 ```
 
 ## HTML パターン
