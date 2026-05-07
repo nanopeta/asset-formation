@@ -207,6 +207,7 @@
         .plan-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:2px 0;gap:8px;flex-wrap:wrap;}
         .plan-row strong{color:var(--text);font-weight:600;}
         .plan-total{font-weight:700;color:var(--text);border-top:1px solid var(--border);margin-top:4px;padding-top:4px;}
+        .plan-ideco{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
         .tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;}
 
         /* 配当シミュレーション */

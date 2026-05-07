@@ -151,11 +151,13 @@ function renderDashboard(){
     const planIdecoM   =D.settings.idecoMonthlyTotal||0;
     const planEl=el('nisa-plan-rows'),planSect=el('nisa-plan-section');
     if(planEl){
-        const rows=[];
-        if(planSeichouM>0||planSeichouSp>0){const sp=planSeichouSp>0?` + スポット${fmt(planSeichouSp)}`:'';rows.push(`<div class="plan-row"><span>成長投資枠</span><span>${fmt(planSeichouM)}/月×12${sp} = <strong>${fmt(planSeichouM*12+planSeichouSp)}</strong></span></div>`);}
-        if(planTsumM>0){rows.push(`<div class="plan-row"><span>積立投資枠</span><span>${fmt(planTsumM)}/月×12 = <strong>${fmt(planTsumM*12)}</strong></span></div>`);}
-        if(planIdecoM>0){rows.push(`<div class="plan-row"><span>iDeCo</span><span>${fmt(planIdecoM)}/月×12 = <strong>${fmt(planIdecoM*12)}</strong></span></div>`);}
-        if(rows.length){rows.push(`<div class="plan-row plan-total"><span>NISA合計</span><strong>${fmt(planSeichouM*12+planSeichouSp+planTsumM*12)}</strong></div>`);planEl.innerHTML=rows.join('');if(planSect)planSect.style.display='';}
+        const nisaRows=[];
+        if(planSeichouM>0||planSeichouSp>0){const sp=planSeichouSp>0?` + スポット${fmt(planSeichouSp)}`:'';nisaRows.push(`<div class="plan-row"><span>成長投資枠</span><span>${fmt(planSeichouM)}/月×12${sp} = <strong>${fmt(planSeichouM*12+planSeichouSp)}</strong></span></div>`);}
+        if(planTsumM>0){nisaRows.push(`<div class="plan-row"><span>積立投資枠</span><span>${fmt(planTsumM)}/月×12 = <strong>${fmt(planTsumM*12)}</strong></span></div>`);}
+        const allRows=[...nisaRows];
+        if(nisaRows.length){allRows.push(`<div class="plan-row plan-total"><span>NISA合計</span><strong>${fmt(planSeichouM*12+planSeichouSp+planTsumM*12)}</strong></div>`);}
+        if(planIdecoM>0){allRows.push(`<div class="plan-row plan-ideco"><span>iDeCo</span><span>${fmt(planIdecoM)}/月×12 = <strong>${fmt(planIdecoM*12)}</strong></span></div>`);}
+        if(allRows.length){planEl.innerHTML=allRows.join('');if(planSect)planSect.style.display='';}
         else{planEl.innerHTML='';if(planSect)planSect.style.display='none';}
     }
 
