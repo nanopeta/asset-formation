@@ -290,8 +290,6 @@
             /* テーブル・分析セクション横スクロール */
             .rec-sec{overflow-x:auto;}
             .an-body{overflow-x:auto;}
-            /* モバイルでは縦スクロール無効（2方向スクロールを避ける） */
-            .tbl-scroll{max-height:none;}
         }
 
         @media(max-width:480px){
