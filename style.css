@@ -200,8 +200,8 @@
         .xf-row input{cursor:pointer;accent-color:var(--primary);}
         .xf-actions{padding:6px 8px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;}
 
-        .positive{color:var(--success);font-weight:600;}
-        .negative{color:var(--danger);font-weight:600;}
+        .positive{color:var(--success);font-weight:600;white-space:nowrap;}
+        .negative{color:var(--danger);font-weight:600;white-space:nowrap;}
         .neutral{color:var(--muted);}
         .empty{text-align:center;padding:28px;color:var(--muted);font-size:13px;}
         .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;}
