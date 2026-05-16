@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=36">
+    <link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
 <header>
@@ -409,8 +409,8 @@
             </table>
             <div class="rec-sec-body">
                 <button class="btn btn-s btn-sm" id="btn-open-holding">+ 追加</button>
-                <div id="s-holding-panel" class="add-panel" style="max-width:620px;">
-                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-holding-panel-title">銘柄を追加</div>
+                <div id="s-holding-panel" class="add-panel">
+                    <div class="add-panel-title" id="s-holding-panel-title">銘柄を追加</div>
                     <input type="hidden" id="s-holding-id">
                     <div class="fi">
                         <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-h-name"></div>
@@ -460,8 +460,8 @@
             </table>
             <div class="rec-sec-body">
                 <button class="btn btn-s btn-sm" id="btn-open-ideco">+ 追加</button>
-                <div id="s-ideco-panel" class="add-panel" style="max-width:480px;">
-                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-ideco-panel-title">iDeCo銘柄を追加</div>
+                <div id="s-ideco-panel" class="add-panel">
+                    <div class="add-panel-title" id="s-ideco-panel-title">iDeCo銘柄を追加</div>
                     <input type="hidden" id="s-ideco-id">
                     <div class="fi">
                         <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
@@ -487,8 +487,8 @@
                 <tbody id="s-banks-table"></tbody></table>
                 <div class="rec-sec-body">
                     <button class="btn btn-s btn-sm" id="btn-open-bank">+ 追加</button>
-                    <div id="s-bank-panel" class="add-panel" style="max-width:480px;">
-                        <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-bank-panel-title">銀行口座を追加</div>
+                    <div id="s-bank-panel" class="add-panel">
+                        <div class="add-panel-title" id="s-bank-panel-title">銀行口座を追加</div>
                         <input type="hidden" id="s-bank-id">
                         <div class="fi">
                             <div class="fg"><label>口座名</label><input type="text" id="s-bank-name" placeholder="楽天銀行"></div>
@@ -507,8 +507,8 @@
                 <tbody id="s-cards-table"></tbody></table>
                 <div class="rec-sec-body">
                     <button class="btn btn-s btn-sm" id="btn-open-card">+ 追加</button>
-                    <div id="s-card-panel" class="add-panel" style="max-width:480px;">
-                        <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-card-panel-title">カードを追加</div>
+                    <div id="s-card-panel" class="add-panel">
+                        <div class="add-panel-title" id="s-card-panel-title">カードを追加</div>
                         <input type="hidden" id="s-card-id">
                         <div class="fi">
                             <div class="fg"><label>カード名</label><input type="text" id="s-card-name" placeholder="楽天カード"></div>
@@ -531,8 +531,8 @@
                 <tbody id="s-acctypes-table"></tbody></table>
                 <div class="rec-sec-body">
                     <button class="btn btn-s btn-sm" id="btn-open-acctype">+ 追加</button>
-                    <div id="s-acctype-panel" class="add-panel" style="max-width:480px;">
-                        <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-acctype-panel-title">口座種別を追加</div>
+                    <div id="s-acctype-panel" class="add-panel">
+                        <div class="add-panel-title" id="s-acctype-panel-title">口座種別を追加</div>
                         <input type="hidden" id="s-acctype-id">
                         <input type="hidden" id="s-acctype-builtin">
                         <div class="fi">
@@ -565,8 +565,8 @@
                 <tbody id="s-assettypes-table"></tbody></table>
                 <div class="rec-sec-body">
                     <button class="btn btn-s btn-sm" id="btn-open-assettype">+ 追加</button>
-                    <div id="s-assettype-panel" class="add-panel" style="max-width:480px;">
-                        <div style="font-size:12px;font-weight:700;margin-bottom:10px;" id="s-assettype-panel-title">銘柄種別を追加</div>
+                    <div id="s-assettype-panel" class="add-panel">
+                        <div class="add-panel-title" id="s-assettype-panel-title">銘柄種別を追加</div>
                         <input type="hidden" id="s-assettype-id">
                         <input type="hidden" id="s-assettype-builtin">
                         <div class="fi">
@@ -644,6 +644,9 @@
     </div>
 </div>
 
+<!-- 設定パネル バックドロップ -->
+<div id="settings-backdrop"></div>
+
 <!-- 月次サマリーモーダル -->
 <div id="snap-modal" class="snap-modal" style="display:none" onclick="this.style.display='none'">
     <div class="snap-modal-card" onclick="event.stopPropagation()">
@@ -654,6 +657,6 @@
 </div>
 
 </main>
-<script src="app.js?v=36"></script>
+<script src="app.js?v=37"></script>
 </body>
 </html>
