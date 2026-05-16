@@ -159,7 +159,7 @@
         .hi:focus{outline:none;border-color:var(--primary);}
         .itd{width:150px;}
         /* テーブル: 名前列以外はnowrap */
-        #rec-holdings-body td,#rec-ideco-body td,#an-holdings td,#div-sim-body td,#an-by-account td,#an-by-type td,#db-ptable td,#s-holdings-table td,#s-ideco-table td,#s-banks-table td,#s-cards-table td{white-space:nowrap;}
+        #rec-holdings-body td,#rec-ideco-body td,#an-holdings td,#div-sim-body td,#an-by-account td,#an-by-type td,#db-ptable td,#s-holdings-table td,#s-ideco-table td,#s-banks-table td,#s-cards-table td,#schd-reinvest-body td{white-space:nowrap;}
         #rec-holdings-body td:nth-child(2),#rec-ideco-body td:nth-child(2),#s-holdings-table td:nth-child(2),#s-ideco-table td:nth-child(2),#s-banks-table td:nth-child(2),#s-cards-table td:nth-child(2){white-space:normal;}
         #an-holdings td:first-child,#div-sim-body td:first-child,#an-by-account td:first-child,#an-by-type td:first-child,#db-ptable td:first-child{white-space:normal;}
         /* A列 最大2行クランプ */
