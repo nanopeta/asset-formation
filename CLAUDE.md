@@ -3,16 +3,16 @@
 ## ファイル構成（3ファイル）
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~600行 |
-| `app.js` | ロジック全般・レンダリング | ~850行 |
-| `style.css` | スタイル | ~290行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~650行 |
+| `app.js` | ロジック全般・レンダリング | ~910行 |
+| `style.css` | スタイル | ~320行 |
 
 ## キャッシュバスター（重要）
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=12">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=12"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=32">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=32"></script>             <!-- app.js変更時に上げる -->
 ```
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
@@ -32,11 +32,15 @@ D = {
     scdHoldingId: 'h-schd',   // 対象銘柄ID（getScdHolding()で取得）
     idecoStartMonth: '',       // iDeCo開始月（YYYY-MM形式）
     idecoMonthlyTotal: 0,      // iDeCo月次拠出合計（円）
+    usdJpy: 150,               // USD/JPY レート（USD銘柄の円換算に使用）
+    targetAllocation: {},      // 目標配分 { [assetTypeId]: number（%） }
   },
   bankAccounts: [ {id, name, note, order} ],
   creditCards:  [ {id, name, note, bankId, order} ],  // bankId: 引き落とし口座ID（任意）
-  holdings:     [ {id, name, account, assetType, monthlyAmount, spotList, dividendYield, order} ],
+  holdings:     [ {id, name, account, assetType, monthlyAmount, spotList, dividendYield, currency, dividendMonths, order} ],
   //  spotList: [{id, amount, done}]  ← 複数スポット購入計画。done=true のみNISA年間バーに加算
+  //  currency: 'jpy'（デフォルト）または 'usd'（holdingJpy()でusdJpy換算）
+  //  dividendMonths: [1-12の数値配列]  ← 配当受取月（配当カレンダーに使用）
   //  （旧 spotAnnual は load() 時に spotList へ自動マイグレーション済み）
   idecoHoldings:[ {id, name, assetType, monthlyAmount, dividendYield, order} ],
   customAccounts:   [ {id, label, color, badge, taxFree} ],  // taxFree: 配当非課税フラグ
@@ -66,6 +70,8 @@ BUILT_IN_ACCOUNTS = {
 }
 // 組み込み銘柄種別
 BUILT_IN_ASSET_TYPES = { 'fund', 'domestic-stock', 'us-stock', 'other' }
+// 銘柄種別カラーパレット（ドーナツグラフ用）
+ASSET_TYPE_COLORS = { 'fund':'#6b7280', 'domestic-stock':'#16a34a', 'us-stock':'#ea580c', 'other':'#a78bfa' }
 
 // 動的取得（カスタム＋上書き含む）
 getAccounts()    // BUILT_IN_ACCOUNTS + accountTypeOverrides + customAccounts
@@ -80,7 +86,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 メインタブ: dashboard / record / settings
   dashboard → （サブタブなし）
     セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio,
-                  sec-trend, sec-sim, sec-reinvest, sec-div-sim, sec-fire, sec-detail
+                  sec-trend, sec-sim, sec-reinvest, sec-div-cal, sec-div-sim, sec-fire, sec-detail
   record    → rec-banks / rec-holdings
   settings  → set-holdings / set-accounts / set-basic
 ```
@@ -90,13 +96,16 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 ### レンダリング
 | 関数 | 役割 |
 |---|---|
-| `renderDashboard()` | ダッシュボード全体再描画（毎回フル） |
-| `renderPortfolio(totalInv)` | ドーナツチャート＋銘柄比率テーブル |
-| `renderAnalysisData()` | 詳細分析3テーブル（口座別・種別・銘柄一覧） |
+| `renderDashboard()` | ダッシュボード全体再描画（毎回フル）＋スナップリマインダー表示判定 |
+| `renderPortfolio(totalInv)` | ドーナツチャート＋銘柄比率テーブル＋目標配分バー |
+| `renderAllocationBars(items)` | 目標配分テーブル（実績・目標・差分・買い増し目安額） |
+| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧） |
+| `renderDivCalendar()` | 配当カレンダー（月別受取スケジュール） |
 | `renderDividendSim()` | 配当シミュレーションテーブル |
 | `renderSCHDReinvest()` | 分配金再投資シミュレーション（年数・積立・再投資なし対応） |
 | `renderFire()` | FIRE達成シミュレーション |
-| `renderTrendChart()` | 資産推移折れ線チャート |
+| `renderTrendChart()` | 資産推移折れ線チャート（`trendPeriod` で期間フィルター） |
+| `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋チャート再描画 |
 | `renderRecordTab()` | 記録タブ全体 |
 | `renderSettings()` | 設定タブ全体 |
 | `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
@@ -144,6 +153,7 @@ uid()             // ユニークID生成（※load()内では使用不可→イ
 persist()         // D を localStorage に保存
 calcTotals()      // {cash, inv, ideco, total} を返す（cash = 銀行合計 - カード合計）
 getScdHolding()   // 設定で選択された対象銘柄を返す
+holdingJpy(h)     // holding の {value, principal} を円換算で返す（USD銘柄はusdJpy換算）
 spotTotal(h)      // holding の spotList 全件合計金額
 spotDone(h)       // holding の spotList のうち done=true の合計金額
 acBadge(acc)      // 口座種別バッジHTML
@@ -155,6 +165,16 @@ _buildCardBankOptions(val) // カード設定パネルの引き落とし口座�
 _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
 _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
 ```
+
+### チャートインスタンス（グローバル変数）
+```js
+let chartPortfolio = null;   // ポートフォリオドーナツ
+let byAccChart = null;       // 口座別合計ドーナツ
+let byTypeChart = null;      // 種別合計ドーナツ
+let chartTrend = null;       // 資産推移折れ線
+let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件）
+```
+チャートを再描画する前に必ず `.destroy()` してから `new Chart()` すること。
 
 ## HTML パターン
 
@@ -191,6 +211,12 @@ _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share
 | `.plan-row` / `.plan-total` / `.plan-ideco` | 投資計画表示行 |
 | `.spot-row` / `.spot-check` / `.spot-badge` | スポット購入パネル行 |
 | `.btn-saved` | 保存完了フラッシュ（緑） |
+| `.port-grid` | ポートフォリオカード2カラム（300px + 1fr、768px以下で縦積み） |
+| `.port-chart-pane` / `.port-table-pane` | ポートフォリオ左（グラフ）・右（テーブル） |
+| `.breakdown-chart` | 口座別・種別ドーナツグラフ用コンテナ（height:150px） |
+| `.trend-summary` | 資産推移セクションヘッダー（タイトル＋期間ボタン横並び） |
+| `.trend-period-btns` / `.tpb` / `.tpb.active` | 期間フィルターボタン群 |
+| `.snap-reminder` / `.snap-reminder-btn` | 先月スナップ未記録バナー |
 
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
