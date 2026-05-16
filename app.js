@@ -177,13 +177,20 @@ function renderDashboard(){
 
 function renderPortfolio(totalInv){
     const c=D.current;
+    const prev=prevSnap();
     const items=[
-        ...D.holdings.map(h=>({name:h.name,account:h.account,assetType:h.assetType,value:holdingJpy(h).value,color:getAccounts()[h.account]?.color||'#9ca3af'})),
-        ...D.idecoHoldings.map(h=>({name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,color:IDECO_COLOR})),
+        ...D.holdings.map(h=>{const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;const val=holdingJpy(h).value;const prevVal=(prev?.holdingValues?.[h.id]?.value||0)*mul;return{id:h.id,name:h.name,account:h.account,assetType:h.assetType,value:val,prevVal,color:getAccounts()[h.account]?.color||'#9ca3af'};}),
+        ...D.idecoHoldings.map(h=>({id:h.id,name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,prevVal:prev?.idecoValues?.[h.id]?.value||0,color:IDECO_COLOR})),
     ].filter(i=>i.value>0);
     const tbody=el('db-ptable');
-    if(!items.length){tbody.innerHTML='<tr><td colspan="3" class="empty">記録タブからデータを入力してください</td></tr>';if(chartPortfolio){chartPortfolio.destroy();chartPortfolio=null;}renderAllocationBars([]);return;}
-    tbody.innerHTML=items.map(i=>{const r=totalInv>0?((i.value/totalInv)*100).toFixed(1):'0.0';const accLabel=i.account==='ideco'?'<span class="badge b-green">iDeCo</span>':acBadge(i.account)+'</span>';return`<tr><td><div class="td-name"><span class="dot" style="background:${i.color}"></span>${i.name}</div></td><td>${accLabel}</td><td style="text-align:right">${r}%</td></tr>`;}).join('');
+    if(!items.length){tbody.innerHTML='<tr><td colspan="4" class="empty">記録タブからデータを入力してください</td></tr>';if(chartPortfolio){chartPortfolio.destroy();chartPortfolio=null;}renderAllocationBars([]);return;}
+    tbody.innerHTML=items.map(i=>{
+        const r=totalInv>0?((i.value/totalInv)*100).toFixed(1):'0.0';
+        const accLabel=i.account==='ideco'?'<span class="badge b-green">iDeCo</span>':acBadge(i.account)+'</span>';
+        const diff=i.prevVal>0?i.value-i.prevVal:null;
+        const diffHtml=diff!==null?`<span class="${diff>=0?'positive':'negative'}" style="font-size:11px;">${diff>=0?'+':''}${fmt(diff)}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';
+        return`<tr><td><div class="td-name"><span class="dot" style="background:${i.color}"></span>${i.name}</div></td><td>${accLabel}</td><td style="text-align:right">${diffHtml}</td><td style="text-align:right">${r}%</td></tr>`;
+    }).join('');
     const ctx=el('portfolio-chart').getContext('2d');
     if(chartPortfolio)chartPortfolio.destroy();
     chartPortfolio=new Chart(ctx,{type:'doughnut',data:{labels:items.map(i=>i.name),datasets:[{data:items.map(i=>i.value),backgroundColor:items.map(i=>i.color),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)}  (${((c.raw/totalInv)*100).toFixed(1)}%)`}}}}});
@@ -358,10 +365,12 @@ function renderDivCalendar(){
     });
     const maxVal=Math.max(...monthly,1);
     const mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const annualTotal=monthly.reduce((a,v)=>a+v,0);
     body.innerHTML='<div class="div-cal-grid">'+mNames.map((m,i)=>{
         const v=monthly[i];const barH=v>0?Math.max(6,v/maxVal*100):0;
         return`<div class="div-cal-col"><div class="div-cal-val">${v>=100?fmt(v):''}</div><div class="div-cal-bar-wrap"><div class="div-cal-bar" style="height:${barH}%"></div></div><div class="div-cal-label">${m}</div></div>`;
-    }).join('')+'</div>';
+    }).join('')+'</div>'
+    +(annualTotal>0?`<div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:right;">年間合計 <strong style="color:var(--success);font-size:14px;">${fmt(annualTotal)}</strong>　月平均 <strong style="color:var(--text)">${fmt(annualTotal/12)}</strong></div>`:'');
 }
 
 function renderFire(){
