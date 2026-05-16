@@ -235,8 +235,8 @@
         .tbl-scroll thead tr th{position:sticky;top:0;background:#fff;z-index:1;}
         .tbl-scroll table th:first-child{position:sticky;left:0;z-index:3;}
         .tbl-scroll table tbody td:first-child,.tbl-wrap table tfoot td:first-child{position:sticky;left:0;background:#fff;z-index:2;}
-        #an-by-account th:first-child,#an-by-type th:first-child{position:sticky;left:0;background:#fff;z-index:2;}
-        #an-by-account td:first-child,#an-by-type td:first-child{position:sticky;left:0;background:#fff;z-index:1;}
+        #tbl-by-account thead th:first-child,#tbl-by-type thead th:first-child{position:sticky;left:0;background:#fff;z-index:2;}
+        #tbl-by-account td:first-child,#tbl-by-type td:first-child{position:sticky;left:0;background:#fff;z-index:1;}
 
         /* ===== NISAカードヘッダー ===== */
         .nisa-head{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
