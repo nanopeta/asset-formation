@@ -227,6 +227,12 @@
         .spot-del{flex-shrink:0;}
         .tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;position:sticky;left:0;z-index:5;}
         .breakdown-chart{position:relative;height:150px;padding:8px;border-bottom:1px solid var(--border);}
+        .trend-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+        .trend-period-btns{display:flex;gap:4px;}
+        .tpb{padding:4px 10px;border:1px solid var(--border);background:#fff;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);}
+        .tpb.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+        .snap-reminder{background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+        .snap-reminder-btn{font-size:11px;font-weight:700;color:#92400e;background:none;border:1px solid #f59e0b;border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap;}
 
         /* 配当シミュレーション */
         .div-tax-free{color:var(--success);font-size:11px;font-weight:600;}
@@ -277,6 +283,7 @@
             .g2,.g3,.g4{grid-template-columns:1fr;}
             .port-grid{grid-template-columns:1fr;}
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
+            .port-table-pane{max-height:none;}
             main{padding:14px;}
             .rec-sticky{margin:0 -14px 12px;padding:8px 14px;}
             .hero-value{font-size:36px;}

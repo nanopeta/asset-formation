@@ -103,6 +103,8 @@ function renderNisaBar(prefix,used,max){const p=pct(used,max);el(`ns-${prefix}-b
 // ===== ダッシュボード =====
 let chartPortfolio=null;
 let byAccChart=null,byTypeChart=null;
+let trendPeriod=0;
+function setTrendPeriod(months,btn){trendPeriod=months;document.querySelectorAll('.tpb').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTrendChart();}
 
 // ===== ダッシュボード サブレンダラー (B-1) =====
 function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps){
@@ -151,6 +153,7 @@ function renderDashNisaSection(mo){
 function renderDashboard(){
     const c=D.current;
     const{cash,inv,ideco,total}=calcTotals();
+    {const rem=el('snap-reminder');if(rem){const now=new Date();const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const lastMonth=`${lm.getFullYear()}-${String(lm.getMonth()+1).padStart(2,'0')}`;const hasSnap=D.snapshots.some(s=>s.month===lastMonth);if(!hasSnap&&D.snapshots.length>0){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">⚠️ ${lastMonth} の記録がまだありません</span><button class="snap-reminder-btn" onclick="document.querySelector('[data-tab=record]').click();el('rec-month').value='${lastMonth}'">記録する</button>`;}else{rem.style.display='none';}}}
     const invPri=D.holdings.reduce((a,h)=>a+holdingJpy(h).principal,0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
     const idecoActualPri=c.idecoActualPrincipal||0;
@@ -197,7 +200,7 @@ function renderAllocationBars(items){
     const types=getAssetTypes();
     const allIds=[...new Set([...Object.keys(ta),...Object.keys(byType)])];
     sec.style.display='';
-    sec.innerHTML=`<div class="alloc-title">目標配分</div><table class="alloc-table"><thead><tr><th>種別</th><th style="text-align:right">実績</th><th style="text-align:right">目標</th><th style="text-align:right">差分</th></tr></thead><tbody>`+
+    sec.innerHTML=`<div class="alloc-title">目標配分</div><table class="alloc-table"><thead><tr><th>種別</th><th style="text-align:right">実績</th><th style="text-align:right">目標</th><th style="text-align:right">差分</th><th style="text-align:right">買い増し目安</th></tr></thead><tbody>`+
     allIds.map(id=>{
         const actual=totalVal>0?((byType[id]||0)/totalVal*100):0;
         const target=ta[id]||0;
@@ -205,7 +208,9 @@ function renderAllocationBars(items){
         const diffCls=Math.abs(diff)<3?'':'positive';
         const diffClsNeg=diff<-2?'negative':'';
         const sign=diff>=0?'+':'';
-        return`<tr><td>${types[id]?.label||id}</td><td style="text-align:right">${actual.toFixed(1)}%</td><td style="text-align:right;color:var(--muted)">${target>0?target+'%':'--'}</td><td style="text-align:right"><span class="${diff>=0?diffCls:diffClsNeg}">${target>0?sign+diff.toFixed(1)+'%':'--'}</span></td></tr>`;
+        const buyAmt=target>0?Math.round(totalVal*(target-actual)/100):null;
+        const buyHtml=buyAmt!=null?(buyAmt>0?`<span class="positive">+${fmt(buyAmt)}</span>`:`<span class="negative">${fmt(buyAmt)}</span>`):'--';
+        return`<tr><td>${types[id]?.label||id}</td><td style="text-align:right">${actual.toFixed(1)}%</td><td style="text-align:right;color:var(--muted)">${target>0?target+'%':'--'}</td><td style="text-align:right"><span class="${diff>=0?diffCls:diffClsNeg}">${target>0?sign+diff.toFixed(1)+'%':'--'}</span></td><td style="text-align:right">${buyHtml}</td></tr>`;
     }).join('')+'</tbody></table>';
 }
 
@@ -378,7 +383,8 @@ function renderFire(){
 
 let chartTrend=null;
 function renderTrendChart(){
-    const snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+    let snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+    if(trendPeriod>0)snaps=snaps.slice(-trendPeriod);
     const ctx=el('trend-chart').getContext('2d');
     if(chartTrend)chartTrend.destroy();
     if(!snaps.length){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('記録を追加すると表示されます',ctx.canvas.width/2,140);return;}
