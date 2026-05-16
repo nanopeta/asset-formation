@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=31">
+    <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
 <header>
@@ -35,6 +35,8 @@
 
 <!-- ======= ダッシュボード ======= -->
 <div id="tab-dashboard" class="tab-content active">
+    <!-- スナップショット未記録リマインダー -->
+    <div id="snap-reminder" style="display:none"></div>
     <!-- HERO -->
     <div class="hero mb" id="sec-summary">
         <div>
@@ -152,7 +154,15 @@
     <hr class="an-divider">
 
     <div class="an-block" id="sec-trend">
-        <div class="an-summary">資産推移チャート</div>
+        <div class="an-summary trend-summary">
+            <span>資産推移チャート</span>
+            <div class="trend-period-btns">
+                <button class="tpb active" onclick="setTrendPeriod(0,this)">全期間</button>
+                <button class="tpb" onclick="setTrendPeriod(12,this)">1年</button>
+                <button class="tpb" onclick="setTrendPeriod(6,this)">6ヶ月</button>
+                <button class="tpb" onclick="setTrendPeriod(3,this)">3ヶ月</button>
+            </div>
+        </div>
         <div class="an-body"><div class="chart-wrap chart-h300"><canvas id="trend-chart"></canvas></div></div>
     </div>
 
@@ -638,6 +648,6 @@
 </div>
 
 </main>
-<script src="app.js?v=31"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>
