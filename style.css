@@ -283,7 +283,6 @@
             .g2,.g3,.g4{grid-template-columns:1fr;}
             .port-grid{grid-template-columns:1fr;}
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
-            .port-table-pane{max-height:none;}
             main{padding:14px;}
             .rec-sticky{margin:0 -14px 12px;padding:8px 14px;}
             .hero-value{font-size:36px;}
