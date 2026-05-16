@@ -96,7 +96,8 @@
 
         /* ===== ポートフォリオ ===== */
         .chart-wrap{position:relative;height:220px;}
-        .port-grid{display:grid;grid-template-columns:220px 1fr;gap:0;align-items:start;}
+        .port-grid{display:grid;grid-template-columns:300px 1fr;gap:0;align-items:start;}
+        .port-chart-pane .chart-wrap{height:270px;}
 
         /* ===== 分析セクション ===== */
         .an-block{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;}

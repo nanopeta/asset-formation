@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
 <header>
@@ -85,10 +85,8 @@
         </div>
     </div>
 
-    <!-- NISA + ポートフォリオ -->
-    <div class="g2 mb" id="sec-nisa">
-        <!-- NISA コンパクト（自動計算） -->
-        <div class="card" id="sec-portfolio-nisa">
+    <!-- NISA -->
+    <div class="card mb" id="sec-nisa">
             <div class="nisa-head">
                 <span>NISA 枠 <span id="db-nisa-year" class="fw-normal">2026</span>年</span>
             </div>
@@ -134,19 +132,18 @@
             </div>
         </div>
 
-        <!-- ポートフォリオ -->
-        <div class="card card-flush" id="sec-portfolio">
-            <div class="port-grid">
-                <div class="port-chart-pane">
-                    <div class="chart-wrap"><canvas id="portfolio-chart"></canvas></div>
-                </div>
-                <div class="port-table-pane">
-                    <table>
-                        <thead><tr><th>銘柄名</th><th>口座</th><th style="text-align:right">比率</th></tr></thead>
-                        <tbody id="db-ptable"><tr><td colspan="3" class="empty">データなし</td></tr></tbody>
-                    </table>
-                    <div id="db-alloc-section" style="display:none;margin-top:12px;"></div>
-                </div>
+    <!-- ポートフォリオ -->
+    <div class="card card-flush mb" id="sec-portfolio">
+        <div class="port-grid">
+            <div class="port-chart-pane">
+                <div class="chart-wrap"><canvas id="portfolio-chart"></canvas></div>
+            </div>
+            <div class="port-table-pane">
+                <table>
+                    <thead><tr><th>銘柄名</th><th>口座</th><th style="text-align:right">比率</th></tr></thead>
+                    <tbody id="db-ptable"><tr><td colspan="3" class="empty">データなし</td></tr></tbody>
+                </table>
+                <div id="db-alloc-section" style="display:none;margin-top:12px;"></div>
             </div>
         </div>
     </div>
@@ -639,6 +636,6 @@
 </div>
 
 </main>
-<script src="app.js?v=28"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>
