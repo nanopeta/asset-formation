@@ -158,6 +158,10 @@
         .hi{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:right;}
         .hi:focus{outline:none;border-color:var(--primary);}
         .itd{width:150px;}
+        /* 保有銘柄テーブル: 銘柄名のみ折り返し許可、他はnowrap */
+        #rec-holdings-body td,#rec-ideco-body td,#an-holdings td{white-space:nowrap;}
+        #rec-holdings-body td:nth-child(2),#rec-ideco-body td:nth-child(2){white-space:normal;min-width:80px;}
+        #an-holdings td:first-child{white-space:normal;min-width:80px;}
 
         /* ===== バッジ ===== */
         .badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;}
