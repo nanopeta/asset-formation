@@ -158,10 +158,12 @@
         .hi{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:right;}
         .hi:focus{outline:none;border-color:var(--primary);}
         .itd{width:150px;}
-        /* 保有銘柄テーブル: 銘柄名のみ折り返し許可、他はnowrap */
-        #rec-holdings-body td,#rec-ideco-body td,#an-holdings td{white-space:nowrap;}
-        #rec-holdings-body td:nth-child(2),#rec-ideco-body td:nth-child(2){white-space:normal;min-width:80px;}
-        #an-holdings td:first-child{white-space:normal;min-width:80px;}
+        /* テーブル: 名前列以外はnowrap */
+        #rec-holdings-body td,#rec-ideco-body td,#an-holdings td,#div-sim-body td,#an-by-account td,#an-by-type td,#db-ptable td,#s-holdings-table td,#s-ideco-table td,#s-banks-table td,#s-cards-table td{white-space:nowrap;}
+        #rec-holdings-body td:nth-child(2),#rec-ideco-body td:nth-child(2),#s-holdings-table td:nth-child(2),#s-ideco-table td:nth-child(2),#s-banks-table td:nth-child(2),#s-cards-table td:nth-child(2){white-space:normal;}
+        #an-holdings td:first-child,#div-sim-body td:first-child,#an-by-account td:first-child,#an-by-type td:first-child,#db-ptable td:first-child{white-space:normal;}
+        /* A列 最大2行クランプ */
+        .td-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:80px;}
 
         /* ===== バッジ ===== */
         .badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;}
