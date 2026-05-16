@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 <header>
@@ -615,6 +615,14 @@
                     </div>
                 </div>
             </div>
+            <div class="rec-sec" style="flex:1;min-width:180px;margin-bottom:0;">
+                <div class="rec-sec-head"><span>楽天証券CSV</span></div>
+                <div class="rec-sec-body">
+                    <button class="btn btn-s btn-sm" id="btn-import-rakuten-trigger">CSVインポート</button>
+                    <input type="file" id="imp-rakuten" accept=".csv" style="display:none">
+                    <div style="font-size:11px;color:var(--muted);margin-top:6px;">保有商品の評価額を一括更新</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -629,6 +637,6 @@
 </div>
 
 </main>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

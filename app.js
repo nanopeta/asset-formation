@@ -633,6 +633,14 @@ function exportSettings(){
 }
 function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();toast('設定をインポートしました（記録は変更されていません）','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
 
+// 楽天証券CSV インポート
+const _RAKUTEN_ACC_MAP={'特定':'specific','一般':'specific','旧NISA':'old-nisa','つみたてNISA':'old-nisa','NISA成長投資枠':'nisa-growth','NISAつみたて投資枠':'nisa-tsumitate'};
+const _RAKUTEN_TYPE_MAP={'国内株式':'domestic-stock','米国株式':'us-stock','投資信託':'fund','中国株式':'other','アセアン株式':'other','外国株式':'other'};
+function _parseCsvLine(line){const cols=[];let i=0;while(i<line.length){if(line[i]==='"'){i++;let val='';while(i<line.length){if(line[i]==='"'){if(line[i+1]==='"'){val+='"';i+=2;}else{i++;break;}}else{val+=line[i++];}}if(i<line.length&&line[i]===',')i++;cols.push(val);}else{let j=line.indexOf(',',i);if(j===-1)j=line.length;cols.push(line.slice(i,j));i=j+1;}}return cols;}
+function _parseJpNum(s){return Number((s||'').replace(/[¥,+\s]/g,''))||0;}
+function _parseRakutenRows(text){const lines=text.split(/\r?\n/);const di=lines.findIndex(l=>l.includes('保有商品詳細'));if(di===-1)throw new Error('保有商品詳細セクションが見つかりません');let hi=-1;for(let i=di;i<Math.min(di+10,lines.length);i++){const c=_parseCsvLine(lines[i]);if(c[0]==='種別'){hi=i;break;}}if(hi===-1)throw new Error('ヘッダー行が見つかりません');const rows=[];for(let i=hi+1;i<lines.length;i++){const line=lines[i].trim();if(!line)break;const c=_parseCsvLine(line);const cat=c[0];if(!cat||!_RAKUTEN_TYPE_MAP[cat])continue;const value=_parseJpNum(c[14]);if(!value)continue;const gain=_parseJpNum(c[16]);rows.push({cat,name:c[2],accountStr:c[3],account:_RAKUTEN_ACC_MAP[c[3]]||'specific',assetType:_RAKUTEN_TYPE_MAP[cat],value,principal:value-gain});}return rows;}
+function importRakuten(e){const f=e.target.files[0];if(!f)return;e.target.value='';const r=new FileReader();r.onload=ev=>{try{const rows=_parseRakutenRows(ev.target.result);if(!rows.length){toast('保有商品が見つかりませんでした','error');return;}const matched=[],unmatched=[];rows.forEach(row=>{const h=D.holdings.find(h=>{if(h.account!==row.account)return false;return h.name===row.name||row.name.includes(h.name)||h.name.includes(row.name);});if(h)matched.push({h,row});else unmatched.push(row);});if(!matched.length){toast('マッチする銘柄がありません。銘柄管理を確認してください','error');return;}let msg='【楽天証券CSV インポート確認】\n\n✅ 更新: '+matched.length+'件\n';matched.forEach(({h,row})=>{const old=D.current.holdingValues[h.id]?.value||0;msg+=`  ${h.name}: ${fmt(old)} → ${fmt(row.value)}\n`;});if(unmatched.length){msg+='\n⚠️ 未マッチ（銘柄管理に未登録）: '+unmatched.length+'件\n';unmatched.forEach(row=>msg+=`  ${row.name}（${row.accountStr}）\n`);}msg+='\n更新してよろしいですか？';if(!confirm(msg))return;matched.forEach(({h,row})=>{D.current.holdingValues[h.id]={value:row.value,principal:row.principal};});persist();renderDashboard();renderRecordTab();toast(matched.length+'件の評価額を更新しました','success');}catch(err){toast('CSVの読み込みに失敗しました: '+err.message,'error');}};r.readAsText(f,'Shift_JIS');}
+
 // CSV エクスポート
 function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
 function _exportCsv(snaps,filename){
@@ -870,6 +878,8 @@ function initSettingsEvents(){
     el('btn-import-settings-trigger').addEventListener('click',()=>el('imp-settings').click());
     el('imp-settings').addEventListener('change',importSettings);
     el('btn-export-csv').addEventListener('click',exportCsvSelected);
+    el('btn-import-rakuten-trigger').addEventListener('click',()=>el('imp-rakuten').click());
+    el('imp-rakuten').addEventListener('change',importRakuten);
 }
 function init(){
     const now=new Date();
