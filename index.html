@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
 <header>
@@ -246,17 +246,18 @@
             <div class="g2 mb">
                 <div class="tbl-wrap">
                     <div class="tbl-head">口座別合計</div>
-                    <table><thead><tr><th>口座</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <table id="tbl-by-account"><thead><tr><th>口座</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
                     <tbody id="an-by-account"></tbody></table>
                 </div>
                 <div class="tbl-wrap">
                     <div class="tbl-head">種別合計</div>
-                    <table><thead><tr><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                    <table id="tbl-by-type"><thead><tr><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
                     <tbody id="an-by-type"></tbody></table>
                 </div>
             </div>
-            <div class="tbl-wrap tbl-scroll">
+            <div class="tbl-wrap">
                 <div class="tbl-head">銘柄別一覧</div>
+                <div class="tbl-scroll">
                 <table>
                     <thead><tr>
                         <th>銘柄名 <button class="xf-btn" data-xf-table="an-holdings" data-xf-col="0">▾</button></th>
@@ -271,6 +272,7 @@
                     <tbody id="an-holdings"><tr><td colspan="8" class="empty">データなし</td></tr></tbody>
                     <tfoot id="an-holdings-foot"></tfoot>
                 </table>
+                </div>
             </div>
         </div>
     </div>
@@ -637,6 +639,6 @@
 </div>
 
 </main>
-<script src="app.js?v=27"></script>
+<script src="app.js?v=28"></script>
 </body>
 </html>
