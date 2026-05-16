@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=32">
+    <link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
 <header>
@@ -187,14 +187,20 @@
             <div class="fi fi-wrap" style="margin-bottom:8px;">
                 <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在の評価額）"></div>
                 <div class="fg"><label>開始時元本（円）</label><input type="number" id="schd-start-principal" placeholder="自動（現在の元本）"></div>
-                <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.5" step="0.1"></div>
+                <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.0" step="0.1"></div>
+                <div class="fg"><label>年利・資産成長率（%）</label><input type="number" id="schd-annual-return" value="0" step="0.1" placeholder="0"></div>
                 <div class="fg"><label>毎月積立（円）</label><input type="number" id="schd-monthly-add" placeholder="0"></div>
+                <div class="fg"><label>目標月収（円）</label><input type="number" id="schd-target-income" placeholder="例: 100000"></div>
                 <div class="fg"><label>年数</label><select id="schd-years-sel"><option value="5">5年</option><option value="10" selected>10年</option><option value="20">20年</option><option value="30">30年</option></select></div>
-                <div class="cb-end"><label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-no-reinvest">再投資なし</label></div>
+                <div class="cb-end" style="gap:10px;">
+                    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-reinvest" checked>再投資あり</label>
+                    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-tax">税引後</label>
+                </div>
             </div>
+            <div id="schd-reach-note" style="display:none;margin-bottom:8px;font-size:12px;padding:6px 10px;background:#f0fdf4;border:1px solid #86efac;border-radius:7px;color:#15803d;font-weight:600;"></div>
             <div class="tbl-wrap tbl-scroll">
                 <table>
-                    <thead><tr><th>経過年</th><th style="text-align:right">元本</th><th style="text-align:right">評価額</th><th style="text-align:right">年間分配金</th><th style="text-align:right">月換算</th><th style="text-align:right">累計分配金</th></tr></thead>
+                    <thead><tr><th>経過年</th><th style="text-align:right">元本</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">年間分配金</th><th style="text-align:right">月換算</th><th style="text-align:right">累計分配金</th></tr></thead>
                     <tbody id="schd-reinvest-body"></tbody>
                 </table>
             </div>
@@ -648,6 +654,6 @@
 </div>
 
 </main>
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>

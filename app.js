@@ -259,20 +259,43 @@ function renderSCHDReinvest(){
     const startVal=inputVal>0?inputVal:scdJpy.value;
     const inputPri=parseFloat(el('schd-start-principal')?.value)||0;
     const startPrincipal=inputPri>0?inputPri:scdJpy.principal;
-    const y=parseFloat(el('schd-yield-sim')?.value||3.5)/100;
+    const y=parseFloat(el('schd-yield-sim')?.value||3.0)/100;
+    const annualReturn=parseFloat(el('schd-annual-return')?.value||0)/100;
     const years=parseInt(el('schd-years-sel')?.value||10);
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
-    const noReinvest=el('schd-no-reinvest')?.checked||false;
-    const rows=[];let val=startVal,cumDiv=0;
-    for(let yr=1;yr<=years;yr++){const div=val*y;cumDiv+=div;val+=monthlyAdd*12+(noReinvest?0:div);const principal=startPrincipal+monthlyAdd*12*yr;rows.push({yr,val,div,cumDiv,principal});}
-    el('schd-reinvest-body').innerHTML=rows.map(r=>`<tr>
+    const reinvest=el('schd-reinvest')?.checked!==false;
+    const taxAfter=el('schd-tax')?.checked||false;
+    const TAX=0.79685;// 1 - 20.315%
+    const targetIncome=parseFloat(el('schd-target-income')?.value)||0;
+    const rows=[];let val=startVal,cumDiv=0,reachYr=null;
+    for(let yr=1;yr<=years;yr++){
+        const divGross=val*y;
+        const divNet=taxAfter?divGross*TAX:divGross;
+        cumDiv+=divNet;
+        val=val*(1+annualReturn)+monthlyAdd*12+(reinvest?divNet:0);
+        const principal=startPrincipal+monthlyAdd*12*yr;
+        const gain=val-principal;
+        if(targetIncome>0&&reachYr===null&&divNet/12>=targetIncome)reachYr=yr;
+        rows.push({yr,val,div:divNet,cumDiv,principal,gain});
+    }
+    const note=el('schd-reach-note');
+    if(note){
+        if(targetIncome>0&&reachYr){note.style.display='';note.textContent=`目標月収 ${fmt(targetIncome)} 達成: ${reachYr}年目`;}
+        else if(targetIncome>0&&!reachYr){note.style.display='';note.style.background='#fef3c7';note.style.borderColor='#f59e0b';note.style.color='#92400e';note.textContent=`目標月収 ${fmt(targetIncome)} は${years}年以内に未達成`;}
+        else{note.style.display='none';note.style.background='';note.style.borderColor='';note.style.color='';}
+    }
+    el('schd-reinvest-body').innerHTML=rows.map(r=>{
+        const gainCls=r.gain>=0?'positive':'negative';
+        const gainStr=r.gain>=0?'+'+fmt(r.gain):fmt(r.gain);
+        return`<tr>
         <td>${r.yr}年目</td>
         <td style="text-align:right">${fmt(r.principal)}</td>
         <td style="text-align:right">${fmt(r.val)}</td>
+        <td style="text-align:right"><span class="${gainCls}">${gainStr}</span></td>
         <td style="text-align:right;color:var(--success);font-weight:600">${fmt(r.div)}</td>
         <td style="text-align:right;color:var(--muted)">${fmt(r.div/12)}</td>
         <td style="text-align:right">${fmt(r.cumDiv)}</td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 }
 
 function renderDividendSim(){
@@ -859,9 +882,10 @@ function initRecordEvents(){
     el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){toast('基本設定でiDeCo開始月と月次拠出合計を設定してください','error');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>el(id).addEventListener('input',markUnsaved));
     document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
-    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-monthly-add'].forEach(id=>el(id).addEventListener('input',renderSCHDReinvest));
+    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-annual-return','schd-monthly-add','schd-target-income'].forEach(id=>el(id).addEventListener('input',renderSCHDReinvest));
     el('schd-years-sel').addEventListener('change',renderSCHDReinvest);
-    el('schd-no-reinvest').addEventListener('change',renderSCHDReinvest);
+    el('schd-reinvest').addEventListener('change',renderSCHDReinvest);
+    el('schd-tax').addEventListener('change',renderSCHDReinvest);
     ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>el(id).addEventListener('input',renderFire));
 }
 function initSettingsEvents(){
