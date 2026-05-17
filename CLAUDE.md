@@ -45,9 +45,11 @@ D = {
     usdJpy: 150,               // USD/JPY レート（USD銘柄の円換算に使用）
     targetAllocation: {},      // 目標配分 { [assetTypeId]: number（%） }
   },
+  brokers:      [ {id, name, order} ],
   bankAccounts: [ {id, name, note, order} ],
   creditCards:  [ {id, name, note, bankId, order} ],  // bankId: 引き落とし口座ID（任意）
-  holdings:     [ {id, name, account, assetType, monthlyAmount, spotList, dividendYield, currency, dividendMonths, order} ],
+  holdings:     [ {id, name, account, assetType, brokerId, monthlyAmount, spotList, dividendYield, currency, dividendMonths, order} ],
+  //  brokerId: 証券会社ID（brokers[].id 参照、楽天証券CSVインポート時の削除スコープ制御に使用）
   //  spotList: [{id, amount, done}]  ← 複数スポット購入計画。done=true のみNISA年間バーに加算
   //  currency: 'jpy'（デフォルト）または 'usd'（holdingJpy()でusdJpy換算）
   //  dividendMonths: [1-12の数値配列]  ← 配当受取月（配当カレンダーに使用）
@@ -170,6 +172,7 @@ acBadge(acc)      // 口座種別バッジHTML
 atBadge(type)     // 銘柄種別バッジHTML
 buildAccountOptions(selId, val)    // select要素に口座種別を動的生成
 buildAssetTypeOptions(selId, val)  // select要素に銘柄種別を動的生成
+buildBrokerOptions(selId, val)     // select要素に証券会社を動的生成
 deleteSnap(month) // 指定月のスナップショット削除
 _buildCardBankOptions(val) // カード設定パネルの引き落とし口座セレクトを生成
 _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
