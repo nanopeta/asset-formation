@@ -338,6 +338,9 @@
         .div-cal-bar{width:100%;background:var(--accent);border-radius:3px 3px 0 0;transition:height .4s ease;}
         .div-cal-label{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;}
         @media(max-width:600px){.div-cal-grid{grid-template-columns:repeat(6,1fr);height:110px;}}
+        /* ===== スティッキーA列もhoverハイライト対象に ===== */
+        .tbl-scroll table tbody tr:hover td:first-child{background:#f3f9fc;}
+        #tbl-by-account tbody tr:hover td:first-child,#tbl-by-type tbody tr:hover td:first-child{background:#f3f9fc;}
         /* ===== トースト通知 ===== */
         .toast{position:fixed;bottom:24px;right:20px;padding:10px 16px;border-radius:10px;background:#243447;color:#fff;font-size:13px;z-index:10000;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;max-width:360px;box-shadow:0 6px 20px rgba(0,0,0,.2);pointer-events:none;}
         .toast.toast-show{opacity:1;transform:translateY(0);}
