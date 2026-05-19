@@ -190,7 +190,7 @@ function renderPortfolio(totalInv){
     if(!items.length){tbody.innerHTML='<tr><td colspan="4" class="empty">記録タブからデータを入力してください</td></tr>';if(chartPortfolio){chartPortfolio.destroy();chartPortfolio=null;}renderAllocationBars([]);return;}
     tbody.innerHTML=items.map(i=>{
         const r=totalInv>0?((i.value/totalInv)*100).toFixed(1):'0.0';
-        const accLabel=i.account==='ideco'?'<span class="badge b-green">iDeCo</span>':acBadge(i.account)+'</span>';
+        const accLabel=i.account==='ideco'?'<span class="badge b-ideco">iDeCo</span>':acBadge(i.account)+'</span>';
         const diff=i.prevVal>0?i.value-i.prevVal:null;
         const diffHtml=diff!==null?`<span class="${diff>=0?'positive':'negative'}" style="font-size:11px;">${diff>=0?'+':''}${fmt(diff)}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';
         return`<tr><td><div class="td-name"><span class="dot" style="background:${i.color}"></span>${i.name}</div></td><td>${accLabel}</td><td style="text-align:right">${diffHtml}</td><td style="text-align:right">${r}%</td></tr>`;
@@ -237,7 +237,7 @@ function renderAnalysisData(){
     const{inv,ideco}=calcTotals();const totalInv=inv+ideco;
     const allH=[
         ...D.holdings.map(h=>{const jpy=holdingJpy(h);return{...h,hv:{value:jpy.value,principal:jpy.principal},acLabel:acBadge(h.account)+'</span>',accKey:h.account,isIdeco:false};}),
-        ...D.idecoHoldings.map(h=>({...h,hv:c.idecoValues[h.id]||{},acLabel:'<span class="badge b-green">iDeCo</span>',accKey:'ideco',isIdeco:true})),
+        ...D.idecoHoldings.map(h=>({...h,hv:c.idecoValues[h.id]||{},acLabel:'<span class="badge b-ideco">iDeCo</span>',accKey:'ideco',isIdeco:true})),
     ];
     const totalVal=allH.reduce((a,h)=>a+(h.hv.value||0),0);
     const totalPri=allH.reduce((a,h)=>a+(h.hv.principal||0),0);
@@ -357,7 +357,7 @@ function renderDividendSim(){
         const after=before*(1-taxRate);
         totalBefore+=before;totalAfter+=after;
         const accText=h.isIdeco?'iDeCo':(getAccounts()[h.account]?.label||h.account);
-        const accLabel=h.isIdeco?'<span class="badge b-green">iDeCo</span>':acBadge(h.account)+'</span>';
+        const accLabel=h.isIdeco?'<span class="badge b-ideco">iDeCo</span>':acBadge(h.account)+'</span>';
         const taxText=isTaxFree?'非課税':'課税';
         const taxLabel=isTaxFree?'<span class="div-tax-free">非課税</span>':'<span class="div-tax">課税</span>';
         const yieldStr=(y*100).toFixed(2)+'%';
@@ -622,7 +622,7 @@ function renderTrendChart(){
     });
     const _tooltipOrder=['現金','投資','iDeCo','投資元本'];
     chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
-        {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#5fad9b',backgroundColor:'rgba(95,173,155,.28)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#c9915a',backgroundColor:'rgba(201,145,90,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資',     data:snaps.map(s=>s.investment),    borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
