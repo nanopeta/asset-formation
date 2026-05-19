@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
 </head>
 <body>
 <header>
@@ -184,8 +184,12 @@
     <div class="an-block" id="sec-reinvest">
         <div class="an-summary">分配金再投資シミュレーション</div>
         <div class="an-body">
+            <div class="fg" style="margin-bottom:8px;max-width:320px;">
+                <label>対象銘柄</label>
+                <select id="sim-holding-sel"></select>
+            </div>
             <div class="fi fi-wrap" style="margin-bottom:8px;">
-                <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（現在の評価額）"></div>
+                <div class="fg"><label>開始時評価額（円）</label><input type="number" id="schd-start-val" placeholder="自動（選択銘柄の評価額）"></div>
                 <div class="fg"><label>開始時元本（円）</label><input type="number" id="schd-start-principal" placeholder="自動（現在の元本）"></div>
                 <div class="fg"><label>想定利回り（%）</label><input type="number" id="schd-yield-sim" value="3.0" step="0.1"></div>
                 <div class="fg"><label>年利・資産成長率（%）</label><input type="number" id="schd-annual-return" value="0" step="0.1" placeholder="0"></div>
@@ -198,6 +202,7 @@
                     <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" id="schd-tax">税引後</label>
                 </div>
             </div>
+            <button id="btn-run-sim" style="margin-bottom:10px;padding:7px 18px;border:none;border-radius:7px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">シミュレーション実行</button>
             <div id="schd-reach-note" style="display:none;margin-bottom:8px;font-size:12px;padding:6px 10px;background:#f0fdf4;border:1px solid #86efac;border-radius:7px;color:#15803d;font-weight:600;"></div>
             <div class="chart-wrap chart-h300" style="margin-bottom:12px;"><canvas id="reinvest-chart"></canvas></div>
             <div class="tbl-wrap tbl-scroll">
@@ -679,6 +684,6 @@
 </div>
 
 </main>
-<script src="app.js?v=44"></script>
+<script src="app.js?v=45"></script>
 </body>
 </html>
