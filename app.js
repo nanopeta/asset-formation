@@ -169,6 +169,7 @@ function renderDashboard(){
     renderDashNisaSection(new Date().getMonth()+1);
     renderPortfolio(inv+ideco);
     renderAnalysisData();
+    buildReinvestHoldingOptions();
     renderSCHDReinvest();
     renderDividendSim();
     renderDivCalendar();
@@ -261,13 +262,31 @@ function renderAnalysisData(){
     xfBind('an-holdings','an-holdings',{afterFilter:updateAnHoldingsFoot});
 }
 
+function buildReinvestHoldingOptions(){
+    const sel=el('sim-holding-sel');
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">-- 銘柄を選択 --</option>'+
+        D.holdings.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+    if(cur)sel.value=cur;
+}
+function _populateReinvestFromHolding(id){
+    const h=id?D.holdings.find(x=>x.id===id):null;
+    if(!h)return;
+    const jpy=holdingJpy(h);
+    el('schd-start-val').value='';
+    el('schd-start-principal').value='';
+    if((h.dividendYield||0)>0)el('schd-yield-sim').value=(h.dividendYield||0).toFixed(2);
+    if((h.monthlyAmount||0)>0)el('schd-monthly-add').value=h.monthlyAmount||0;
+}
 function renderSCHDReinvest(){
-    const scdH=getScdHolding();
-    const scdJpy=scdH?holdingJpy(scdH):{value:0,principal:0};
+    const selId=el('sim-holding-sel')?.value||'';
+    const selH=selId?D.holdings.find(h=>h.id===selId):getScdHolding();
+    const selJpy=selH?holdingJpy(selH):{value:0,principal:0};
     const inputVal=parseFloat(el('schd-start-val')?.value)||0;
-    const startVal=inputVal>0?inputVal:scdJpy.value;
+    const startVal=inputVal>0?inputVal:selJpy.value;
     const inputPri=parseFloat(el('schd-start-principal')?.value)||0;
-    const startPrincipal=inputPri>0?inputPri:scdJpy.principal;
+    const startPrincipal=inputPri>0?inputPri:selJpy.principal;
     const y=parseFloat(el('schd-yield-sim')?.value||3.0)/100;
     const divGrowth=parseFloat(el('schd-div-growth')?.value||0)/100;
     const annualReturn=parseFloat(el('schd-annual-return')?.value||0)/100;
@@ -943,10 +962,8 @@ function initRecordEvents(){
     el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){toast('基本設定でiDeCo開始月と月次拠出合計を設定してください','error');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>el(id).addEventListener('input',markUnsaved));
     document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
-    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-annual-return','schd-monthly-add','schd-target-income','schd-div-growth'].forEach(id=>el(id).addEventListener('input',renderSCHDReinvest));
-    el('schd-years-sel').addEventListener('change',renderSCHDReinvest);
-    el('schd-reinvest').addEventListener('change',renderSCHDReinvest);
-    el('schd-tax').addEventListener('change',renderSCHDReinvest);
+    el('btn-run-sim').addEventListener('click',renderSCHDReinvest);
+    el('sim-holding-sel').addEventListener('change',function(){_populateReinvestFromHolding(this.value);});
     ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>el(id).addEventListener('input',renderFire));
 }
 function initSettingsEvents(){
