@@ -429,16 +429,23 @@ function renderIdecoSim(){
     const projected=Math.round(idecoTotal*Math.pow(1+ret,yrs));
     let html='';
     if(method==='lumpsum'){
-        const svcYrs=parseInt(el('ideco-sim-service')?.value||30);
+        const startMonth=D.settings.idecoStartMonth;
+        let svcYrs=20;
+        if(startMonth){
+            const start=new Date(startMonth+'-01');
+            const receiveDate=new Date();receiveDate.setFullYear(receiveDate.getFullYear()+yrs);
+            svcYrs=Math.max(1,Math.floor((receiveDate-start)/(1000*60*60*24*365.25)));
+        }
         const deduction=svcYrs<=20?400000*svcYrs:8000000+700000*(svcYrs-20);
         const taxableIncome=Math.floor(Math.max(0,projected-deduction)/2);
         const incomeTax=calcIncomeTax(taxableIncome);
         const residentTax=Math.floor(taxableIncome*0.1);
         const totalTax=incomeTax+residentTax;
         const netAmount=projected-totalTax;
-        html=`<div class="g4 mb">
+        const noStartNote=!startMonth?'<div style="font-size:11px;color:var(--warning);margin-bottom:8px;">⚠ 基本設定でiDeCo開始月を設定すると加入年数が自動計算されます（現在は'+svcYrs+'年で計算）</div>':'';
+        html=`${noStartNote}<div class="g4 mb">
             <div class="card card-sm"><div class="clabel">${yrs}年後の想定残高</div><div class="cval">${fmt(projected)}</div></div>
-            <div class="card card-sm"><div class="clabel">退職所得控除（勤続${svcYrs}年）</div><div class="cval">${fmt(deduction)}</div></div>
+            <div class="card card-sm"><div class="clabel">退職所得控除（加入${svcYrs}年）</div><div class="cval">${fmt(deduction)}</div></div>
             <div class="card card-sm"><div class="clabel">概算税額</div><div class="cval" style="color:var(--danger)">${fmt(totalTax)}</div><div class="csub">税率 ${projected>0?(totalTax/projected*100).toFixed(1):0}%</div></div>
             <div class="card card-sm"><div class="clabel">実質受取額（税引後）</div><div class="cval positive">${fmt(netAmount)}</div></div>
         </div>
@@ -1110,7 +1117,7 @@ function initRecordEvents(){
     el('sim-holding-sel').addEventListener('change',function(){_populateReinvestFromHolding(this.value);});
     ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>el(id).addEventListener('input',renderFire));
     el('btn-run-ideco-sim').addEventListener('click',renderIdecoSim);
-    el('ideco-sim-method').addEventListener('change',function(){el('ideco-service-wrap').style.display=this.value==='lumpsum'?'':'none';});
+    el('ideco-sim-method').addEventListener('change',renderIdecoSim);
     el('btn-run-drawdown').addEventListener('click',renderDrawdown);
 }
 function initSettingsEvents(){
