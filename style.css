@@ -179,6 +179,7 @@
         .b-ideco{background:#fdefd8;color:#b07030;}
         .b-gray{background:#eef2f5;color:#5a7080;}
         .b-red{background:#fde8e8;color:#a03030;}
+        .b-rose{background:#f5e5f0;color:#905080;}
 
         /* ===== ドラッグ ===== */
         .drag-handle{cursor:grab;color:#94a3b8;user-select:none;font-size:18px;text-align:center;width:36px;padding:0 8px;}
