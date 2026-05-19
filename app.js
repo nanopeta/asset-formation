@@ -821,7 +821,7 @@ function renderAccTypesTable(){
         return`<tr ${drag}>${handle}<td><span class="dot" style="background:${a.color}"></span>${a.label} ${taxBadge}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
-function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#2563eb|b-blue';el('s-acctype-taxfree').checked=false;el('s-acctype-panel-title').textContent='口座種別を追加';}_panelOpen('s-acctype-panel');}
+function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#5b8fa8|b-blue';el('s-acctype-taxfree').checked=false;el('s-acctype-panel-title').textContent='口座種別を追加';}_panelOpen('s-acctype-panel');}
 function closeAccTypePanel(){_panelClose('s-acctype-panel');}
 function editAccType(id,builtIn=false){
     const accs=getAccounts();const a=accs[id];if(!a)return;
