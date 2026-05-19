@@ -333,9 +333,9 @@ function renderSCHDReinvest(){
     const rCtx=el('reinvest-chart')?.getContext('2d');
     if(rCtx&&rows.length){
         chartReinvest=new Chart(rCtx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
-            {label:'評価額',    data:rows.map(r=>r.val),      borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true, tension:.3,pointRadius:3},
-            {label:'投資元本',  data:rows.map(r=>r.principal),borderColor:'#94a3b8',borderDash:[6,3],              fill:false,tension:.3,pointRadius:3,borderWidth:1.5},
-            {label:'累計分配金',data:rows.map(r=>r.cumDiv),   borderColor:'#059669',borderDash:[4,3],              fill:false,tension:.3,pointRadius:3},
+            {label:'評価額',    data:rows.map(r=>r.val),      borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.10)',fill:true, tension:.3,pointRadius:3},
+            {label:'投資元本',  data:rows.map(r=>r.principal),borderColor:'#c9915a',borderDash:[6,3],              fill:false,tension:.3,pointRadius:3,borderWidth:1.5},
+            {label:'累計分配金',data:rows.map(r=>r.cumDiv),   borderColor:'#5fad9b',borderDash:[4,3],              fill:false,tension:.3,pointRadius:3},
         ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
     }
 }
@@ -409,7 +409,7 @@ function renderDivCalendar(){
     if(chartDivCal)chartDivCal.destroy();
     const ctx=el('div-cal-chart')?.getContext('2d');
     if(ctx){
-        chartDivCal=new Chart(ctx,{type:'bar',data:{labels:mNames,datasets:[{label:'月間配当',data:monthly,backgroundColor:monthly.map(v=>v>0?'rgba(22,163,74,.75)':'rgba(226,232,240,.6)'),borderColor:monthly.map(v=>v>0?'#16a34a':'#e2e8f0'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>v>=10000?(v/10000).toFixed(1)+'万':fmt(v)},beginAtZero:true}}}});
+        chartDivCal=new Chart(ctx,{type:'bar',data:{labels:mNames,datasets:[{label:'月間配当',data:monthly,backgroundColor:monthly.map(v=>v>0?'rgba(95,173,155,.8)':'rgba(216,231,239,.6)'),borderColor:monthly.map(v=>v>0?'#5fad9b':'#d8e7ef'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>v>=10000?(v/10000).toFixed(1)+'万':fmt(v)},beginAtZero:true}}}});
     }
 }
 
@@ -505,8 +505,8 @@ function renderDrawdown(){
     if(chartDrawdown)chartDrawdown.destroy();
     const ctx=el('drawdown-chart')?.getContext('2d');
     if(ctx)chartDrawdown=new Chart(ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
-        {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3,pointRadius:2},
-        {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#94a3b8',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
+        {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.12)',fill:true,tension:.3,pointRadius:2},
+        {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'},beginAtZero:true}}}});
 }
 
@@ -614,10 +614,10 @@ function renderTrendChart(){
     });
     const _tooltipOrder=['現金','投資','iDeCo','投資元本'];
     chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
-        {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#059669',backgroundColor:'rgba(5,150,105,.3)',  fill:true, tension:.3,pointRadius:3,stack:'assets'},
-        {label:'投資',     data:snaps.map(s=>s.investment),    borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.2)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
-        {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,.2)',  fill:true, tension:.3,pointRadius:3,stack:'assets'},
-        {label:'投資元本', data:principalData,                  borderColor:'#64748b',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
+        {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#5fad9b',backgroundColor:'rgba(95,173,155,.28)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'投資',     data:snaps.map(s=>s.investment),    borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label)}},scales:{y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
 }
 
