@@ -7,10 +7,10 @@ const BUILT_IN_ACCOUNTS={
 };
 const IDECO_COLOR='#c9915a';
 const BUILT_IN_ASSET_TYPES={
-    'fund':           {label:'投資信託',badge:'b-gray'},
-    'domestic-stock': {label:'国内株式',badge:'b-green'},
+    'fund':           {label:'投資信託',badge:'b-blue'},
+    'domestic-stock': {label:'国内株式',badge:'b-teal'},
     'us-stock':       {label:'米国株式',badge:'b-orange'},
-    'other':          {label:'その他',  badge:'b-gray'},
+    'other':          {label:'その他',  badge:'b-purple'},
 };
 const ASSET_TYPE_COLORS={'fund':'#5b8fa8','domestic-stock':'#5fad9b','us-stock':'#c9915a','other':'#9b8fc4'};
 function getAccounts(){const r={...BUILT_IN_ACCOUNTS};Object.entries(D.accountTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
@@ -36,6 +36,7 @@ function makeDefault(){
         idecoHoldings:[],
         customAccounts:[],
         customAssetTypes:[],
+        accountTypeOrder:['nisa-growth','nisa-tsumitate','specific','old-nisa'],
         accountTypeOverrides:{},
         assetTypeOverrides:{},
         current:{
@@ -52,7 +53,7 @@ function makeDefault(){
 function load(){
     try{
         const r=localStorage.getItem('asset-v3');
-        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};if(!d.settings.idecoStartMonth)d.settings.idecoStartMonth='';if(!d.settings.usdJpy)d.settings.usdJpy=150;if(!d.settings.targetAllocation)d.settings.targetAllocation={};if(!d.brokers)d.brokers=[{id:'broker-rakuten',name:'楽天証券',order:0}];(d.holdings||[]).forEach((h,i)=>{if(!h.spotList){h.spotList=(h.spotAnnual||0)>0?[{id:'sp'+Date.now()+i,amount:h.spotAnnual,done:false}]:[];}if(!h.currency)h.currency='jpy';if(!h.dividendMonths)h.dividendMonths=[];if(h.brokerId===undefined)h.brokerId='';});return d;}
+        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};if(!d.settings.idecoStartMonth)d.settings.idecoStartMonth='';if(!d.settings.usdJpy)d.settings.usdJpy=150;if(!d.settings.targetAllocation)d.settings.targetAllocation={};if(!d.brokers)d.brokers=[{id:'broker-rakuten',name:'楽天証券',order:0}];if(!d.accountTypeOrder)d.accountTypeOrder=[...Object.keys(BUILT_IN_ACCOUNTS),...(d.customAccounts||[]).map(a=>a.id)];(d.holdings||[]).forEach((h,i)=>{if(!h.spotList){h.spotList=(h.spotAnnual||0)>0?[{id:'sp'+Date.now()+i,amount:h.spotAnnual,done:false}]:[];}if(!h.currency)h.currency='jpy';if(!h.dividendMonths)h.dividendMonths=[];if(h.brokerId===undefined)h.brokerId='';});return d;}
         const v2=localStorage.getItem('asset-v2');
         if(v2)return migrateV2(JSON.parse(v2));
     }catch{}
@@ -247,7 +248,7 @@ function renderAnalysisData(){
 
     const byAcc={},byType={};
     allH.forEach(h=>{if(!byAcc[h.accKey])byAcc[h.accKey]={val:0,pri:0,label:h.acLabel};byAcc[h.accKey].val+=h.hv.value||0;byAcc[h.accKey].pri+=h.hv.principal||0;if(!byType[h.assetType])byType[h.assetType]={val:0,pri:0};byType[h.assetType].val+=h.hv.value||0;byType[h.assetType].pri+=h.hv.principal||0;});
-    const accOrder=[...Object.keys(BUILT_IN_ACCOUNTS),'ideco'];
+    const accOrder=[...(D.accountTypeOrder||[...Object.keys(BUILT_IN_ACCOUNTS),...(D.customAccounts||[]).map(a=>a.id)]),'ideco'];
     function breakdownRow(label,d,totalVal,totalGain){const g=d.pri>0?d.val-d.pri:null;const gr=d.pri>0?(d.val-d.pri)/d.pri*100:null;const r=totalVal>0?((d.val/totalVal)*100).toFixed(1):'0.0';const gHtml=g!==null?`<span class="${g>=0?'positive':'negative'}">${g>=0?'+':''}${fmt(g)}</span>`:'--';const grHtml=gr!==null?`<span class="${gr>=0?'positive':'negative'}">${gr>=0?'+':''}${gr.toFixed(2)}%</span>`:'--';return`<tr><td><div class="td-name">${label}</div></td><td style="text-align:right">${fmt(d.val)}</td><td style="text-align:right">${gHtml}</td><td style="text-align:right">${grHtml}</td><td style="text-align:right">${r}%</td></tr>`;}
     const totalGainRate=totalPri>0?(totalGain/totalPri*100):null;
     const accFooter=`<tr style="border-top:2px solid var(--border);font-weight:700"><td>合計</td><td style="text-align:right">${fmt(totalVal)}</td><td style="text-align:right">${totalGain!==null?`<span class="${totalGain>=0?'positive':'negative'}">${totalGain>=0?'+':''}${fmt(totalGain)}</span>`:'--'}</td><td style="text-align:right">${totalGainRate!==null?`<span class="${totalGainRate>=0?'positive':'negative'}">${totalGainRate>=0?'+':''}${totalGainRate.toFixed(2)}%</span>`:'--'}</td><td></td></tr>`;
@@ -821,14 +822,16 @@ function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return
 // 口座種別
 function renderAccTypesTable(){
     const accs=getAccounts();
-    const all=[...Object.entries(BUILT_IN_ACCOUNTS).map(([id])=>({id,...accs[id],builtIn:true})),...(D.customAccounts||[]).map(a=>({...a,builtIn:false}))];
+    const order=D.accountTypeOrder||[...Object.keys(BUILT_IN_ACCOUNTS),...(D.customAccounts||[]).map(a=>a.id)];
+    const byId={...Object.fromEntries(Object.keys(BUILT_IN_ACCOUNTS).map(id=>[id,{id,...accs[id],builtIn:true}])),...Object.fromEntries((D.customAccounts||[]).map(a=>[a.id,{...a,builtIn:false}]))};
+    const all=order.map(id=>byId[id]).filter(Boolean);
     el('s-acctypes-table').innerHTML=all.map(a=>{
-        const drag=a.builtIn?'':'draggable="true" data-id="'+a.id+'" data-group="acctype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
-        const handle=a.builtIn?'<td style="width:36px;color:var(--muted);text-align:center;font-size:11px;">―</td>':'<td class="drag-handle">⠿</td>';
+        const drag='draggable="true" data-id="'+a.id+'" data-group="acctype" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"';
         const taxBadge=a.taxFree?'<span class="badge b-green" style="font-size:10px;">非課税</span>':'';
-        return`<tr ${drag}>${handle}<td><span class="dot" style="background:${a.color}"></span>${a.label} ${taxBadge}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
+        return`<tr ${drag}><td class="drag-handle">⠿</td><td><span class="dot" style="background:${a.color}"></span>${a.label} ${taxBadge}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
+function randomAccColor(){const sel=el('s-acctype-color');const opts=[...sel.options];sel.value=opts[Math.floor(Math.random()*opts.length)].value;}
 function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#5b8fa8|b-blue';el('s-acctype-taxfree').checked=false;el('s-acctype-panel-title').textContent='口座種別を追加';}_panelOpen('s-acctype-panel');}
 function closeAccTypePanel(){_panelClose('s-acctype-panel');}
 function editAccType(id,builtIn=false){
@@ -838,8 +841,8 @@ function editAccType(id,builtIn=false){
     el('s-acctype-taxfree').checked=!!a.taxFree;
     el('s-acctype-panel-title').textContent='口座種別を編集';openAccTypePanel(false);
 }
-function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){toast('種別名を入力してください','error');return;}const[color,badge]=el('s-acctype-color').value.split('|');const taxFree=el('s-acctype-taxfree').checked;if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge,taxFree};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;a.taxFree=taxFree;}}else{D.customAccounts.push({id:uid(),label:name,color,badge,taxFree});}persist();closeAccTypePanel();renderAccTypesTable();}
-function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){toast('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。','error');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);persist();renderAccTypesTable();}
+function saveAccType(){const name=el('s-acctype-name').value.trim();if(!name){toast('種別名を入力してください','error');return;}const[color,badge]=el('s-acctype-color').value.split('|');const taxFree=el('s-acctype-taxfree').checked;if(!D.customAccounts)D.customAccounts=[];const id=el('s-acctype-id').value;const isBuiltIn=el('s-acctype-builtin').value==='1';if(isBuiltIn){if(!D.accountTypeOverrides)D.accountTypeOverrides={};D.accountTypeOverrides[id]={label:name,color,badge,taxFree};}else if(id){const a=D.customAccounts.find(a=>a.id===id);if(a){a.label=name;a.color=color;a.badge=badge;a.taxFree=taxFree;}}else{const newId=uid();D.customAccounts.push({id:newId,label:name,color,badge,taxFree});if(!D.accountTypeOrder)D.accountTypeOrder=[...Object.keys(BUILT_IN_ACCOUNTS),...D.customAccounts.map(a=>a.id)];else D.accountTypeOrder.push(newId);}persist();closeAccTypePanel();renderAccTypesTable();}
+function deleteAccType(id){const a=(D.customAccounts||[]).find(a=>a.id===id);if(!a)return;if(D.holdings.some(h=>h.account===id)){toast('この口座種別を使用している銘柄があります。先に銘柄の口座を変更してください。','error');return;}if(!confirm(`「${a.label}」を削除しますか？`))return;D.customAccounts=D.customAccounts.filter(a=>a.id!==id);D.accountTypeOrder=(D.accountTypeOrder||[]).filter(oid=>oid!==id);persist();renderAccTypesTable();}
 
 // 銘柄種別
 function renderAssetTypesTable(){
@@ -863,7 +866,7 @@ function dragStart(e){dragId=e.currentTarget.dataset.id;dragGroup=e.currentTarge
 function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
 function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function dragEnd(e){e.currentTarget.classList.remove('dragging');}
-function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;const arr=dragGroup==='ideco'?D.idecoHoldings:dragGroup==='bank'?D.bankAccounts:dragGroup==='card'?D.creditCards:dragGroup==='broker'?(D.brokers||[]):dragGroup==='acctype'?D.customAccounts:dragGroup==='assettype'?D.customAssetTypes:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else if(dragGroup==='bank'){renderBanksTable();renderBankInputs();}else if(dragGroup==='card'){renderCardsTable();renderCardInputs();}else if(dragGroup==='broker'){renderBrokersTable();}else if(dragGroup==='acctype'){renderAccTypesTable();}else if(dragGroup==='assettype'){renderAssetTypesTable();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
+function drop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');const tid=e.currentTarget.dataset.id,tg=e.currentTarget.dataset.group;if(!dragId||dragId===tid||dragGroup!==tg)return;if(dragGroup==='acctype'){if(!D.accountTypeOrder)D.accountTypeOrder=[...Object.keys(BUILT_IN_ACCOUNTS),...(D.customAccounts||[]).map(a=>a.id)];const si=D.accountTypeOrder.indexOf(dragId),ti=D.accountTypeOrder.indexOf(tid);if(si===-1||ti===-1){dragId=null;dragGroup=null;return;}const[item]=D.accountTypeOrder.splice(si,1);D.accountTypeOrder.splice(ti,0,item);persist();renderAccTypesTable();dragId=null;dragGroup=null;return;}const arr=dragGroup==='ideco'?D.idecoHoldings:dragGroup==='bank'?D.bankAccounts:dragGroup==='card'?D.creditCards:dragGroup==='broker'?(D.brokers||[]):dragGroup==='assettype'?D.customAssetTypes:D.holdings;const si=arr.findIndex(h=>h.id===dragId),ti=arr.findIndex(h=>h.id===tid);if(si===-1||ti===-1)return;const[item]=arr.splice(si,1);arr.splice(ti,0,item);persist();if(dragGroup==='ideco'){renderIdecoTable();renderIdecoInputs();}else if(dragGroup==='bank'){renderBanksTable();renderBankInputs();}else if(dragGroup==='card'){renderCardsTable();renderCardInputs();}else if(dragGroup==='broker'){renderBrokersTable();}else if(dragGroup==='assettype'){renderAssetTypesTable();}else{renderHoldingsTable();renderHoldingInputs();}dragId=null;dragGroup=null;}
 
 // ===== データ管理 =====
 const today=()=>new Date().toISOString().slice(0,10);
