@@ -269,6 +269,7 @@ function renderSCHDReinvest(){
     const inputPri=parseFloat(el('schd-start-principal')?.value)||0;
     const startPrincipal=inputPri>0?inputPri:scdJpy.principal;
     const y=parseFloat(el('schd-yield-sim')?.value||3.0)/100;
+    const divGrowth=parseFloat(el('schd-div-growth')?.value||0)/100;
     const annualReturn=parseFloat(el('schd-annual-return')?.value||0)/100;
     const years=parseInt(el('schd-years-sel')?.value||10);
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
@@ -278,7 +279,8 @@ function renderSCHDReinvest(){
     const targetIncome=parseFloat(el('schd-target-income')?.value)||0;
     const rows=[];let val=startVal,cumDiv=0,reachYr=null;
     for(let yr=1;yr<=years;yr++){
-        const divGross=val*y;
+        const effectiveYield=y*Math.pow(1+divGrowth,yr-1);
+        const divGross=val*effectiveYield;
         const divNet=taxAfter?divGross*TAX:divGross;
         cumDiv+=divNet;
         val=val*(1+annualReturn)+monthlyAdd*12+(reinvest?divNet:0);
@@ -289,15 +291,16 @@ function renderSCHDReinvest(){
     }
     const note=el('schd-reach-note');
     if(note){
-        if(targetIncome>0&&reachYr){note.style.display='';note.textContent=`目標月収 ${fmt(targetIncome)} 達成: ${reachYr}年目`;}
+        if(targetIncome>0&&reachYr){note.style.display='';note.style.background='';note.style.borderColor='';note.style.color='';note.textContent=`目標月収 ${fmt(targetIncome)} 達成: ${reachYr}年目`;}
         else if(targetIncome>0&&!reachYr){note.style.display='';note.style.background='#fef3c7';note.style.borderColor='#f59e0b';note.style.color='#92400e';note.textContent=`目標月収 ${fmt(targetIncome)} は${years}年以内に未達成`;}
         else{note.style.display='none';note.style.background='';note.style.borderColor='';note.style.color='';}
     }
     el('schd-reinvest-body').innerHTML=rows.map(r=>{
         const gainCls=r.gain>=0?'positive':'negative';
         const gainStr=r.gain>=0?'+'+fmt(r.gain):fmt(r.gain);
-        return`<tr>
-        <td>${r.yr}年目</td>
+        const highlight=targetIncome>0&&reachYr===r.yr?' style="background:#f0fdf4;outline:2px solid #86efac;outline-offset:-1px;"':'';
+        return`<tr${highlight}>
+        <td>${r.yr}年目${reachYr===r.yr?'<span style="margin-left:4px;font-size:10px;color:var(--success);font-weight:700;">✓達成</span>':''}</td>
         <td style="text-align:right">${fmt(r.principal)}</td>
         <td style="text-align:right">${fmt(r.val)}</td>
         <td style="text-align:right"><span class="${gainCls}">${gainStr}</span></td>
@@ -305,6 +308,16 @@ function renderSCHDReinvest(){
         <td style="text-align:right;color:var(--muted)">${fmt(r.div/12)}</td>
         <td style="text-align:right">${fmt(r.cumDiv)}</td>
     </tr>`;}).join('');
+    // チャート描画
+    if(chartReinvest)chartReinvest.destroy();
+    const rCtx=el('reinvest-chart')?.getContext('2d');
+    if(rCtx&&rows.length){
+        chartReinvest=new Chart(rCtx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
+            {label:'評価額',    data:rows.map(r=>r.val),      borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true, tension:.3,pointRadius:3},
+            {label:'投資元本',  data:rows.map(r=>r.principal),borderColor:'#94a3b8',borderDash:[6,3],              fill:false,tension:.3,pointRadius:3,borderWidth:1.5},
+            {label:'累計分配金',data:rows.map(r=>r.cumDiv),   borderColor:'#059669',borderDash:[4,3],              fill:false,tension:.3,pointRadius:3},
+        ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
+    }
 }
 
 function renderDividendSim(){
@@ -415,6 +428,7 @@ function renderFire(){
         <div style="font-size:11px;color:var(--muted)">${fmt(total)} / ${fmt(target)}（${nowPct.toFixed(1)}%）　月次積立: ${fmt(contrib)}/月</div>`;
 }
 
+let chartReinvest=null;
 let chartTrend=null;
 function renderTrendChart(){
     let snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
@@ -929,7 +943,7 @@ function initRecordEvents(){
     el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){toast('基本設定でiDeCo開始月と月次拠出合計を設定してください','error');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>el(id).addEventListener('input',markUnsaved));
     document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
-    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-annual-return','schd-monthly-add','schd-target-income'].forEach(id=>el(id).addEventListener('input',renderSCHDReinvest));
+    ['schd-start-val','schd-start-principal','schd-yield-sim','schd-annual-return','schd-monthly-add','schd-target-income','schd-div-growth'].forEach(id=>el(id).addEventListener('input',renderSCHDReinvest));
     el('schd-years-sel').addEventListener('change',renderSCHDReinvest);
     el('schd-reinvest').addEventListener('change',renderSCHDReinvest);
     el('schd-tax').addEventListener('change',renderSCHDReinvest);
