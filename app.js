@@ -427,7 +427,12 @@ function renderTrendChart(){
         const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
         return invPri+idecoPri;
     });
-    chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[{label:'総資産',data:snaps.map(s=>s.total),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.3,pointRadius:4},{label:'投資元本',data:principalData,borderColor:'#94a3b8',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:1.5},{label:'投資',data:snaps.map(s=>s.investment),borderColor:'#7c3aed',borderDash:[5,5],fill:false,tension:.3,pointRadius:4},{label:'iDeCo',data:snaps.map(s=>s.idecoTotal||0),borderColor:'#059669',borderDash:[3,3],fill:false,tension:.3,pointRadius:4},{label:'現金',data:snaps.map(s=>s.cash),borderColor:'#0891b2',borderDash:[2,4],fill:false,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
+    chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
+        {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#059669',backgroundColor:'rgba(5,150,105,.3)',  fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'投資',     data:snaps.map(s=>s.investment),    borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.2)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,.2)',  fill:true, tension:.3,pointRadius:3,stack:'assets'},
+        {label:'投資元本', data:principalData,                  borderColor:'#64748b',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
 }
 
 // ===== NISA 自動推計 =====
