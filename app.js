@@ -276,8 +276,8 @@ function _populateReinvestFromHolding(id){
     const jpy=holdingJpy(h);
     el('schd-start-val').value='';
     el('schd-start-principal').value='';
-    if((h.dividendYield||0)>0)el('schd-yield-sim').value=(h.dividendYield||0).toFixed(2);
-    if((h.monthlyAmount||0)>0)el('schd-monthly-add').value=h.monthlyAmount||0;
+    el('schd-yield-sim').value=(h.dividendYield||0).toFixed(2);
+    el('schd-monthly-add').value=h.monthlyAmount||0;
 }
 function renderSCHDReinvest(){
     const selId=el('sim-holding-sel')?.value||'';
