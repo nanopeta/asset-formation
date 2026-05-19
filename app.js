@@ -175,6 +175,7 @@ function renderDashboard(){
     renderDivCalendar();
     renderTrendChart();
     renderFire();
+    renderTaxEstimate();
     updateTs();
 }
 
@@ -381,6 +382,7 @@ function renderDividendSim(){
     xfBind('div-sim','div-sim-body',{afterFilter:updateDivSimFoot});
 }
 
+let chartDivCal=null;
 function renderDivCalendar(){
     const c=D.current;
     const allH=[
@@ -388,7 +390,10 @@ function renderDivCalendar(){
         ...D.idecoHoldings.filter(h=>(h.dividendYield||0)>0&&(h.dividendMonths||[]).length>0).map(h=>({...h,isIdeco:true})),
     ];
     const body=el('div-cal-body');if(!body)return;
-    if(!allH.length){body.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0;">配当月を設定した銘柄がありません。銘柄設定 → 銘柄を編集 → 配当月を選択してください。</div>';return;}
+    if(!allH.length){
+        if(chartDivCal){chartDivCal.destroy();chartDivCal=null;}
+        body.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0;">配当月を設定した銘柄がありません。銘柄設定 → 銘柄を編集 → 配当月を選択してください。</div>';return;
+    }
     const monthly=Array(12).fill(0);
     allH.forEach(h=>{
         const val=h.isIdeco?(c.idecoValues[h.id]?.value||0):holdingJpy(h).value;
@@ -397,14 +402,153 @@ function renderDivCalendar(){
         const perMonth=months.length?annual/months.length:0;
         months.forEach(m=>monthly[m-1]+=perMonth);
     });
-    const maxVal=Math.max(...monthly,1);
     const mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
     const annualTotal=monthly.reduce((a,v)=>a+v,0);
-    body.innerHTML='<div class="div-cal-grid">'+mNames.map((m,i)=>{
-        const v=monthly[i];const barH=v>0?Math.max(6,v/maxVal*100):0;
-        return`<div class="div-cal-col"><div class="div-cal-val">${v>=100?fmt(v):''}</div><div class="div-cal-bar-wrap"><div class="div-cal-bar" style="height:${barH}%"></div></div><div class="div-cal-label">${m}</div></div>`;
-    }).join('')+'</div>'
-    +(annualTotal>0?`<div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:right;">年間合計 <strong style="color:var(--success);font-size:14px;">${fmt(annualTotal)}</strong>　月平均 <strong style="color:var(--text)">${fmt(annualTotal/12)}</strong></div>`:'');
+    body.innerHTML='<div class="chart-wrap" style="height:220px"><canvas id="div-cal-chart"></canvas></div>'
+        +(annualTotal>0?`<div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:right;">年間合計 <strong style="color:var(--success);font-size:14px;">${fmt(annualTotal)}</strong>　月平均 <strong style="color:var(--text)">${fmt(annualTotal/12)}</strong></div>`:'');
+    if(chartDivCal)chartDivCal.destroy();
+    const ctx=el('div-cal-chart')?.getContext('2d');
+    if(ctx){
+        chartDivCal=new Chart(ctx,{type:'bar',data:{labels:mNames,datasets:[{label:'月間配当',data:monthly,backgroundColor:monthly.map(v=>v>0?'rgba(22,163,74,.75)':'rgba(226,232,240,.6)'),borderColor:monthly.map(v=>v>0?'#16a34a':'#e2e8f0'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>v>=10000?(v/10000).toFixed(1)+'万':fmt(v)},beginAtZero:true}}}});
+    }
+}
+
+function calcIncomeTax(income){
+    const b=[[1950000,.05,0],[3300000,.1,97500],[6950000,.2,427500],[9000000,.23,636000],[18000000,.33,1536000],[40000000,.4,2796000]];
+    for(const[lim,r,d] of b)if(income<=lim)return Math.max(0,Math.floor(income*r-d));
+    return Math.floor(income*.45-4796000);
+}
+function renderIdecoSim(){
+    const c=D.current;
+    const idecoTotal=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);
+    const res=el('ideco-sim-result');if(!res)return;
+    if(!idecoTotal){res.innerHTML='<div style="color:var(--muted);font-size:13px;">iDeCoの評価額を記録タブで入力してください</div>';return;}
+    const yrs=parseInt(el('ideco-sim-years')?.value||20);
+    const ret=parseFloat(el('ideco-sim-return')?.value||4)/100;
+    const method=el('ideco-sim-method')?.value||'lumpsum';
+    const projected=Math.round(idecoTotal*Math.pow(1+ret,yrs));
+    let html='';
+    if(method==='lumpsum'){
+        const svcYrs=parseInt(el('ideco-sim-service')?.value||30);
+        const deduction=svcYrs<=20?400000*svcYrs:8000000+700000*(svcYrs-20);
+        const taxableIncome=Math.floor(Math.max(0,projected-deduction)/2);
+        const incomeTax=calcIncomeTax(taxableIncome);
+        const residentTax=Math.floor(taxableIncome*0.1);
+        const totalTax=incomeTax+residentTax;
+        const netAmount=projected-totalTax;
+        html=`<div class="g4 mb">
+            <div class="card card-sm"><div class="clabel">${yrs}年後の想定残高</div><div class="cval">${fmt(projected)}</div></div>
+            <div class="card card-sm"><div class="clabel">退職所得控除（勤続${svcYrs}年）</div><div class="cval">${fmt(deduction)}</div></div>
+            <div class="card card-sm"><div class="clabel">概算税額</div><div class="cval" style="color:var(--danger)">${fmt(totalTax)}</div><div class="csub">税率 ${projected>0?(totalTax/projected*100).toFixed(1):0}%</div></div>
+            <div class="card card-sm"><div class="clabel">実質受取額（税引後）</div><div class="cval positive">${fmt(netAmount)}</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);">所得税 ${fmt(incomeTax)} + 住民税 ${fmt(residentTax)}　※退職所得 = (残高 − 控除額) ÷ 2 に累進課税</div>`;
+    } else {
+        const annualAmount=Math.round(projected/20);
+        const pensionDeduction=1100000;
+        const taxableIncome=Math.max(0,annualAmount-pensionDeduction);
+        const incomeTax=calcIncomeTax(taxableIncome);
+        const residentTax=Math.floor(taxableIncome*0.1);
+        const totalTax=incomeTax+residentTax;
+        const netAnnual=annualAmount-totalTax;
+        html=`<div class="g4 mb">
+            <div class="card card-sm"><div class="clabel">${yrs}年後の想定残高</div><div class="cval">${fmt(projected)}</div></div>
+            <div class="card card-sm"><div class="clabel">年間受取（20年分割）</div><div class="cval">${fmt(annualAmount)}</div><div class="csub">${fmt(annualAmount/12)}/月</div></div>
+            <div class="card card-sm"><div class="clabel">概算税額/年</div><div class="cval" style="color:var(--danger)">${fmt(totalTax)}</div></div>
+            <div class="card card-sm"><div class="clabel">年間実質受取（税引後）</div><div class="cval positive">${fmt(netAnnual)}</div><div class="csub">${fmt(netAnnual/12)}/月</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);">公的年金等控除 ${fmt(pensionDeduction)}/年 適用後に課税　※65歳以上想定</div>`;
+    }
+    res.innerHTML=html;
+}
+
+let chartDrawdown=null;
+function renderDrawdown(){
+    const{total}=calcTotals();
+    const initAsset=parseFloat(el('dd-init-asset')?.value)||total;
+    const annualWithdraw=parseFloat(el('dd-annual-withdraw')?.value)||0;
+    const ret=parseFloat(el('dd-return')?.value||4)/100;
+    const years=parseInt(el('dd-years')?.value||40);
+    const res=el('drawdown-result');if(!res)return;
+    if(annualWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">年間取り崩し額を入力してください</div>';return;}
+    const rows=[];let val=initAsset,depletedYr=null;
+    for(let yr=1;yr<=years;yr++){
+        val=val*(1+ret)-annualWithdraw;
+        if(val<=0&&depletedYr===null)depletedYr=yr;
+        rows.push({yr,val:Math.max(0,val)});
+        if(val<0)break;
+    }
+    const isSafe=depletedYr===null;
+    res.innerHTML=`<div class="g3 mb">
+        <div class="card card-sm"><div class="clabel">初期資産</div><div class="cval">${fmt(initAsset)}</div></div>
+        <div class="card card-sm"><div class="clabel">年間取り崩し</div><div class="cval">${fmt(annualWithdraw)}</div><div class="csub">${fmt(annualWithdraw/12)}/月</div></div>
+        <div class="card card-sm"><div class="clabel">資産枯渇</div><div class="cval" style="color:${isSafe?'var(--success)':'var(--danger)'}">${isSafe?years+'年超 安全':depletedYr+'年目'}</div></div>
+    </div>
+    <div class="chart-wrap chart-h300" style="margin-bottom:12px"><canvas id="drawdown-chart"></canvas></div>
+    <div class="tbl-wrap tbl-scroll"><table>
+        <thead><tr><th>経過年</th><th style="text-align:right">残高</th><th style="text-align:right">年間取崩</th><th style="text-align:right">運用損益</th></tr></thead>
+        <tbody>${rows.map((r,i)=>{
+            const prevVal=i===0?initAsset:rows[i-1].val;
+            const gain=r.val-prevVal+annualWithdraw;
+            const depleted=r.val===0;
+            return`<tr${depleted?' style="background:#fef2f2"':''}><td>${r.yr}年目</td><td style="text-align:right;font-weight:600">${depleted?'<span style="color:var(--danger)">枯渇</span>':fmt(r.val)}</td><td style="text-align:right;color:var(--muted)">${fmt(annualWithdraw)}</td><td style="text-align:right"><span class="${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${fmt(gain)}</span></td></tr>`;
+        }).join('')}</tbody>
+    </table></div>`;
+    if(chartDrawdown)chartDrawdown.destroy();
+    const ctx=el('drawdown-chart')?.getContext('2d');
+    if(ctx)chartDrawdown=new Chart(ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
+        {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3,pointRadius:2},
+        {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#94a3b8',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'},beginAtZero:true}}}});
+}
+
+function renderTaxEstimate(){
+    const c=D.current;
+    const accs=getAccounts();
+    let taxableDivPre=0,nisaDivPre=0;
+    D.holdings.forEach(h=>{
+        if(!(h.dividendYield||0))return;
+        const val=holdingJpy(h).value;
+        const annual=val*(h.dividendYield/100);
+        if(accs[h.account]?.taxFree)nisaDivPre+=annual;
+        else taxableDivPre+=annual;
+    });
+    D.idecoHoldings.forEach(h=>{
+        if(!(h.dividendYield||0))return;
+        nisaDivPre+=(c.idecoValues[h.id]?.value||0)*(h.dividendYield/100);
+    });
+    const divTax=taxableDivPre*0.20315;
+    let taxableGain=0,nisaGain=0,idecoGain=0;
+    D.holdings.forEach(h=>{
+        const{value,principal}=holdingJpy(h);
+        const gain=value-principal;
+        if(gain<=0)return;
+        if(accs[h.account]?.taxFree)nisaGain+=gain;
+        else taxableGain+=gain;
+    });
+    D.idecoHoldings.forEach(h=>{
+        const val=c.idecoValues[h.id]?.value||0;
+        const pri=c.idecoValues[h.id]?.principal||0;
+        if(val-pri>0)idecoGain+=val-pri;
+    });
+    const gainTax=taxableGain*0.20315;
+    const body=el('tax-result');if(!body)return;
+    const taxableRows=D.holdings.filter(h=>!accs[h.account]?.taxFree);
+    body.innerHTML=`<div class="g4 mb">
+        <div class="card card-sm"><div class="clabel">配当税（特定口座）</div><div class="cval" style="color:var(--danger)">${fmt(divTax)}</div><div class="csub">税前配当 ${fmt(taxableDivPre)}</div></div>
+        <div class="card card-sm"><div class="clabel">潜在税（特定口座含み益）</div><div class="cval" style="color:var(--warning)">${fmt(gainTax)}</div><div class="csub">含み益 ${fmt(taxableGain)}</div></div>
+        <div class="card card-sm"><div class="clabel">NISA非課税メリット</div><div class="cval positive">${fmt((nisaDivPre*0.20315)+(nisaGain*0.20315))}</div><div class="csub">配当+含み益節税分</div></div>
+        <div class="card card-sm"><div class="clabel">iDeCo非課税メリット</div><div class="cval positive">${fmt(idecoGain*0.20315)}</div><div class="csub">含み益節税分</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">※ 配当税は今年の推定年間額。含み益潜在税は売却した場合の概算（20.315%）。実際の税額は確定申告等で確認してください。</div>
+    ${taxableRows.length?`<div class="tbl-wrap"><div class="tbl-head">特定口座 銘柄別内訳</div>
+    <table><thead><tr><th>銘柄名</th><th style="text-align:right">評価額</th><th style="text-align:right">年間配当(税前)</th><th style="text-align:right">配当税</th><th style="text-align:right">含み益</th><th style="text-align:right">潜在税</th></tr></thead>
+    <tbody>${taxableRows.map(h=>{
+        const{value,principal}=holdingJpy(h);
+        const annual=value*(h.dividendYield||0)/100;
+        const gain=value-principal;
+        return`<tr><td>${h.name}</td><td style="text-align:right">${fmt(value)}</td><td style="text-align:right">${fmt(annual)}</td><td style="text-align:right;color:var(--danger)">${fmt(annual*0.20315)}</td><td style="text-align:right">${gain>0?`<span class="positive">+${fmt(gain)}</span>`:'<span style="color:var(--muted)">--</span>'}</td><td style="text-align:right;color:var(--warning)">${gain>0?fmt(gain*0.20315):'--'}</td></tr>`;
+    }).join('')}</tbody></table></div>`:''}`;
 }
 
 function renderFire(){
@@ -907,7 +1051,7 @@ function xfUpdateBtnState(tableId){
 
 // ===== クイックナビ スクロール連動 =====
 function initQnavHighlight(){
-    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-sim','sec-div-cal','sec-fire','sec-detail'];
+    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-detail','sec-tax'];
     const pills={};
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
     const update=()=>{
@@ -965,6 +1109,9 @@ function initRecordEvents(){
     el('btn-run-sim').addEventListener('click',renderSCHDReinvest);
     el('sim-holding-sel').addEventListener('change',function(){_populateReinvestFromHolding(this.value);});
     ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>el(id).addEventListener('input',renderFire));
+    el('btn-run-ideco-sim').addEventListener('click',renderIdecoSim);
+    el('ideco-sim-method').addEventListener('change',function(){el('ideco-service-wrap').style.display=this.value==='lumpsum'?'':'none';});
+    el('btn-run-drawdown').addEventListener('click',renderDrawdown);
 }
 function initSettingsEvents(){
     el('btn-open-holding').addEventListener('click',openHoldingPanel);
