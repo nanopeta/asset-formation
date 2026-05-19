@@ -549,14 +549,22 @@ function renderTaxEstimate(){
         <div class="card card-sm"><div class="clabel">iDeCo非課税メリット</div><div class="cval positive">${fmt(idecoGain*0.20315)}</div><div class="csub">含み益節税分</div></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">※ 配当税は今年の推定年間額。含み益潜在税は売却した場合の概算（20.315%）。実際の税額は確定申告等で確認してください。</div>
-    ${taxableRows.length?`<div class="tbl-wrap"><div class="tbl-head">特定口座 銘柄別内訳</div>
-    <table><thead><tr><th>銘柄名</th><th style="text-align:right">評価額</th><th style="text-align:right">年間配当(税前)</th><th style="text-align:right">配当税</th><th style="text-align:right">含み益</th><th style="text-align:right">潜在税</th></tr></thead>
-    <tbody>${taxableRows.map(h=>{
+    ${taxableRows.length?`<div class="tbl-wrap tbl-scroll" id="tax-table"><div class="tbl-head">特定口座 銘柄別内訳</div>
+    <table><thead><tr>
+    <th>銘柄名 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="0" onclick="xfOpen('tax-table',0,this)">▾</button></th>
+    <th style="text-align:right">評価額 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="1" onclick="xfOpen('tax-table',1,this)">▾</button></th>
+    <th style="text-align:right">年間配当(税前) <button class="xf-btn" data-xf-table="tax-table" data-xf-col="2" onclick="xfOpen('tax-table',2,this)">▾</button></th>
+    <th style="text-align:right">配当税 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="3" onclick="xfOpen('tax-table',3,this)">▾</button></th>
+    <th style="text-align:right">含み益 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="4" onclick="xfOpen('tax-table',4,this)">▾</button></th>
+    <th style="text-align:right">潜在税 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="5" onclick="xfOpen('tax-table',5,this)">▾</button></th>
+    </tr></thead>
+    <tbody id="tax-holdings-body">${taxableRows.map(h=>{
         const{value,principal}=holdingJpy(h);
         const annual=value*(h.dividendYield||0)/100;
         const gain=value-principal;
-        return`<tr><td>${h.name}</td><td style="text-align:right">${fmt(value)}</td><td style="text-align:right">${fmt(annual)}</td><td style="text-align:right;color:var(--danger)">${fmt(annual*0.20315)}</td><td style="text-align:right">${gain>0?`<span class="positive">+${fmt(gain)}</span>`:'<span style="color:var(--muted)">--</span>'}</td><td style="text-align:right;color:var(--warning)">${gain>0?fmt(gain*0.20315):'--'}</td></tr>`;
+        return`<tr><td><div class="td-name">${h.name}</div></td><td style="text-align:right">${fmt(value)}</td><td style="text-align:right">${fmt(annual)}</td><td style="text-align:right;color:var(--danger)">${fmt(annual*0.20315)}</td><td style="text-align:right">${gain>0?`<span class="positive">+${fmt(gain)}</span>`:'<span style="color:var(--muted)">--</span>'}</td><td style="text-align:right;color:var(--warning)">${gain>0?fmt(gain*0.20315):'--'}</td></tr>`;
     }).join('')}</tbody></table></div>`:''}`;
+    if(taxableRows.length)xfBind('tax-table','tax-holdings-body',{});
 }
 
 function renderFire(){
