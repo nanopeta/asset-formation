@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=56">
+    <link rel="stylesheet" href="style.css?v=57">
 </head>
 <body>
 <header>
@@ -601,6 +601,7 @@
                         <div class="fi">
                             <div class="fg" style="flex:2"><label>種別名</label><input type="text" id="s-acctype-name"></div>
                             <div class="fg"><label>色</label>
+                                <div style="display:flex;gap:6px;align-items:center;">
                                 <select id="s-acctype-color">
                                     <option value="#5b8fa8|b-blue">青（くすみブルー）</option>
                                     <option value="#9b8fc4|b-purple">紫（くすみパープル）</option>
@@ -610,6 +611,8 @@
                                     <option value="#b08ab0|b-rose">ピンク（ダスティローズ）</option>
                                     <option value="#7a94a6|b-gray">グレー（ブルーグレー）</option>
                                 </select>
+                                <button type="button" class="btn btn-s btn-sm" onclick="randomAccColor()" title="ランダム">🎲</button>
+                                </div>
                             </div>
                             <div class="fg" style="justify-content:flex-end;padding-top:20px;">
                                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="s-acctype-taxfree"> 非課税口座</label>
@@ -720,6 +723,6 @@
 </div>
 
 </main>
-<script src="app.js?v=56"></script>
+<script src="app.js?v=57"></script>
 </body>
 </html>
