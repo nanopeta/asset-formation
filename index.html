@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=38">
+    <link rel="stylesheet" href="style.css?v=39">
 </head>
 <body>
 <header>
@@ -418,8 +418,8 @@
                         <div class="fg"><label>種別</label><select id="s-h-type"></select></div>
                     </div>
                     <div class="fi" style="margin-top:8px;">
-                        <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0"></div>
-                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1"></div>
+                        <div class="fg"><label>月次積立額（円）</label><input type="number" id="s-h-monthly" placeholder="0" min="0"></div>
+                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-h-yield" placeholder="0" step="0.1" min="0"></div>
                         <div class="fg"><label>通貨</label><select id="s-h-currency"><option value="jpy">JPY（円）</option><option value="usd">USD（ドル）</option></select></div>
                         <div class="fg"><label>証券会社</label><select id="s-h-broker"></select></div>
                     </div>
@@ -468,7 +468,7 @@
                         <div class="fg" style="flex:2"><label>銘柄名</label><input type="text" id="s-i-name"></div>
                         <div class="fg"><label>種別</label><select id="s-i-type"></select></div>
                         <div class="fg"><label>配分比率（%）</label><input type="number" id="s-i-monthly" placeholder="0" min="0" max="100" step="1"></div>
-                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1"></div>
+                        <div class="fg"><label>想定配当利回り（%）</label><input type="number" id="s-i-yield" placeholder="0" step="0.1" min="0"></div>
                     </div>
                     <div class="flex-gap" style="margin-top:10px;">
                         <button class="btn btn-p btn-sm" id="btn-save-ideco">保存</button>
@@ -607,9 +607,9 @@
         <div class="sec-label">基本設定</div>
         <div class="card" style="max-width:480px;margin-bottom:20px;">
             <div class="fi">
-                <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000"></div>
+                <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000" min="0"></div>
                 <div class="fg"><label>SCHD 対象銘柄</label><select id="s-scd-holding"></select></div>
-                <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0"></div>
+                <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0" min="0"></div>
                 <div class="fg"><label>iDeCo 開始月</label><input type="month" id="s-ideco-start"></div>
                 <div class="fg"><label>USD/JPY レート</label><input type="number" id="s-usd-jpy" placeholder="150" step="0.1"></div>
             </div>
@@ -677,6 +677,6 @@
 </div>
 
 </main>
-<script src="app.js?v=38"></script>
+<script src="app.js?v=39"></script>
 </body>
 </html>

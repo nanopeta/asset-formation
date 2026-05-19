@@ -40,8 +40,8 @@
         .tab-content.active ~ * .dash-qnav{display:flex;}
         #tab-dashboard.active + .dash-qnav-wrapper .dash-qnav,
         .dash-qnav-show{display:flex;}
-        .qnav-pill{padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);white-space:nowrap;}
-        .qnav-pill:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+        .qnav-pill{padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);white-space:nowrap;transition:background .2s,color .2s,border-color .2s;}
+        .qnav-pill:hover,.qnav-pill.qnav-active{background:var(--primary);color:#fff;border-color:var(--primary);}
         .qnav-sep{color:var(--border);font-size:14px;align-self:center;}
 
         /* ===== HERO ===== */
@@ -123,7 +123,8 @@
         .rec-sticky-inner label{font-size:12px;font-weight:600;white-space:nowrap;}
         .rec-sticky-inner input[type=month]{padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;max-width:150px;}
         .rec-sticky-inner select{padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;color:var(--text);background:#fff;max-width:160px;}
-        .rec-unsaved{font-size:11px;color:var(--warning);font-weight:600;white-space:nowrap;}
+        .rec-unsaved{font-size:11px;color:var(--warning);font-weight:600;white-space:nowrap;animation:unsaved-pulse 1.5s ease-in-out infinite;}
+        @keyframes unsaved-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 
         /* ===== 記録サブタブ sticky ===== */
         #tab-record .sub-nav{position:sticky;top:136px;z-index:148;background:#fff;padding-top:8px;margin-bottom:12px;}
@@ -228,6 +229,9 @@
         .spot-check{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;cursor:pointer;color:var(--text);padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;flex-shrink:0;}
         .spot-check input{cursor:pointer;accent-color:var(--success);width:15px;height:15px;}
         .spot-del{flex-shrink:0;}
+        /* スポット完了行 */
+        .spot-done-row .spot-amount{opacity:.45;text-decoration:line-through;}
+        .spot-done-row .spot-yen{opacity:.45;}
         .tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;position:sticky;left:0;z-index:5;}
         .breakdown-chart{position:relative;height:150px;padding:8px;border-bottom:1px solid var(--border);}
         .trend-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
@@ -292,6 +296,8 @@
             /* テーブル・分析セクション横スクロール */
             .rec-sec{overflow-x:auto;}
             .an-body{overflow-x:auto;}
+            /* iOSズーム防止: フォントサイズ16px以上 */
+            .fg input,.fg select,.hi{font-size:16px;}
         }
 
         @media(max-width:480px){

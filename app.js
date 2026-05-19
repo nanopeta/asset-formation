@@ -456,12 +456,12 @@ function renderRecordTab(){renderBankInputs();renderCardInputs();renderHoldingIn
 function renderBankInputs(){
     const c=D.current,prev=prevSnap();
     const grid=el('rec-banks-grid');grid.className=`g${Math.min(4,D.bankAccounts.length)}`;
-    grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
+    grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderCardInputs(){
     const c=D.current,prev=prevSnap();el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
     const grid=el('rec-cards-grid');grid.className=`g${Math.min(4,D.creditCards.length)}`;
-    grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
+    grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
 }
 
 function prevSnap(){return D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month)).pop();}
@@ -477,8 +477,8 @@ function holdingRow(h,hv,prevHv,showAccount){
     return`<tr draggable="true" data-id="${h.id}" data-group="${showAccount?'regular':'ideco'}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
         <td class="drag-handle">⠿</td><td><div class="td-name">${h.name}${h.currency==='usd'?'<span class="badge b-orange" style="margin-left:4px;font-size:10px;">USD</span>':''}</div></td>${accCell}
         <td>${atBadge(h.assetType)}</td>
-        <td class="itd"><input class="hi ${lossBg}" type="number" id="hv-${h.id}" value="${hv?.value||''}" placeholder="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
-        <td class="itd"><input class="hi" type="number" id="hp-${h.id}" value="${hv?.principal||''}" placeholder="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
+        <td class="itd"><input class="hi ${lossBg}" type="number" id="hv-${h.id}" value="${hv?.value||''}" placeholder="0" min="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
+        <td class="itd"><input class="hi" type="number" id="hp-${h.id}" value="${hv?.principal||''}" placeholder="0" min="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
         <td style="text-align:right">${diffHtml}</td></tr>`;
 }
 function renderHoldingInputs(){const c=D.current,prev=prevSnap();el('rec-holdings-body').innerHTML=D.holdings.length===0?'<tr><td colspan="7" class="empty">銘柄が登録されていません</td></tr>':D.holdings.map(h=>holdingRow(h,c.holdingValues[h.id],prev?.holdingValues?.[h.id],true)).join('');}
@@ -595,7 +595,7 @@ function deleteCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)retur
 
 // 保有銘柄
 function renderHoldingsTable(){const brokerMap=Object.fromEntries((D.brokers||[]).map(b=>[b.id,b.name]));el('s-holdings-table').innerHTML=D.holdings.length===0?'<tr><td colspan="8" class="empty">銘柄なし</td></tr>':D.holdings.map(h=>{const sps=h.spotList||[],spTot=spotTotal(h),spDone=sps.filter(s=>s.done).length;const spCell=spTot>0?`${fmt(spTot)}<span style="color:var(--muted);font-size:11px;margin-left:3px;">✅${spDone}/${sps.length}</span>`:'--';const bname=h.brokerId&&brokerMap[h.brokerId]?`<span style="font-size:12px;color:var(--muted);">${brokerMap[h.brokerId]}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';return`<tr draggable="true" data-id="${h.id}" data-group="regular" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td><div class="td-name">${h.name}</div></td><td>${acBadge(h.account)}</span></td><td>${atBadge(h.assetType)}</td><td>${bname}</td><td style="text-align:right">${h.monthlyAmount>0?fmt(h.monthlyAmount)+'/月':'--'}</td><td style="text-align:right">${spCell}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editHolding('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteHolding('${h.id}')">削除</button></div></td></tr>`;}).join('');}
-function addSpotRow(s){s=s||{id:uid(),amount:'',done:false};const row=document.createElement('div');row.className='spot-row';row.dataset.id=s.id;row.innerHTML=`<span class="spot-yen">¥</span><input type="number" class="spot-amount" value="${s.amount||''}" placeholder="金額"><label class="spot-check"><input type="checkbox"${s.done?' checked':''}><span>済</span></label><button type="button" class="btn btn-d btn-sm spot-del" onclick="this.closest('.spot-row').remove()">×</button>`;el('s-h-spot-list').appendChild(row);}
+function addSpotRow(s){s=s||{id:uid(),amount:'',done:false};const row=document.createElement('div');row.className='spot-row';if(s.done)row.classList.add('spot-done-row');row.dataset.id=s.id;row.innerHTML=`<span class="spot-yen">¥</span><input type="number" class="spot-amount" value="${s.amount||''}" placeholder="金額" min="0"><label class="spot-check"><input type="checkbox"${s.done?' checked':''} onchange="this.closest('.spot-row').classList.toggle('spot-done-row',this.checked)"><span>済</span></label><button type="button" class="btn btn-d btn-sm spot-del" aria-label="スポットを削除" onclick="this.closest('.spot-row').remove()">×</button>`;el('s-h-spot-list').appendChild(row);}
 function renderSpotListPanel(spots){const list=el('s-h-spot-list');list.innerHTML='';(spots||[]).forEach(s=>addSpotRow(s));}
 function getSpotListFromPanel(){return[...el('s-h-spot-list').querySelectorAll('.spot-row')].map(row=>({id:row.dataset.id||uid(),amount:Number(row.querySelector('.spot-amount').value)||0,done:row.querySelector('input[type=checkbox]').checked})).filter(s=>s.amount>0);}
 function getDivMonthsFromPanel(){return[...el('s-h-div-months').querySelectorAll('input[type=checkbox]:checked')].map(cb=>Number(cb.value));}
@@ -684,7 +684,7 @@ function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;
 
 // 設定のみ（記録は保持）
 function exportSettings(){
-    const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],current:D.current};
+    const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],accountTypeOverrides:D.accountTypeOverrides||{},assetTypeOverrides:D.assetTypeOverrides||{},current:D.current};
     const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});_triggerExport(b,`asset-settings-${today()}.json`,'btn-export-settings');
 }
 function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();toast('設定をインポートしました（記録は変更されていません）','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
@@ -861,6 +861,21 @@ function xfUpdateBtnState(tableId){
     });
 }
 
+// ===== クイックナビ スクロール連動 =====
+function initQnavHighlight(){
+    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-sim','sec-div-cal','sec-fire','sec-detail'];
+    const pills={};
+    document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
+    const update=()=>{
+        let active=ids[0];
+        ids.forEach(id=>{const e=document.getElementById(id);if(e&&e.getBoundingClientRect().top<=200)active=id;});
+        Object.values(pills).forEach(b=>b.classList.remove('qnav-active'));
+        if(pills[active])pills[active].classList.add('qnav-active');
+    };
+    window.addEventListener('scroll',update,{passive:true});
+    update();
+}
+
 // ===== タブ切り替え =====
 const TABS=['dashboard','record','settings'];
 function switchTab(name){
@@ -947,9 +962,17 @@ function init(){
     el('rec-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';
     el('settings-backdrop').addEventListener('click',()=>{document.querySelectorAll('.add-panel.open').forEach(p=>p.classList.remove('open'));el('settings-backdrop').classList.remove('active');});
+    document.addEventListener('keydown',e=>{
+        if(e.key!=='Escape')return;
+        const modal=el('snap-modal');
+        if(modal&&modal.style.display!=='none'){modal.style.display='none';return;}
+        const open=document.querySelector('.add-panel.open');
+        if(open){open.classList.remove('open');el('settings-backdrop').classList.remove('active');}
+    });
     initTabEvents();
     initRecordEvents();
     initSettingsEvents();
+    initQnavHighlight();
     renderDashboard();
     renderRecordTab();
 }
