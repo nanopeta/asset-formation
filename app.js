@@ -1,18 +1,18 @@
 // ===== 定数 =====
 const BUILT_IN_ACCOUNTS={
-    'nisa-growth':    {label:'NISA成長投資',color:'#2563eb',badge:'b-blue',   taxFree:true},
-    'nisa-tsumitate': {label:'NISA積立',    color:'#7c3aed',badge:'b-purple', taxFree:true},
-    'specific':       {label:'特定口座',     color:'#0891b2',badge:'b-teal',   taxFree:false},
-    'old-nisa':       {label:'旧NISA',       color:'#dc2626',badge:'b-red',    taxFree:true},
+    'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
+    'nisa-tsumitate': {label:'NISA積立',    color:'#5fad9b',badge:'b-purple', taxFree:true},
+    'specific':       {label:'特定口座',     color:'#7ab8c4',badge:'b-teal',   taxFree:false},
+    'old-nisa':       {label:'旧NISA',       color:'#c97a7a',badge:'b-red',    taxFree:true},
 };
-const IDECO_COLOR='#059669';
+const IDECO_COLOR='#c9915a';
 const BUILT_IN_ASSET_TYPES={
     'fund':           {label:'投資信託',badge:'b-gray'},
     'domestic-stock': {label:'国内株式',badge:'b-green'},
     'us-stock':       {label:'米国株式',badge:'b-orange'},
     'other':          {label:'その他',  badge:'b-gray'},
 };
-const ASSET_TYPE_COLORS={'fund':'#6b7280','domestic-stock':'#16a34a','us-stock':'#ea580c','other':'#a78bfa'};
+const ASSET_TYPE_COLORS={'fund':'#5b8fa8','domestic-stock':'#5fad9b','us-stock':'#c9915a','other':'#9b8fc4'};
 function getAccounts(){const r={...BUILT_IN_ACCOUNTS};Object.entries(D.accountTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAccounts||[]).forEach(a=>{r[a.id]={label:a.label,color:a.color,badge:a.badge};});return r;}
 function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};Object.entries(D.assetTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray'};});return r;}
 
