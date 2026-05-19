@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=49">
+    <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
 <header>
@@ -276,12 +276,12 @@
         <div class="an-body">
             <div class="fi fi-wrap" style="margin-bottom:8px;">
                 <div class="fg"><label>初期資産（円）</label><input type="number" id="dd-init-asset" placeholder="自動（現在の総資産）"></div>
-                <div class="fg"><label>年間取り崩し額（円）</label><input type="number" id="dd-annual-withdraw" placeholder="例: 3000000"></div>
+                <div class="fg"><label>月間取り崩し額（円）</label><input type="number" id="dd-annual-withdraw" placeholder="例: 250000"></div>
                 <div class="fg"><label>想定年利（%）</label><input type="number" id="dd-return" value="4" step="0.1" min="0"></div>
                 <div class="fg"><label>シミュレーション年数</label><select id="dd-years"><option value="30">30年</option><option value="40" selected>40年</option><option value="50">50年</option></select></div>
             </div>
             <button id="btn-run-drawdown" style="margin-bottom:10px;padding:7px 18px;border:none;border-radius:7px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">シミュレーション実行</button>
-            <div id="drawdown-result"><div style="color:var(--muted);font-size:13px;">年間取り崩し額を入力してください</div></div>
+            <div id="drawdown-result"><div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div></div>
         </div>
     </div>
 
@@ -720,6 +720,6 @@
 </div>
 
 </main>
-<script src="app.js?v=49"></script>
+<script src="app.js?v=50"></script>
 </body>
 </html>

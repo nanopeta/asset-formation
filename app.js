@@ -473,11 +473,12 @@ let chartDrawdown=null;
 function renderDrawdown(){
     const{total}=calcTotals();
     const initAsset=parseFloat(el('dd-init-asset')?.value)||total;
-    const annualWithdraw=parseFloat(el('dd-annual-withdraw')?.value)||0;
+    const monthlyWithdraw=parseFloat(el('dd-annual-withdraw')?.value)||0;
+    const annualWithdraw=monthlyWithdraw*12;
     const ret=parseFloat(el('dd-return')?.value||4)/100;
     const years=parseInt(el('dd-years')?.value||40);
     const res=el('drawdown-result');if(!res)return;
-    if(annualWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">年間取り崩し額を入力してください</div>';return;}
+    if(monthlyWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div>';return;}
     const rows=[];let val=initAsset,depletedYr=null;
     for(let yr=1;yr<=years;yr++){
         val=val*(1+ret)-annualWithdraw;
@@ -488,7 +489,7 @@ function renderDrawdown(){
     const isSafe=depletedYr===null;
     res.innerHTML=`<div class="g3 mb">
         <div class="card card-sm"><div class="clabel">初期資産</div><div class="cval">${fmt(initAsset)}</div></div>
-        <div class="card card-sm"><div class="clabel">年間取り崩し</div><div class="cval">${fmt(annualWithdraw)}</div><div class="csub">${fmt(annualWithdraw/12)}/月</div></div>
+        <div class="card card-sm"><div class="clabel">月間取り崩し</div><div class="cval">${fmt(monthlyWithdraw)}</div><div class="csub">年間 ${fmt(annualWithdraw)}</div></div>
         <div class="card card-sm"><div class="clabel">資産枯渇</div><div class="cval" style="color:${isSafe?'var(--success)':'var(--danger)'}">${isSafe?years+'年超 安全':depletedYr+'年目'}</div></div>
     </div>
     <div class="chart-wrap chart-h300" style="margin-bottom:12px"><canvas id="drawdown-chart"></canvas></div>
