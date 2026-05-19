@@ -422,7 +422,12 @@ function renderTrendChart(){
     const ctx=el('trend-chart').getContext('2d');
     if(chartTrend)chartTrend.destroy();
     if(!snaps.length){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('記録を追加すると表示されます',ctx.canvas.width/2,140);return;}
-    chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[{label:'総資産',data:snaps.map(s=>s.total),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.3,pointRadius:4},{label:'投資',data:snaps.map(s=>s.investment),borderColor:'#7c3aed',borderDash:[5,5],fill:false,tension:.3,pointRadius:4},{label:'iDeCo',data:snaps.map(s=>s.idecoTotal||0),borderColor:'#059669',borderDash:[3,3],fill:false,tension:.3,pointRadius:4},{label:'現金',data:snaps.map(s=>s.cash),borderColor:'#0891b2',borderDash:[2,4],fill:false,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
+    const principalData=snaps.map(s=>{
+        const invPri=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+        const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+        return invPri+idecoPri;
+    });
+    chartTrend=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[{label:'総資産',data:snaps.map(s=>s.total),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.3,pointRadius:4},{label:'投資元本',data:principalData,borderColor:'#94a3b8',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:1.5},{label:'投資',data:snaps.map(s=>s.investment),borderColor:'#7c3aed',borderDash:[5,5],fill:false,tension:.3,pointRadius:4},{label:'iDeCo',data:snaps.map(s=>s.idecoTotal||0),borderColor:'#059669',borderDash:[3,3],fill:false,tension:.3,pointRadius:4},{label:'現金',data:snaps.map(s=>s.cash),borderColor:'#0891b2',borderDash:[2,4],fill:false,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
 }
 
 // ===== NISA 自動推計 =====
