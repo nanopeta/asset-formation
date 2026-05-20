@@ -152,6 +152,15 @@ delete〇〇(id)         → 削除＆persist()
 ```
 - 組み込み種別の編集は `accountTypeOverrides` / `assetTypeOverrides` に保存（元の定数は変更しない）
 
+### クイックナビ
+```js
+toggleQnavSim(event)   // シミュレーションドロップダウンの開閉（外側クリックで自動閉じ）
+initQnavHighlight()    // スクロール連動ハイライト（.qnav-pill/.qnav-drop-item に qnav-active 付与）
+                       // シミュレーション系セクション表示中は #qnav-sim-btn に qnav-group-active 付与
+```
+- ナビ構成: 概要・SCHD・NISA・ポートフォリオ ｜ 資産推移・詳細分析 ｜ シミュレーション▾（ドロップダウン6項目）
+- ドロップダウン: `.qnav-group > .qnav-dropdown.open` パターン
+
 ### フィルター（Excel風）
 ```js
 xfBind(tableId, tbodyId, {afterFilter})  // テーブルにフィルター機能を紐付け
@@ -236,6 +245,8 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.trend-summary` | 資産推移セクションヘッダー（タイトル＋期間ボタン横並び） |
 | `.trend-period-btns` / `.tpb` / `.tpb.active` | 期間フィルターボタン群 |
 | `.snap-reminder` / `.snap-reminder-btn` | 先月スナップ未記録バナー |
+| `.qnav-group` / `.qnav-dropdown` / `.qnav-dropdown.open` | クイックナビ シミュレーションドロップダウン |
+| `.qnav-drop-item` / `.qnav-group-active` | ドロップダウン内アイテム / グループボタンのハイライト状態 |
 
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
