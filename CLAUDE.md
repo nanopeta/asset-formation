@@ -268,12 +268,16 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.an-block` / `.an-summary` / `.an-body` | ダッシュボード分析セクション |
 | `.tbl-wrap` | テーブルを角丸枠で囲む（overflow-x:auto） |
 | `.tbl-wrap.tbl-scroll` | スクロール固定テーブル（max-height:380px・sticky thead） |
-| `.add-panel` / `.add-panel.open` | 追加/編集フォームパネル |
+| `.tbl-head` | テーブル上部のsticky見出し（白背景グラデーション） |
+| `.add-panel` / `.add-panel.open` | 追加/編集フォームパネル（`.open`時はモーダルとして表示） |
+| `#settings-backdrop` / `#settings-backdrop.active` | モーダル背景オーバーレイ（blur付き） |
 | `.xf-btn` / `.xf-active` | フィルターボタン（▾） |
 | `.g2` `.g3` `.g4` | 2/3/4カラムグリッド |
 | `.plan-row` / `.plan-total` / `.plan-ideco` | 投資計画表示行 |
-| `.spot-row` / `.spot-check` / `.spot-badge` | スポット購入パネル行 |
+| `.spot-row` / `.spot-check` / `.spot-badge` / `.spot-done-row` | スポット購入パネル行・完了状態 |
+| `.spot-badge.spot-done` | スポット全完了バッジ（緑） |
 | `.btn-saved` | 保存完了フラッシュ（緑） |
+| `.btn-auto` | 自動計算ボタン（薄緑） |
 | `.port-grid` | ポートフォリオカード2カラム（300px + 1fr、768px以下で縦積み） |
 | `.port-chart-pane` / `.port-table-pane` | ポートフォリオ左（グラフ）・右（テーブル） |
 | `.breakdown-chart` | 口座別・種別ドーナツグラフ用コンテナ（height:150px） |
@@ -282,6 +286,17 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.snap-reminder` / `.snap-reminder-btn` | 先月スナップ未記録バナー |
 | `.qnav-group` / `.qnav-dropdown` / `.qnav-dropdown.open` | クイックナビ シミュレーションドロップダウン |
 | `.qnav-drop-item` / `.qnav-group-active` | ドロップダウン内アイテム / グループボタンのハイライト状態 |
+| `.b-blue` `.b-teal` `.b-green` `.b-orange` `.b-purple` `.b-red` `.b-gray` | 組み込みバッジカラー |
+| `.b-ideco` | iDeCo専用バッジ（薄橙色） |
+| `.b-rose` | ローズ色バッジ（カスタム用） |
+| `.div-tax-free` / `.div-tax` | 配当シミュ 非課税/課税ラベル |
+| `.hi-warn` | 含み損ハイライト（黄色背景） |
+| `.div-months-grid` / `.div-month-cb` | 配当月チェックボックスグリッド |
+| `.snap-modal` / `.snap-modal-card` / `.snap-row` | 月次サマリーモーダル |
+| `.alloc-title` / `.alloc-table` | 目標配分セクション |
+| `.chart-wrap` / `.chart-h300` | チャートコンテナ（標準220px / 高さ300px） |
+| `.fill-blue` `.fill-orange` `.fill-green` `.fill-purple` `.fill-red` | プログレスバー色 |
+| `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知 |
 
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
