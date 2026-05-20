@@ -1072,15 +1072,20 @@ function xfUpdateBtnState(tableId){
 }
 
 // ===== クイックナビ スクロール連動 =====
+function toggleQnavSim(e){e.stopPropagation();const dd=el('qnav-sim-dropdown');const isOpen=dd.classList.toggle('open');if(isOpen){setTimeout(()=>document.addEventListener('click',function h(ev){if(!el('qnav-sim-group')?.contains(ev.target)){dd.classList.remove('open');}document.removeEventListener('click',h);},{once:true}),0);}}
 function initQnavHighlight(){
-    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-detail','sec-tax'];
+    const simIds=new Set(['sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax']);
+    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
     const pills={};
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
+    document.querySelectorAll('.qnav-drop-item[data-scroll]').forEach(b=>{pills[b.dataset.scroll]=b;b.addEventListener('click',()=>{el('qnav-sim-dropdown')?.classList.remove('open');qScroll(b.dataset.scroll);});});
     const update=()=>{
         let active=ids[0];
         ids.forEach(id=>{const e=document.getElementById(id);if(e&&e.getBoundingClientRect().top<=200)active=id;});
-        Object.values(pills).forEach(b=>b.classList.remove('qnav-active'));
+        document.querySelectorAll('.qnav-pill,.qnav-drop-item').forEach(b=>b.classList.remove('qnav-active'));
+        el('qnav-sim-btn')?.classList.remove('qnav-group-active');
         if(pills[active])pills[active].classList.add('qnav-active');
+        if(simIds.has(active))el('qnav-sim-btn')?.classList.add('qnav-group-active');
     };
     window.addEventListener('scroll',update,{passive:true});
     update();
