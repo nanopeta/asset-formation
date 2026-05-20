@@ -19,16 +19,16 @@
 ## ファイル構成（3ファイル）
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~650行 |
-| `app.js` | ロジック全般・レンダリング | ~910行 |
-| `style.css` | スタイル | ~320行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~750行 |
+| `app.js` | ロジック全般・レンダリング | ~1200行 |
+| `style.css` | スタイル | ~360行 |
 
 ## キャッシュバスター（重要）
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=32">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=32"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=61">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=61"></script>             <!-- app.js変更時に上げる -->
 ```
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
@@ -62,9 +62,11 @@ D = {
   //  （旧 spotAnnual は load() 時に spotList へ自動マイグレーション済み）
   idecoHoldings:[ {id, name, assetType, monthlyAmount, dividendYield, order} ],
   customAccounts:   [ {id, label, color, badge, taxFree} ],  // taxFree: 配当非課税フラグ
-  customAssetTypes: [ {id, label, badge} ],
+  customAssetTypes: [ {id, label, badge, color} ],           // color: ドーナツグラフ用カラーコード
+  accountTypeOrder: [ ...builtInIds, ...customIds ],         // 口座種別の表示順（ドラッグ並び替えで変更）
+  assetTypeOrder:   [ ...builtInIds, ...customIds ],         // 銘柄種別の表示順（ドラッグ並び替えで変更）
   accountTypeOverrides: { [builtInId]: {label, color, badge, taxFree} },  // 組み込み口座種別の上書き
-  assetTypeOverrides:   { [builtInId]: {label} },                          // 組み込み銘柄種別の上書き
+  assetTypeOverrides:   { [builtInId]: {label, color, badge} },            // 組み込み銘柄種別の上書き
   current: {
     bankValues:    { [id]: 数値 },
     cardValues:    { [id]: 数値 },
@@ -86,14 +88,21 @@ BUILT_IN_ACCOUNTS = {
   'specific':       {label, color, badge, taxFree:false},
   'old-nisa':       {label, color, badge, taxFree:true},
 }
-// 組み込み銘柄種別
-BUILT_IN_ASSET_TYPES = { 'fund', 'domestic-stock', 'us-stock', 'other' }
-// 銘柄種別カラーパレット（ドーナツグラフ用）
-ASSET_TYPE_COLORS = { 'fund':'#6b7280', 'domestic-stock':'#16a34a', 'us-stock':'#ea580c', 'other':'#a78bfa' }
+// 組み込み銘柄種別（color フィールド付き）
+BUILT_IN_ASSET_TYPES = {
+  'fund':           {label, badge:'b-blue',   color:'#5b8fa8'},
+  'domestic-stock': {label, badge:'b-teal',   color:'#5fad9b'},
+  'us-stock':       {label, badge:'b-orange', color:'#c9915a'},
+  'other':          {label, badge:'b-purple', color:'#9b8fc4'},
+}
+// 銘柄種別カラーパレット（ASSET_TYPE_COLORS は後方互換フォールバック用として残存）
+ASSET_TYPE_COLORS = { 'fund':'#5b8fa8', 'domestic-stock':'#5fad9b', 'us-stock':'#c9915a', 'other':'#9b8fc4' }
+// iDeCo 専用カラー
+IDECO_COLOR = '#c9915a'
 
 // 動的取得（カスタム＋上書き含む）
-getAccounts()    // BUILT_IN_ACCOUNTS + accountTypeOverrides + customAccounts
-getAssetTypes()  // BUILT_IN_ASSET_TYPES + assetTypeOverrides + customAssetTypes
+getAccounts()    // BUILT_IN_ACCOUNTS + accountTypeOverrides + customAccounts（accountTypeOrder 順）
+getAssetTypes()  // BUILT_IN_ASSET_TYPES + assetTypeOverrides + customAssetTypes（color フィールドあり）
 
 // 対象銘柄取得（settings.scdHoldingId を参照）
 getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
@@ -104,7 +113,9 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 メインタブ: dashboard / record / settings
   dashboard → （サブタブなし）
     セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio,
-                  sec-trend, sec-sim, sec-reinvest, sec-div-cal, sec-div-sim, sec-fire, sec-detail
+                  sec-trend, sec-detail,
+                  sec-sim, sec-reinvest, sec-div-cal, sec-div-sim,
+                  sec-ideco-sim, sec-fire, sec-drawdown, sec-tax
   record    → rec-banks / rec-holdings
   settings  → set-holdings / set-accounts / set-basic
 ```
@@ -115,18 +126,29 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | 関数 | 役割 |
 |---|---|
 | `renderDashboard()` | ダッシュボード全体再描画（毎回フル）＋スナップリマインダー表示判定 |
+| `renderDashHero(...)` | ヒーローカード＋サマリーカード描画（renderDashboard内サブ関数） |
+| `renderDashScdStrip(...)` | 対象銘柄元本ストリップ描画 |
+| `renderDashNisaSection(mo)` | NISAカード＋今年の投資計画描画 |
 | `renderPortfolio(totalInv)` | ドーナツチャート＋銘柄比率テーブル＋目標配分バー |
 | `renderAllocationBars(items)` | 目標配分テーブル（実績・目標・差分・買い増し目安額） |
-| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧） |
-| `renderDivCalendar()` | 配当カレンダー（月別受取スケジュール） |
+| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧、到達シミュ） |
+| `renderDivCalendar()` | 配当カレンダー（月別受取スケジュール・棒グラフ） |
 | `renderDividendSim()` | 配当シミュレーションテーブル |
-| `renderSCHDReinvest()` | 分配金再投資シミュレーション（年数・積立・再投資なし対応） |
-| `renderFire()` | FIRE達成シミュレーション |
+| `renderSCHDReinvest()` | 分配金再投資シミュレーション（年数・積立・再投資なし・目標月収・折れ線チャート） |
+| `buildReinvestHoldingOptions()` | 再投資シミュ用銘柄セレクト生成 |
+| `_populateReinvestFromHolding(id)` | 選択銘柄から再投資シミュ入力欄へ値をコピー |
+| `renderFire()` | FIRE達成シミュレーション（必要資産・達成年数・プログレスバー） |
+| `renderIdecoSim()` | iDeCo受取シミュレーション（一時金・年金方式、退職所得控除・税額計算） |
+| `renderDrawdown()` | FIRE取崩しシミュレーション（資産枯渇年計算・折れ線チャート） |
+| `renderTaxEstimate()` | 税金概算（配当税・潜在税・NISA非課税メリット、特定口座銘柄別内訳テーブル付き） |
 | `renderTrendChart()` | 資産推移折れ線チャート（`trendPeriod` で期間フィルター） |
 | `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋チャート再描画 |
 | `renderRecordTab()` | 記録タブ全体 |
 | `renderSettings()` | 設定タブ全体 |
+| `autoFillNisa()` | NISA使用額を積立月数×月次額で自動計算して入力欄へ反映 |
 | `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
+| `calcIncomeTax(income)` | 所得金額から所得税額を計算（累進課税テーブル） |
+| `showSnapSummary(month, snap, prev)` | スナップショット保存後の月次サマリーモーダル表示 |
 
 ### NISAカード「今年の投資計画」
 `renderDashboard()` 内で計算・描画。
@@ -157,9 +179,12 @@ delete〇〇(id)         → 削除＆persist()
 toggleQnavSim(event)   // シミュレーションドロップダウンの開閉（外側クリックで自動閉じ）
 initQnavHighlight()    // スクロール連動ハイライト（.qnav-pill/.qnav-drop-item に qnav-active 付与）
                        // シミュレーション系セクション表示中は #qnav-sim-btn に qnav-group-active 付与
+qScroll(id)            // 指定セクションIDへスムーズスクロール（offset=160px）
 ```
 - ナビ構成: 概要・SCHD・NISA・ポートフォリオ ｜ 資産推移・詳細分析 ｜ シミュレーション▾（ドロップダウン6項目）
+- ドロップダウン6項目: 資産シミュ / 配当カレンダー / iDeCoシミュ / FIRE / 取崩し / 税金概算
 - ドロップダウン: `.qnav-group > .qnav-dropdown.open` パターン
+- シミュ系セクションID（`simIds`）: `sec-sim`, `sec-div-cal`, `sec-ideco-sim`, `sec-fire`, `sec-drawdown`, `sec-tax`
 
 ### フィルター（Excel風）
 ```js
@@ -175,6 +200,7 @@ xfApply(tableId)                         // フィルター＆ソート適用
 ### ユーティリティ
 ```js
 fmt(n)            // ¥1,234,567 形式
+fmtMonths(months) // 月数を「N年Mヶ月」形式に変換
 el(id)            // document.getElementById 省略形
 uid()             // ユニークID生成（※load()内では使用不可→インラインIDを使うこと）
 persist()         // D を localStorage に保存
@@ -183,14 +209,20 @@ getScdHolding()   // 設定で選択された対象銘柄を返す
 holdingJpy(h)     // holding の {value, principal} を円換算で返す（USD銘柄はusdJpy換算）
 spotTotal(h)      // holding の spotList 全件合計金額
 spotDone(h)       // holding の spotList のうち done=true の合計金額
+gainHtml(val, pri, size) // 含み損益を色付きHTMLで返す（+¥xxx / -¥xxx 形式）
 acBadge(acc)      // 口座種別バッジHTML
 atBadge(type)     // 銘柄種別バッジHTML
 buildAccountOptions(selId, val)    // select要素に口座種別を動的生成
 buildAssetTypeOptions(selId, val)  // select要素に銘柄種別を動的生成
 buildBrokerOptions(selId, val)     // select要素に証券会社を動的生成
 deleteSnap(month) // 指定月のスナップショット削除
+filterTable(tbodyId, query) // tbodyをテキスト検索でフィルター（簡易版）
+randomAccColor()  // 口座種別カラーピッカーで未使用色をランダム選択
+randomAssetColor() // 銘柄種別カラーピッカーで未使用色をランダム選択
 _buildCardBankOptions(val) // カード設定パネルの引き落とし口座セレクトを生成
 _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
+_panelOpen(id)    // 設定パネルを開く（モーダル表示＋バックドロップ有効化）
+_panelClose(id)   // 設定パネルを閉じる（バックドロップ非表示）
 _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
 ```
 
@@ -200,6 +232,9 @@ let chartPortfolio = null;   // ポートフォリオドーナツ
 let byAccChart = null;       // 口座別合計ドーナツ
 let byTypeChart = null;      // 種別合計ドーナツ
 let chartTrend = null;       // 資産推移折れ線
+let chartReinvest = null;    // 再投資シミュ折れ線
+let chartDivCal = null;      // 配当カレンダー棒グラフ
+let chartDrawdown = null;    // 取崩しシミュ折れ線
 let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件）
 ```
 チャートを再描画する前に必ず `.destroy()` してから `new Chart()` すること。
