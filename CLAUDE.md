@@ -27,9 +27,10 @@
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=61">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=61"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=64">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=64"></script>             <!-- app.js変更時に上げる -->
 ```
+また `app.js` 冒頭の `APP_VERSION='v64'` も同じ番号に揃えること（ヘッダーバッジに反映される）。
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
 ## 過去に起きた重大バグ（再発防止）
@@ -152,6 +153,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `customConfirm(msg, onOk, opts)` | ブランデッド確認ダイアログ（`#confirm-modal`）。`opts.okLabel` / `opts.okClass` / `opts.html` を指定可。ブラウザ標準 `confirm()` の代替 |
 | `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示 |
 | `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`、異なる場合は `destroy`＋`new Chart()` |
+| `APP_VERSION` | バージョン文字列定数（例: `'v64'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
 
 ### NISAカード「今年の投資計画」
 `renderDashboard()` 内で計算・描画。
