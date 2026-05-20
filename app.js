@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v64';
+const APP_VERSION='v65';
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
     'nisa-tsumitate': {label:'NISA積立',    color:'#5fad9b',badge:'b-purple', taxFree:true},
@@ -280,11 +280,12 @@ function buildReinvestHoldingOptions(){
 function _populateReinvestFromHolding(id){
     const h=id?D.holdings.find(x=>x.id===id):null;
     if(!h)return;
-    const jpy=holdingJpy(h);
     el('schd-start-val').value='';
     el('schd-start-principal').value='';
     el('schd-yield-sim').value=(h.dividendYield||0).toFixed(2);
     el('schd-monthly-add').value=h.monthlyAmount||0;
+    const accs=getAccounts();const taxCb=el('schd-tax');
+    if(taxCb)taxCb.checked=!(accs[h.account]?.taxFree);
 }
 function renderSCHDReinvest(){
     const selId=el('sim-holding-sel')?.value||'';
@@ -483,20 +484,22 @@ function renderDrawdown(){
     const monthlyWithdraw=parseFloat(el('dd-annual-withdraw')?.value)||0;
     const annualWithdraw=monthlyWithdraw*12;
     const ret=parseFloat(el('dd-return')?.value||4)/100;
+    const inflation=parseFloat(el('dd-inflation')?.value||0)/100;
     const years=parseInt(el('dd-years')?.value||40);
     const res=el('drawdown-result');if(!res)return;
     if(monthlyWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div>';return;}
-    const rows=[];let val=initAsset,depletedYr=null;
+    const rows=[];let val=initAsset,depletedYr=null,curWithdraw=annualWithdraw;
     for(let yr=1;yr<=years;yr++){
-        val=val*(1+ret)-annualWithdraw;
+        val=val*(1+ret)-curWithdraw;
         if(val<=0&&depletedYr===null)depletedYr=yr;
-        rows.push({yr,val:Math.max(0,val)});
+        rows.push({yr,val:Math.max(0,val),withdraw:curWithdraw});
         if(val<0)break;
+        curWithdraw*=(1+inflation);
     }
     const isSafe=depletedYr===null;
     res.innerHTML=`<div class="g3 mb">
         <div class="card card-sm"><div class="clabel">初期資産</div><div class="cval">${fmt(initAsset)}</div></div>
-        <div class="card card-sm"><div class="clabel">月間取り崩し</div><div class="cval">${fmt(monthlyWithdraw)}</div><div class="csub">年間 ${fmt(annualWithdraw)}</div></div>
+        <div class="card card-sm"><div class="clabel">月間取り崩し（初年）</div><div class="cval">${fmt(monthlyWithdraw)}</div><div class="csub">年間 ${fmt(annualWithdraw)}${inflation>0?` (+${(inflation*100).toFixed(1)}%/年)`:''}</div></div>
         <div class="card card-sm"><div class="clabel">資産枯渇</div><div class="cval" style="color:${isSafe?'var(--success)':'var(--danger)'}">${isSafe?years+'年超 安全':depletedYr+'年目'}</div></div>
     </div>
     <div class="chart-wrap chart-h300" style="margin-bottom:12px"><canvas id="drawdown-chart"></canvas></div>
@@ -504,9 +507,9 @@ function renderDrawdown(){
         <thead><tr><th>経過年</th><th style="text-align:right">残高</th><th style="text-align:right">年間取崩</th><th style="text-align:right">運用損益</th></tr></thead>
         <tbody>${rows.map((r,i)=>{
             const prevVal=i===0?initAsset:rows[i-1].val;
-            const gain=r.val-prevVal+annualWithdraw;
+            const gain=r.val-prevVal+r.withdraw;
             const depleted=r.val===0;
-            return`<tr${depleted?' style="background:#fef2f2"':''}><td>${r.yr}年目</td><td style="text-align:right;font-weight:600">${depleted?'<span style="color:var(--danger)">枯渇</span>':fmt(r.val)}</td><td style="text-align:right;color:var(--muted)">${fmt(annualWithdraw)}</td><td style="text-align:right"><span class="${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${fmt(gain)}</span></td></tr>`;
+            return`<tr${depleted?' style="background:#fef2f2"':''}><td>${r.yr}年目</td><td style="text-align:right;font-weight:600">${depleted?'<span style="color:var(--danger)">枯渇</span>':fmt(r.val)}</td><td style="text-align:right;color:var(--muted)">${fmt(r.withdraw)}</td><td style="text-align:right"><span class="${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${fmt(gain)}</span></td></tr>`;
         }).join('')}</tbody>
     </table></div>`;
     if(chartDrawdown)chartDrawdown.destroy();
@@ -579,11 +582,13 @@ function renderFire(){
     const desired=parseFloat(el('fire-monthly')?.value)||0;
     const rate=parseFloat(el('fire-rate')?.value||4)/100;
     const ret=parseFloat(el('fire-return')?.value||4)/100;
+    const inflation=parseFloat(el('fire-inflation')?.value||2)/100;
     const autoContrib=D.holdings.reduce((a,h)=>a+(h.monthlyAmount||0),0)+(D.settings.idecoMonthlyTotal||0);
     const contrib=parseFloat(el('fire-contrib')?.value)||autoContrib;
     const res=el('fire-result');if(!res)return;
     if(desired<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0;">希望月収を入力するとシミュレーションが表示されます</div>';return;}
-    const target=desired*12/rate;
+    const effectiveRate=rate-inflation;
+    const target=effectiveRate>0?desired*12/effectiveRate:desired*12/rate;
     const nowMonthly=total*rate/12;
     const nowPct=Math.min(100,total/target*100);
     // 達成年数計算（年次複利）
@@ -626,12 +631,19 @@ function renderTrendChart(){
         const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
         return invPri+idecoPri;
     });
-    const _tooltipOrder=['現金','投資','iDeCo','投資元本'];
+    const gainData=snaps.map(s=>{
+        const invVal=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.value||0),0);
+        const invPri=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+        const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+        return (invVal+(s.idecoTotal||0))-(invPri+idecoPri);
+    });
+    const _tooltipOrder=['現金','投資','iDeCo','投資元本','含み損益'];
     chartTrend=_chartRender(chartTrend,ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
         {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#c9915a',backgroundColor:'rgba(201,145,90,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資',     data:snaps.map(s=>s.investment),    borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
+        {label:'含み損益', data:gainData,                       borderColor:'#5fad9b',borderDash:[3,2],fill:false,tension:.3,pointRadius:3,borderWidth:2},
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label)}},scales:{y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
 }
 
@@ -675,6 +687,19 @@ function renderCardInputs(){
 }
 
 function prevSnap(){return D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month)).pop();}
+function copyPrevSnap(){
+    const prev=prevSnap();
+    if(!prev){toast('コピー元となる前月データがありません','error');return;}
+    D.bankAccounts.forEach(b=>{const e=el(`rb-${b.id}`);if(e)e.value=prev.bankValues?.[b.id]||'';});
+    D.creditCards.forEach(cd=>{const e=el(`rc-${cd.id}`);if(e)e.value=prev.cardValues?.[cd.id]||'';});
+    D.holdings.forEach(h=>{const hv=prev.holdingValues?.[h.id];const ev=el(`hv-${h.id}`);if(ev)ev.value=hv?.value||'';const ep=el(`hp-${h.id}`);if(ep)ep.value=hv?.principal||'';});
+    D.idecoHoldings.forEach(h=>{const hv=prev.idecoValues?.[h.id];const ev=el(`hv-${h.id}`);if(ev)ev.value=hv?.value||'';const ep=el(`hp-${h.id}`);if(ep)ep.value=hv?.principal||'';});
+    const apiEl=el('rec-ideco-actual-pri');if(apiEl)apiEl.value=prev.idecoActualPrincipal||'';
+    el('rec-seichou').value=prev.nisa?.seichouUsed||'';el('rec-tsumitate').value=prev.nisa?.tsumitateUsed||'';
+    el('rec-lifetime').value=prev.nisa?.lifetimeUsed||'';el('rec-seichou-lifetime').value=prev.nisa?.seichouLifetimeUsed||'';
+    const noteEl=el('rec-note');if(noteEl)noteEl.value=prev.note||'';
+    markUnsaved();toast(`${prev.month} のデータをコピーしました`);
+}
 
 function holdingRow(h,hv,prevHv,showAccount){
     const cur=hv?.value||0,diff=prevHv?cur-prevHv.value:null;
@@ -682,10 +707,12 @@ function holdingRow(h,hv,prevHv,showAccount){
     const bigMove=prevHv?.value>0&&cur>0&&Math.abs(cur-prevHv.value)/prevHv.value>=0.3;
     const warnIcon=bigMove?'<span title="前月比±30%以上の変動" style="margin-left:3px;font-size:11px;">⚠️</span>':'';
     const diffHtml=diff!==null?`<span class="${diff>=0?'positive':'negative'}">${diff>=0?'+':''}${fmt(diff)}</span>${warnIcon}`:'<span class="neutral">--</span>';
+    const lossRatio=hv?.principal>0?(cur-hv.principal)/hv.principal:0;
+    const lossWarn=hv?.principal>0&&lossRatio<-0.20?`<span title="含み損が元本の${Math.abs(lossRatio*100).toFixed(0)}%超" style="color:var(--danger);font-size:11px;margin-left:3px;">⚠</span>`:'';
     const accCell=showAccount?`<td>${acBadge(h.account)}</span></td>`:'';
     const unit=h.currency==='usd'?'USD':'円';
     return`<tr draggable="true" data-id="${h.id}" data-group="${showAccount?'regular':'ideco'}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
-        <td class="drag-handle">⠿</td><td><div class="td-name">${h.name}${h.currency==='usd'?'<span class="badge b-orange" style="margin-left:4px;font-size:10px;">USD</span>':''}</div></td>${accCell}
+        <td class="drag-handle">⠿</td><td><div class="td-name">${h.name}${lossWarn}${h.currency==='usd'?'<span class="badge b-orange" style="margin-left:4px;font-size:10px;">USD</span>':''}</div></td>${accCell}
         <td>${atBadge(h.assetType)}</td>
         <td class="itd"><input class="hi ${lossBg}" type="number" id="hv-${h.id}" value="${hv?.value||''}" placeholder="0" min="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
         <td class="itd"><input class="hi" type="number" id="hp-${h.id}" value="${hv?.principal||''}" placeholder="0" min="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
@@ -703,10 +730,13 @@ function saveSnapshot(){
     D.idecoHoldings.forEach(h=>{const v=Number(el(`hv-${h.id}`)?.value)||0,p=Number(el(`hp-${h.id}`)?.value)||0;c.idecoValues[h.id]={value:v,principal:p||c.idecoValues[h.id]?.principal||0};});
     c.idecoActualPrincipal=Number(el('rec-ideco-actual-pri')?.value)||0;
     c.nisa.seichouUsed=Number(el('rec-seichou').value)||0;c.nisa.tsumitateUsed=Number(el('rec-tsumitate').value)||0;c.nisa.lifetimeUsed=Number(el('rec-lifetime').value)||0;c.nisa.seichouLifetimeUsed=Number(el('rec-seichou-lifetime').value)||0;
+    if(c.nisa.seichouUsed>2400000)toast('成長投資枠（年間）が上限 240万円を超えています','error');
+    if(c.nisa.tsumitateUsed>1200000)toast('積立投資枠（年間）が上限 120万円を超えています','error');
+    if(c.nisa.lifetimeUsed>18000000)toast('生涯投資枠が上限 1,800万円を超えています','error');
     const{cash,inv,ideco}=calcTotals();
     const prevSnaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
     const prevSnapForModal=prevSnaps.length&&prevSnaps[prevSnaps.length-1].month!==month?prevSnaps[prevSnaps.length-1]:null;
-    const snap={month,bankValues:{...c.bankValues},cardValues:{...c.cardValues},holdingValues:JSON.parse(JSON.stringify(c.holdingValues)),idecoValues:JSON.parse(JSON.stringify(c.idecoValues)),idecoActualPrincipal:c.idecoActualPrincipal,nisa:{...c.nisa},cash,investment:inv,idecoTotal:ideco,total:cash+inv+ideco};
+    const snap={month,note:el('rec-note')?.value||'',bankValues:{...c.bankValues},cardValues:{...c.cardValues},holdingValues:JSON.parse(JSON.stringify(c.holdingValues)),idecoValues:JSON.parse(JSON.stringify(c.idecoValues)),idecoActualPrincipal:c.idecoActualPrincipal,nisa:{...c.nisa},cash,investment:inv,idecoTotal:ideco,total:cash+inv+ideco};
     const idx=D.snapshots.findIndex(s=>s.month===month);
     if(idx>=0)D.snapshots[idx]=snap;else D.snapshots.push(snap);
     persist();clearUnsaved();renderDashboard();renderHistoryTable();renderHoldingInputs();renderIdecoInputs();
@@ -733,7 +763,7 @@ function showSnapSummary(month,snap,prev){
 function renderHistoryTable(){
     const snaps=D.snapshots.slice().sort((a,b)=>b.month.localeCompare(a.month));
     const scdH=getScdHolding();
-    el('rec-history').innerHTML=!snaps.length?'<tr><td colspan="7" class="empty">記録がありません</td></tr>':snaps.map(s=>`<tr><td>${s.month}</td><td style="text-align:right">${fmt(s.total)}</td><td style="text-align:right">${fmt(s.investment)}</td><td style="text-align:right">${fmt(s.idecoTotal||0)}</td><td style="text-align:right">${fmt(s.cash)}</td><td style="text-align:right">${fmt(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)}</td><td><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="loadSnap('${s.month}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteSnap('${s.month}')">削除</button></div></td></tr>`).join('');
+    el('rec-history').innerHTML=!snaps.length?'<tr><td colspan="8" class="empty">記録がありません</td></tr>':snaps.map(s=>`<tr><td>${s.month}</td><td style="text-align:right">${fmt(s.total)}</td><td style="text-align:right">${fmt(s.investment)}</td><td style="text-align:right">${fmt(s.idecoTotal||0)}</td><td style="text-align:right">${fmt(s.cash)}</td><td style="text-align:right">${fmt(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)}</td><td style="max-width:120px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.note||''}</td><td><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="loadSnap('${s.month}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteSnap('${s.month}')">削除</button></div></td></tr>`).join('');
     renderHistorySelect();
 }
 
@@ -748,6 +778,7 @@ function loadSnap(month){
     D.idecoHoldings.forEach(h=>{const hv=s.idecoValues?.[h.id];const ev=el(`hv-${h.id}`);if(ev)ev.value=hv?.value||'';const ep=el(`hp-${h.id}`);if(ep)ep.value=hv?.principal||'';});
     const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=s.idecoActualPrincipal||'';
     el('rec-seichou').value=s.nisa?.seichouUsed||'';el('rec-tsumitate').value=s.nisa?.tsumitateUsed||'';el('rec-lifetime').value=s.nisa?.lifetimeUsed||'';el('rec-seichou-lifetime').value=s.nisa?.seichouLifetimeUsed||'';
+    const noteEl=el('rec-note');if(noteEl)noteEl.value=s.note||'';
     switchTab('record');clearUnsaved();
 }
 
@@ -771,7 +802,7 @@ function saveBasic(){
     D.settings.targetAllocation={};
     Object.keys(getAssetTypes()).forEach(id=>{const v=Number(el('ta-'+id)?.value)||0;if(v>0)D.settings.targetAllocation[id]=v;});
     const _totalAlloc=Object.values(D.settings.targetAllocation).reduce((a,v)=>a+v,0);
-    if(_totalAlloc>100)toast('目標配分の合計が'+_totalAlloc.toFixed(1)+'%です（100%を超えています）','error');
+    if(_totalAlloc>100){toast('目標配分の合計が'+_totalAlloc.toFixed(1)+'%です（100%を超えています）','error');return;}
     persist();renderDashboard();
     const btn=el('btn-save-basic');btn.textContent='✓ 保存しました';btn.classList.add('btn-saved');
     setTimeout(()=>{btn.textContent='保存';btn.classList.remove('btn-saved');},2000);
@@ -1136,7 +1167,7 @@ function initRecordEvents(){
     document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
     el('btn-run-sim').addEventListener('click',renderSCHDReinvest);
     el('sim-holding-sel').addEventListener('change',function(){_populateReinvestFromHolding(this.value);});
-    ['fire-monthly','fire-rate','fire-return','fire-contrib'].forEach(id=>el(id).addEventListener('input',renderFire));
+    ['fire-monthly','fire-rate','fire-return','fire-contrib','fire-inflation'].forEach(id=>el(id)?.addEventListener('input',renderFire));
     el('btn-run-ideco-sim').addEventListener('click',renderIdecoSim);
     el('ideco-sim-method').addEventListener('change',renderIdecoSim);
     el('btn-run-drawdown').addEventListener('click',renderDrawdown);
@@ -1181,6 +1212,7 @@ function init(){
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';
     el('settings-backdrop').addEventListener('click',()=>{document.querySelectorAll('.add-panel.open').forEach(p=>p.classList.remove('open'));el('settings-backdrop').classList.remove('active');});
     document.addEventListener('keydown',e=>{
+        if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveSnapshot();return;}
         if(e.key!=='Escape')return;
         const confirmM=el('confirm-modal');
         if(confirmM&&confirmM.style.display!=='none'){confirmM.style.display='none';return;}
