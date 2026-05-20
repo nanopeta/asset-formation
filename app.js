@@ -832,7 +832,7 @@ function renderAccTypesTable(){
         return`<tr ${drag}><td class="drag-handle">⠿</td><td><span class="dot" style="background:${a.color}"></span>${a.label} ${taxBadge}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAccType('${a.id}',${a.builtIn})">編集</button>${a.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAccType(\''+a.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
-function randomAccColor(){const sel=el('s-acctype-color');const opts=[...sel.options];sel.value=opts[Math.floor(Math.random()*opts.length)].value;}
+function randomAccColor(){const sel=el('s-acctype-color');const opts=[...sel.options];const usedColors=new Set(Object.values(getAccounts()).map(a=>a.color));const curId=el('s-acctype-id').value;if(curId){const cur=getAccounts()[curId];if(cur)usedColors.delete(cur.color);}const pool=opts.filter(o=>!usedColors.has(o.value.split('|')[0]));sel.value=(pool.length?pool:opts)[Math.floor(Math.random()*((pool.length?pool:opts).length))].value;}
 function openAccTypePanel(r=true){if(r){el('s-acctype-id').value='';el('s-acctype-name').value='';el('s-acctype-color').value='#5b8fa8|b-blue';el('s-acctype-taxfree').checked=false;el('s-acctype-panel-title').textContent='口座種別を追加';}_panelOpen('s-acctype-panel');}
 function closeAccTypePanel(){_panelClose('s-acctype-panel');}
 function editAccType(id,builtIn=false){
@@ -856,7 +856,7 @@ function renderAssetTypesTable(){
         return`<tr ${drag}><td class="drag-handle">⠿</td><td><span class="dot" style="background:${t.color||'#9ca3af'}"></span>${t.label}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editAssetType('${t.id}',${t.builtIn})">編集</button>${t.builtIn?'':'<button class="btn btn-d btn-sm" onclick="deleteAssetType(\''+t.id+'\')">削除</button>'}</div></td></tr>`;
     }).join('');
 }
-function randomAssetColor(){const sel=el('s-assettype-color');const opts=[...sel.options];sel.value=opts[Math.floor(Math.random()*opts.length)].value;}
+function randomAssetColor(){const sel=el('s-assettype-color');const opts=[...sel.options];const usedColors=new Set(Object.values(getAssetTypes()).map(t=>t.color));const curId=el('s-assettype-id').value;if(curId){const cur=getAssetTypes()[curId];if(cur)usedColors.delete(cur.color);}const pool=opts.filter(o=>!usedColors.has(o.value.split('|')[0]));sel.value=(pool.length?pool:opts)[Math.floor(Math.random()*((pool.length?pool:opts).length))].value;}
 function openAssetTypePanel(r=true){if(r){el('s-assettype-id').value='';el('s-assettype-name').value='';el('s-assettype-color').value='#5b8fa8|b-blue';el('s-assettype-builtin').value='';el('s-assettype-panel-title').textContent='銘柄種別を追加';}_panelOpen('s-assettype-panel');}
 function closeAssetTypePanel(){_panelClose('s-assettype-panel');}
 function editAssetType(id,builtIn=false){const types=getAssetTypes();const t=types[id];if(!t)return;el('s-assettype-id').value=id;el('s-assettype-builtin').value=builtIn?'1':'';el('s-assettype-name').value=t.label;const colorSel=el('s-assettype-color');if(colorSel)colorSel.value=`${t.color||'#5b8fa8'}|${t.badge||'b-blue'}`;el('s-assettype-panel-title').textContent='銘柄種別を編集';openAssetTypePanel(false);}
