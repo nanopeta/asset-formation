@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=60">
+    <link rel="stylesheet" href="style.css?v=61">
 </head>
 <body>
 <header>
@@ -27,13 +27,19 @@
     <button class="qnav-pill" data-scroll="sec-portfolio">ポートフォリオ</button>
     <span class="qnav-sep">｜</span>
     <button class="qnav-pill" data-scroll="sec-trend">資産推移</button>
-    <button class="qnav-pill" data-scroll="sec-sim">シミュレーション</button>
-    <button class="qnav-pill" data-scroll="sec-div-cal">配当カレンダー</button>
-    <button class="qnav-pill" data-scroll="sec-ideco-sim">iDeCoシミュ</button>
-    <button class="qnav-pill" data-scroll="sec-fire">FIRE</button>
-    <button class="qnav-pill" data-scroll="sec-drawdown">取崩し</button>
     <button class="qnav-pill" data-scroll="sec-detail">詳細分析</button>
-    <button class="qnav-pill" data-scroll="sec-tax">税金概算</button>
+    <span class="qnav-sep">｜</span>
+    <div class="qnav-group" id="qnav-sim-group">
+        <button class="qnav-pill qnav-group-btn" id="qnav-sim-btn" onclick="toggleQnavSim(event)">シミュレーション ▾</button>
+        <div class="qnav-dropdown" id="qnav-sim-dropdown">
+            <button class="qnav-drop-item" data-scroll="sec-sim">資産シミュ</button>
+            <button class="qnav-drop-item" data-scroll="sec-div-cal">配当カレンダー</button>
+            <button class="qnav-drop-item" data-scroll="sec-ideco-sim">iDeCoシミュ</button>
+            <button class="qnav-drop-item" data-scroll="sec-fire">FIRE</button>
+            <button class="qnav-drop-item" data-scroll="sec-drawdown">取崩し</button>
+            <button class="qnav-drop-item" data-scroll="sec-tax">税金概算</button>
+        </div>
+    </div>
 </div>
 
 <!-- ======= ダッシュボード ======= -->
@@ -738,6 +744,6 @@
 </div>
 
 </main>
-<script src="app.js?v=60"></script>
+<script src="app.js?v=61"></script>
 </body>
 </html>
