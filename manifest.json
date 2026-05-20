@@ -1,0 +1,14 @@
+{
+  "name": "資産形成ダッシュボード",
+  "short_name": "資産管理",
+  "description": "個人の資産形成状況を管理・可視化するダッシュボード",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef4f8",
+  "theme_color": "#5b8fa8",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" }
+  ]
+}
