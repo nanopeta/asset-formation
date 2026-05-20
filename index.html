@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=57">
+    <link rel="stylesheet" href="style.css?v=58">
 </head>
 <body>
 <header>
@@ -636,7 +636,22 @@
                         <input type="hidden" id="s-assettype-id">
                         <input type="hidden" id="s-assettype-builtin">
                         <div class="fi">
-                            <div class="fg"><label>種別名</label><input type="text" id="s-assettype-name"></div>
+                            <div class="fg" style="flex:2"><label>種別名</label><input type="text" id="s-assettype-name"></div>
+                            <div class="fg"><label>色</label>
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                <select id="s-assettype-color">
+                                    <option value="#5b8fa8|b-blue">青（くすみブルー）</option>
+                                    <option value="#9b8fc4|b-purple">紫（くすみパープル）</option>
+                                    <option value="#7ab8c4|b-teal">水色（ソフトティール）</option>
+                                    <option value="#c97a7a|b-red">赤（くすみローズ）</option>
+                                    <option value="#5fad9b|b-green">緑（ミント）</option>
+                                    <option value="#c9915a|b-orange">オレンジ（アンバー）</option>
+                                    <option value="#b08ab0|b-rose">ピンク（ダスティローズ）</option>
+                                    <option value="#7a94a6|b-gray">グレー（ブルーグレー）</option>
+                                </select>
+                                <button type="button" class="btn btn-s btn-sm" onclick="randomAssetColor()" title="ランダム">🎲</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex-gap" style="margin-top:10px;">
                             <button class="btn btn-p btn-sm" id="btn-save-assettype">保存</button>
@@ -723,6 +738,6 @@
 </div>
 
 </main>
-<script src="app.js?v=57"></script>
+<script src="app.js?v=58"></script>
 </body>
 </html>
