@@ -159,6 +159,8 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 ### スポット購入パネル関数
 ```js
 addSpotRow(s)             // スポット行をパネルに追加（s省略時は空行）
+                          // done=true の行は spot-done-row クラスを付与して取り消し線表示
+                          // checkbox onchange でリアルタイムにクラスをトグル
 renderSpotListPanel(spots) // 銘柄編集パネルにspotListを描画
 getSpotListFromPanel()    // パネルからspotListを読み取り配列で返す
 ```
@@ -224,6 +226,8 @@ _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2
 _panelOpen(id)    // 設定パネルを開く（モーダル表示＋バックドロップ有効化）
 _panelClose(id)   // 設定パネルを閉じる（バックドロップ非表示）
 _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
+exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
+exportAll()       // 全体バックアップJSONエクスポート
 ```
 
 ### チャートインスタンス（グローバル変数）
@@ -297,6 +301,17 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.chart-wrap` / `.chart-h300` | チャートコンテナ（標準220px / 高さ300px） |
 | `.fill-blue` `.fill-orange` `.fill-green` `.fill-purple` `.fill-red` | プログレスバー色 |
 | `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知 |
+
+## init() の主な初期化処理
+```js
+init()  // アプリ起動時の初期化
+  // - 記録月を当月に設定
+  // - クイックナビを表示
+  // - settings-backdrop クリックでパネルを一括閉じ
+  // - ESCキーでモーダル（snap-modal）またはパネル（.add-panel.open）を閉じる
+  // - initTabEvents / initRecordEvents / initSettingsEvents / initQnavHighlight 呼び出し
+  // - renderDashboard / renderRecordTab 呼び出し
+```
 
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
