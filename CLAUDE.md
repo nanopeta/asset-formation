@@ -149,6 +149,9 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
 | `calcIncomeTax(income)` | 所得金額から所得税額を計算（累進課税テーブル） |
 | `showSnapSummary(month, snap, prev)` | スナップショット保存後の月次サマリーモーダル表示 |
+| `customConfirm(msg, onOk, opts)` | ブランデッド確認ダイアログ（`#confirm-modal`）。`opts.okLabel` / `opts.okClass` / `opts.html` を指定可。ブラウザ標準 `confirm()` の代替 |
+| `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示 |
+| `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`、異なる場合は `destroy`＋`new Chart()` |
 
 ### NISAカード「今年の投資計画」
 `renderDashboard()` 内で計算・描画。
@@ -241,7 +244,9 @@ let chartDivCal = null;      // 配当カレンダー棒グラフ
 let chartDrawdown = null;    // 取崩しシミュ折れ線
 let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件）
 ```
-チャートを再描画する前に必ず `.destroy()` してから `new Chart()` すること。
+チャートの再描画は `_chartRender(chart, ctx, config)` ヘルパーを使うこと（直接 `new Chart()` しない）。
+データ数が同じ場合はインプレース更新（`chart.update('active')`）、異なる場合のみ destroy＋再生成。
+配当カレンダー（`renderDivCalendar`）は `<canvas id="div-cal-chart">` を永続化しているため innerHTML を毎回上書きしないこと。
 
 ## HTML パターン
 
