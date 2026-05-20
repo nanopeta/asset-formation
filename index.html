@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=64">
+    <link rel="stylesheet" href="style.css?v=65">
 </head>
 <body>
 <header>
@@ -275,6 +275,7 @@
                 <div class="fg"><label>取り崩し率（%）</label><input type="number" id="fire-rate" value="4" step="0.1"></div>
                 <div class="fg"><label>想定年利（%）</label><input type="number" id="fire-return" value="4" step="0.1"></div>
                 <div class="fg"><label>月次積立（円）</label><input type="number" id="fire-contrib" placeholder="設定から自動取得"></div>
+                <div class="fg"><label>生活費インフレ率（%）</label><input type="number" id="fire-inflation" value="2" step="0.1" min="0" max="10"></div>
             </div>
             <div id="fire-result"><div class="fire-hint">希望月収を入力するとシミュレーションが表示されます</div></div>
         </div>
@@ -288,6 +289,7 @@
                 <div class="fg"><label>月間取り崩し額（円）</label><input type="number" id="dd-annual-withdraw" placeholder="例: 250000"></div>
                 <div class="fg"><label>想定年利（%）</label><input type="number" id="dd-return" value="4" step="0.1" min="0"></div>
                 <div class="fg"><label>シミュレーション年数</label><select id="dd-years"><option value="30">30年</option><option value="40" selected>40年</option><option value="50">50年</option></select></div>
+                <div class="fg"><label>取り崩し増加率（%/年）</label><input type="number" id="dd-inflation" value="0" step="0.1" min="0" max="10"></div>
             </div>
             <button id="btn-run-drawdown" style="margin-bottom:10px;padding:7px 18px;border:none;border-radius:7px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">シミュレーション実行</button>
             <div id="drawdown-result"><div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div></div>
@@ -355,8 +357,13 @@
             <select id="rec-past-select">
                 <option value="">過去月を編集...</option>
             </select>
+            <button class="btn btn-s btn-sm" onclick="copyPrevSnap()" style="white-space:nowrap;">前月コピー</button>
             <button class="btn btn-p btn-sm" id="btn-save-snapshot" style="white-space:nowrap;">この月を保存</button>
             <span class="rec-unsaved" id="rec-unsaved" style="display:none">● 未保存</span>
+        </div>
+        <div style="padding:6px 0 2px;display:flex;align-items:center;gap:8px;">
+            <label style="font-size:12px;color:var(--muted);white-space:nowrap;">メモ</label>
+            <input type="text" id="rec-note" placeholder="この月のメモ（任意）" style="flex:1;font-size:13px;" oninput="markUnsaved()">
         </div>
     </div>
 
@@ -436,8 +443,8 @@
         <div class="sec-label">過去の記録</div>
         <div class="tbl-wrap tbl-scroll">
             <table>
-                <thead><tr><th>月</th><th style="text-align:right">総資産</th><th style="text-align:right">投資</th><th style="text-align:right">iDeCo</th><th style="text-align:right">現金</th><th style="text-align:right">SCHD元本</th><th></th></tr></thead>
-                <tbody id="rec-history"><tr><td colspan="7" class="empty">記録なし</td></tr></tbody>
+                <thead><tr><th>月</th><th style="text-align:right">総資産</th><th style="text-align:right">投資</th><th style="text-align:right">iDeCo</th><th style="text-align:right">現金</th><th style="text-align:right">SCHD元本</th><th>メモ</th><th></th></tr></thead>
+                <tbody id="rec-history"><tr><td colspan="8" class="empty">記録なし</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -759,6 +766,6 @@
 </div>
 
 </main>
-<script src="app.js?v=64"></script>
+<script src="app.js?v=65"></script>
 </body>
 </html>
