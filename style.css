@@ -371,6 +371,16 @@
         .dark-mode .hi-warn{background:#2a2010;}
         .dark-mode .rec-sticky{background:var(--card);border-bottom-color:var(--border);}
         .dark-mode .dash-qnav{background:var(--card);border-bottom-color:var(--border);}
+        .dark-mode .an-block{background:var(--card);}
+        .dark-mode .qnav-pill{background:var(--card);}
+        .dark-mode .qnav-dropdown{background:var(--card);}
+        .dark-mode #tab-settings .sub-nav,.dark-mode #tab-record .sub-nav{background:var(--card);}
+        .dark-mode .xf-dropdown{background:var(--card);border-color:var(--border);}
+        .dark-mode .xf-sort-btns button{background:var(--card);color:var(--text);border-color:var(--border);}
+        .dark-mode .xf-row{color:var(--text);}
+        .dark-mode td{border-bottom-color:var(--border);}
+        .dark-mode .btn-d{background:#2d1313;border-color:#5a2222;}
+        .dark-mode .btn-s{background:var(--bg);}
         #theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:14px;color:var(--muted);transition:color .2s;}
 /* ===== 印刷ヘッダー ===== */
 #print-header{display:none;}
