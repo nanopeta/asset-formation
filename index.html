@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5b8fa8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="資産管理">
+    <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=66">
+    <link rel="stylesheet" href="style.css?v=67">
 </head>
 <body>
 <header>
@@ -24,6 +29,9 @@
     <button data-tab="settings">設定</button>
 </nav>
 <main>
+
+<!-- 印刷ヘッダー（通常時は非表示） -->
+<div id="print-header" style="display:none;"></div>
 
 <!-- クイックナビ（ダッシュボード専用） -->
 <div id="dash-qnav" class="dash-qnav">
@@ -368,6 +376,7 @@
                 <option value="">過去月を編集...</option>
             </select>
             <button class="btn btn-s btn-sm" onclick="copyPrevSnap()" style="white-space:nowrap;">前月コピー</button>
+            <button class="btn btn-s btn-sm" onclick="printReport()" style="white-space:nowrap;">🖨 印刷/PDF</button>
             <button class="btn btn-p btn-sm" id="btn-save-snapshot" style="white-space:nowrap;">この月を保存</button>
             <span class="rec-unsaved" id="rec-unsaved" style="display:none">● 未保存</span>
         </div>
@@ -391,6 +400,10 @@
         <div class="rec-sec" id="rec-cards-section" style="display:none;">
             <div class="rec-sec-head"><span>クレジットカード 請求予定額</span></div>
             <div class="rec-sec-body"><div id="rec-cards-grid" class="g4"></div></div>
+        </div>
+        <div class="rec-sec" id="rec-points-section" style="display:none;">
+            <div class="rec-sec-head"><span>ポイント残高</span></div>
+            <div class="rec-sec-body"><div id="rec-points-grid" class="g4"></div></div>
         </div>
     </div>
 
@@ -613,6 +626,27 @@
             </div>
         </div>
 
+        <div class="rec-sec mb">
+            <div class="rec-sec-head"><span>ポイント口座</span></div>
+            <table><thead><tr><th style="width:36px;"></th><th>ポイント名</th><th>メモ</th><th></th></tr></thead>
+            <tbody id="s-points-table"></tbody></table>
+            <div class="rec-sec-body">
+                <button class="btn btn-s btn-sm" id="btn-open-point">+ 追加</button>
+                <div id="s-point-panel" class="add-panel">
+                    <div class="add-panel-title" id="s-point-panel-title">ポイント口座を追加</div>
+                    <input type="hidden" id="s-point-id">
+                    <div class="fi">
+                        <div class="fg"><label>ポイント名</label><input type="text" id="s-point-name" placeholder="楽天ポイント"></div>
+                        <div class="fg"><label>メモ（任意）</label><input type="text" id="s-point-note" placeholder="期間限定ポイント含む"></div>
+                    </div>
+                    <div class="flex-gap" style="margin-top:8px;">
+                        <button class="btn btn-p btn-sm" id="btn-save-point">保存</button>
+                        <button class="btn btn-s btn-sm" id="btn-close-point">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="g2">
             <div class="rec-sec" style="margin-bottom:0">
                 <div class="rec-sec-head"><span>口座種別</span></div>
@@ -791,6 +825,6 @@
 </div>
 
 </main>
-<script src="app.js?v=66"></script>
+<script src="app.js?v=67"></script>
 </body>
 </html>

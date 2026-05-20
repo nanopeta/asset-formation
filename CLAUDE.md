@@ -27,10 +27,10 @@
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=64">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=64"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=67">  <!-- style.css変更時に上げる -->
+<script src="app.js?v=67"></script>             <!-- app.js変更時に上げる -->
 ```
-また `app.js` 冒頭の `APP_VERSION='v64'` も同じ番号に揃えること（ヘッダーバッジに反映される）。
+また `app.js` 冒頭の `APP_VERSION='v67'` も同じ番号に揃えること（ヘッダーバッジに反映される）。
 片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
 
 ## 過去に起きた重大バグ（再発防止）
@@ -62,6 +62,7 @@ D = {
   //  dividendMonths: [1-12の数値配列]  ← 配当受取月（配当カレンダーに使用）
   //  （旧 spotAnnual は load() 時に spotList へ自動マイグレーション済み）
   idecoHoldings:[ {id, name, assetType, monthlyAmount, dividendYield, order} ],
+  pointAccounts:[ {id, name, note, order} ],  // ポイント口座（楽天ポイント等）
   customAccounts:   [ {id, label, color, badge, taxFree} ],  // taxFree: 配当非課税フラグ
   customAssetTypes: [ {id, label, badge, color} ],           // color: ドーナツグラフ用カラーコード
   accountTypeOrder: [ ...builtInIds, ...customIds ],         // 口座種別の表示順（ドラッグ並び替えで変更）
@@ -74,9 +75,10 @@ D = {
     holdingValues: { [id]: {value, principal} },
     idecoValues:   { [id]: {value, principal} },
     idecoActualPrincipal: 数値,  // iDeCo累計拠出元本（スイッチング前からの実拠出総額）
+    pointValues:  { [id]: 数値 },  // ポイント残高（calcTotals()で現金合計に加算）
     nisa: { year, seichouUsed, tsumitateUsed, lifetimeUsed, seichouLifetimeUsed }
   },
-  snapshots: [ {month, bankValues, cardValues, holdingValues, idecoValues, idecoActualPrincipal, nisa, cash, investment, idecoTotal, total} ]
+  snapshots: [ {month, bankValues, cardValues, pointValues, holdingValues, idecoValues, idecoActualPrincipal, nisa, cash, investment, idecoTotal, total} ]
 }
 ```
 
@@ -233,6 +235,10 @@ _panelClose(id)   // 設定パネルを閉じる（バックドロップ非表�
 _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
 exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
 exportAll()       // 全体バックアップJSONエクスポート
+printReport()     // 印刷ヘッダー(#print-header)にKPIを書き込んでwindow.print()を呼び出す
+renderPointInputs() // 記録タブのポイント残高グリッドを再描画
+renderPointsTable() // 設定タブのポイント口座テーブルを再描画
+// ポイント口座 CRUD: openPointPanel / closePointPanel / editPoint / savePoint / deletePoint
 ```
 
 ### チャートインスタンス（グローバル変数）

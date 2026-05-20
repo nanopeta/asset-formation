@@ -372,3 +372,23 @@
         .dark-mode .rec-sticky{background:var(--card);border-bottom-color:var(--border);}
         .dark-mode .dash-qnav{background:var(--card);border-bottom-color:var(--border);}
         #theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:14px;color:var(--muted);transition:color .2s;}
+/* ===== 印刷ヘッダー ===== */
+#print-header{display:none;}
+.print-hdr-title{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--primary);padding-bottom:8px;margin-bottom:12px;font-weight:700;font-size:16px;color:var(--primary);}
+.print-hdr-date{font-size:12px;font-weight:400;color:var(--muted);}
+.print-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.print-kpi-item{text-align:center;padding:8px;background:var(--bg);border-radius:6px;}
+.print-kpi-label{font-size:11px;color:var(--muted);}
+.print-kpi-val{font-size:15px;font-weight:700;color:var(--text);}
+/* ===== 印刷レイアウト ===== */
+@media print{
+    body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+    header,nav.main-nav,.dash-qnav,#settings-backdrop,.snap-reminder,
+    #tab-record,#tab-settings,#snap-modal,#confirm-modal,#snap-compare-modal,
+    .rec-sticky,.add-panel{display:none!important;}
+    #print-header{display:block!important;}
+    #tab-dashboard{display:block!important;}
+    .card,.sum-card,.schd-strip,.rec-sec,.an-block{break-inside:avoid;page-break-inside:avoid;}
+    .btn,.qnav-pill,.qnav-group,.snap-reminder-btn{display:none!important;}
+    main{padding:0;}
+}
