@@ -356,3 +356,19 @@
         .toast.toast-error{background:var(--danger);}
         .toast.toast-success{background:var(--accent);}
         .toast.toast-warn{background:var(--warning);}
+        /* ===== ダークモード ===== */
+        .dark-mode{--primary:#6fa9c4;--primary-dark:#5b9ab5;--primary-light:#1a2e3a;--accent:#6dbfad;--accent-light:#1a2e28;--bg:#111c24;--card:#1a2a36;--text:#dde8f0;--muted:#6a8898;--border:#243342;--success:#5fad9b;--danger:#d06868;--warning:#c9915a;}
+        .dark-mode header,.dark-mode .main-nav,.dark-mode .sub-nav{background:var(--card);}
+        .dark-mode .hero{background:linear-gradient(135deg,#1a3548 0%,#1e4060 50%,#224d72 100%);}
+        .dark-mode .card,.dark-mode .sum-card,.dark-mode .schd-strip,.dark-mode .rec-sec,.dark-mode .add-panel.open,.dark-mode .snap-modal-card{background:var(--card);}
+        .dark-mode table thead tr{background:var(--card);}
+        .dark-mode tbody tr:hover td,.dark-mode tbody tr:hover{background:#1e2f3d;}
+        .dark-mode .tbl-scroll table tbody tr:hover td:first-child,.dark-mode #tbl-by-account tbody tr:hover td:first-child,.dark-mode #tbl-by-type tbody tr:hover td:first-child{background:#1e2f3d;}
+        .dark-mode input,.dark-mode select,.dark-mode textarea{background:#1a2a36;color:var(--text);border-color:var(--border);}
+        .dark-mode .xf-btn{background:#1a2a36;color:var(--muted);}
+        .dark-mode #settings-backdrop{background:rgba(0,0,0,.6);}
+        .dark-mode .snap-modal{background:rgba(0,0,0,.7);}
+        .dark-mode .hi-warn{background:#2a2010;}
+        .dark-mode .rec-sticky{background:var(--card);border-bottom-color:var(--border);}
+        .dark-mode .dash-qnav{background:var(--card);border-bottom-color:var(--border);}
+        #theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:14px;color:var(--muted);transition:color .2s;}
