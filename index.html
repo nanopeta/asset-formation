@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産形成ダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=63">
+    <link rel="stylesheet" href="style.css?v=64">
 </head>
 <body>
 <header>
-    <h1 onclick="location.reload()" style="cursor:pointer;">資産形成ダッシュボード</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <h1 onclick="location.reload()" style="cursor:pointer;">資産形成ダッシュボード</h1>
+        <span id="app-version-badge" style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;"></span>
+    </div>
     <span id="last-updated"></span>
 </header>
 <nav class="main-nav">
@@ -756,6 +759,6 @@
 </div>
 
 </main>
-<script src="app.js?v=63"></script>
+<script src="app.js?v=64"></script>
 </body>
 </html>

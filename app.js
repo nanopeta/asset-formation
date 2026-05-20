@@ -1,4 +1,5 @@
 // ===== 定数 =====
+const APP_VERSION='v64';
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
     'nisa-tsumitate': {label:'NISA積立',    color:'#5fad9b',badge:'b-purple', taxFree:true},
@@ -1176,6 +1177,7 @@ function initSettingsEvents(){
 function init(){
     const now=new Date();
     el('rec-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const vb=el('app-version-badge');if(vb)vb.textContent=APP_VERSION;
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';
     el('settings-backdrop').addEventListener('click',()=>{document.querySelectorAll('.add-panel.open').forEach(p=>p.classList.remove('open'));el('settings-backdrop').classList.remove('active');});
     document.addEventListener('keydown',e=>{
