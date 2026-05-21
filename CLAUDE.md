@@ -25,13 +25,18 @@
 
 ## キャッシュバスター（重要）
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
-**`app.js` または `style.css` を変更したときは、必ず両方のバージョン番号を同時に上げること。**
+**`app.js` または `style.css` を変更したときは、必ず以下の4箇所を同時に上げること。**
 ```html
-<link rel="stylesheet" href="style.css?v=67">  <!-- style.css変更時に上げる -->
-<script src="app.js?v=67"></script>             <!-- app.js変更時に上げる -->
+<link rel="stylesheet" href="style.css?v=N">  <!-- index.html -->
+<script src="app.js?v=N"></script>             <!-- index.html -->
 ```
-また `app.js` 冒頭の `APP_VERSION='v67'` も同じ番号に揃えること（ヘッダーバッジに反映される）。
-片方だけ上げると、古いファイルがブラウザにキャッシュされたまま反映されない。
+```js
+const APP_VERSION='vN';  // app.js 冒頭（ヘッダーバッジに反映）
+```
+```js
+const CACHE = 'asset-dashboard-vN';  // sw.js 冒頭（Service Workerキャッシュ）★忘れると古いファイルがPWAで使われ続ける
+```
+4箇所のうち1つでも上げ忘れると、ブラウザ・PWAのキャッシュが古いままになる。
 
 ## 過去に起きた重大バグ（再発防止）
 
