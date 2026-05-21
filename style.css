@@ -302,6 +302,7 @@
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
             main{padding:14px;}
             .rec-sticky{margin:0 -14px 12px;padding:8px 14px;}
+            .rec-sticky-inner{flex-wrap:wrap;}
             .hero-value{font-size:36px;}
             .rec-sec{overflow-x:auto;}
             .an-body{overflow-x:auto;}
