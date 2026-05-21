@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v70';
+const APP_VERSION='v71';
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
     'nisa-tsumitate': {label:'NISA積立',    color:'#5fad9b',badge:'b-purple', taxFree:true},
