@@ -381,6 +381,13 @@
         .dark-mode td{border-bottom-color:var(--border);}
         .dark-mode .btn-d{background:#2d1313;border-color:#5a2222;}
         .dark-mode .btn-s{background:var(--bg);}
+        .dark-mode th{background:var(--card)!important;color:var(--muted);}
+        .dark-mode .tbl-scroll table tbody td:first-child,.dark-mode .tbl-wrap table tfoot td:first-child{background:var(--card);}
+        .dark-mode #tbl-by-account td:first-child,.dark-mode #tbl-by-type td:first-child{background:var(--card);}
+        .dark-mode .tbl-head{background:linear-gradient(90deg,var(--primary-light) 0%,var(--card) 100%);}
+        .dark-mode .tpb{background:var(--card);}
+        .dark-mode .spot-check{background:var(--card);}
+        .dark-mode .spot-amount{background:#1a2a36;}
         #theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:14px;color:var(--muted);transition:color .2s;}
 /* ===== 印刷ヘッダー ===== */
 #print-header{display:none;}
