@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v74';
+const APP_VERSION='v75';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -111,6 +111,11 @@ function toast(msg,type='info'){const t=document.createElement('div');t.classNam
 function customConfirm(msg,onOk,opts){opts=opts||{};const modal=el('confirm-modal');const bodyEl=el('confirm-modal-body');if(opts.html)bodyEl.innerHTML=msg;else bodyEl.textContent=msg;const okBtn=el('confirm-modal-ok');okBtn.textContent=opts.okLabel||'削除';okBtn.className='btn '+(opts.okClass||'btn-d')+' btn-sm';modal.style.display='flex';const close=()=>{modal.style.display='none';};okBtn.onclick=()=>{close();onOk();};el('confirm-modal-cancel').onclick=close;modal.onclick=(e)=>{if(e.target===modal)close();};}
 
 function handleTitleClick(){if(_unsaved){customConfirm('保存されていない変更があります。リロードすると失われます。',()=>location.reload(),{okLabel:'リロード',okClass:'btn-d'});return;}location.reload();}
+
+// ===== ヘルプモーダル =====
+function openHelp(tab){tab=tab||'usage';el('help-modal').style.display='flex';switchHelpTab(tab);}
+function closeHelp(){el('help-modal').style.display='none';}
+function switchHelpTab(tab){['usage','changelog'].forEach(t=>{el('help-tab-'+t).classList.toggle('active',t===tab);el('help-pane-'+t).style.display=t===tab?'':'none';});}
 
 // ===== NISA バー =====
 function renderNisaBar(prefix,used,max){const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);barEl.style.width=Math.min(100,p)+'%';const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
@@ -1307,6 +1312,8 @@ function init(){
     document.addEventListener('keydown',e=>{
         if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveSnapshot();return;}
         if(e.key!=='Escape')return;
+        const helpM=el('help-modal');
+        if(helpM&&helpM.style.display!=='none'){closeHelp();return;}
         const confirmM=el('confirm-modal');
         if(confirmM&&confirmM.style.display!=='none'){confirmM.style.display='none';return;}
         const compareM=el('snap-compare-modal');

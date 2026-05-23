@@ -10,13 +10,13 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=74">
+    <link rel="stylesheet" href="style.css?v=75">
 </head>
 <body>
 <header>
     <div style="display:flex;align-items:center;gap:8px;">
         <h1 onclick="handleTitleClick()" style="cursor:pointer;">資産形成ダッシュボード</h1>
-        <span id="app-version-badge" style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;"></span>
+        <span id="app-version-badge" onclick="openHelp()" title="使い方・更新履歴" style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;cursor:pointer;"></span>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
         <button id="theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替">🌙</button>
@@ -824,7 +824,196 @@
     </div>
 </div>
 
+
+<!-- ヘルプ・更新履歴モーダル -->
+<div id="help-modal" class="snap-modal" style="display:none" onclick="if(event.target===this)closeHelp()">
+    <div class="help-modal-card" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <span class="help-modal-title">📖 使い方・更新履歴</span>
+            <button class="help-close-btn" onclick="closeHelp()" aria-label="閉じる">✕</button>
+        </div>
+        <div class="help-tabs">
+            <button class="help-tab-btn active" id="help-tab-usage" onclick="switchHelpTab('usage')">使い方</button>
+            <button class="help-tab-btn" id="help-tab-changelog" onclick="switchHelpTab('changelog')">更新履歴</button>
+        </div>
+
+        <!-- 使い方 -->
+        <div id="help-pane-usage" class="help-pane">
+            <div class="help-about">
+                個人の資産形成を管理・可視化するダッシュボードです。銀行残高・投資信託・株の評価額を毎月記録して、資産推移やシミュレーションを確認できます。<br>
+                <strong>データはこのブラウザにのみ保存されます（外部には送信されません）。</strong>
+            </div>
+
+            <div class="help-section">
+                <div class="help-section-title">① はじめに（初期設定）</div>
+                <div class="help-step">
+                    <div class="help-step-num">1</div>
+                    <div>
+                        <div class="help-step-label">「設定」タブ → 「銘柄」で保有銘柄を登録</div>
+                        <div class="help-step-sub">銘柄名・口座種別（NISA成長枠など）・月次積立額・配当利回りを入力します。まだ評価額がわからなければ 0 でも大丈夫です</div>
+                    </div>
+                </div>
+                <div class="help-step">
+                    <div class="help-step-num">2</div>
+                    <div>
+                        <div class="help-step-label">「設定」タブ → 「口座・カード」で銀行口座とクレジットカードを登録</div>
+                        <div class="help-step-sub">残高を毎月記録したい口座を登録します</div>
+                    </div>
+                </div>
+                <div class="help-step">
+                    <div class="help-step-num">3</div>
+                    <div>
+                        <div class="help-step-label">「設定」タブ → 「基本設定」で目標元本などを設定</div>
+                        <div class="help-step-sub">USD/JPY レート・iDeCo 開始月・目標配分なども設定できます</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-section-title">② 毎月の使い方</div>
+                <div class="help-step">
+                    <div class="help-step-num">1</div>
+                    <div>
+                        <div class="help-step-label">「記録」タブを開く</div>
+                        <div class="help-step-sub">記録月は当月が自動入力されています</div>
+                    </div>
+                </div>
+                <div class="help-step">
+                    <div class="help-step-num">2</div>
+                    <div>
+                        <div class="help-step-label">各銘柄の「評価額」と「元本」を入力</div>
+                        <div class="help-step-sub">証券会社アプリの最新数値を入力します。楽天証券の場合は設定タブの「CSV インポート」で評価額を自動入力できます</div>
+                    </div>
+                </div>
+                <div class="help-step">
+                    <div class="help-step-num">3</div>
+                    <div>
+                        <div class="help-step-label">銀行残高・クレジットカード残高を入力</div>
+                        <div class="help-step-sub">「現金・預金」欄に銀行残高、「クレジットカード」欄に引き落とし予定額を入力します</div>
+                    </div>
+                </div>
+                <div class="help-step">
+                    <div class="help-step-num">4</div>
+                    <div>
+                        <div class="help-step-label">「スナップショットを保存」ボタンを押す</div>
+                        <div class="help-step-sub">保存すると月次サマリーが表示され、ダッシュボードに反映されます。毎月末頃に記録するのがおすすめです</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-section-title">③ ダッシュボードの見方</div>
+                <div class="help-feature-list">
+                    <div class="help-feature">
+                        <span class="help-feature-key">総資産</span>
+                        <span class="help-feature-desc">現金・投資・iDeCo の合計。先月比と含み損益を表示します</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">NISA</span>
+                        <span class="help-feature-desc">今年の NISA 枠（成長投資枠・積立投資枠）の使用状況と今年の投資計画</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">ポートフォリオ</span>
+                        <span class="help-feature-desc">銘柄ごとの比率グラフ。目標配分を設定するとずれが一目でわかります</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">資産推移</span>
+                        <span class="help-feature-desc">月次スナップの折れ線グラフ。全期間・1年・6ヶ月・3ヶ月で絞り込めます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">シミュレーション</span>
+                        <span class="help-feature-desc">上部ナビの「シミュレーション ▾」から FIRE・配当・iDeCo・取崩し・税金概算などを確認できます</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-section-title">④ 便利な機能</div>
+                <div class="help-feature-list">
+                    <div class="help-feature">
+                        <span class="help-feature-key">Ctrl+S</span>
+                        <span class="help-feature-desc">記録タブでスナップショットを素早く保存できます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">楽天CSV</span>
+                        <span class="help-feature-desc">楽天証券の「保有商品一覧CSV」をインポートすると評価額を一括更新できます（設定タブ → データ管理）</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">バックアップ</span>
+                        <span class="help-feature-desc">設定タブ → データ管理から全データを JSON でエクスポートできます。機種変更前や定期的なバックアップにご利用ください</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">並び替え</span>
+                        <span class="help-feature-desc">設定タブで銘柄・口座・種別をドラッグ&ドロップで自由に並び替えられます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">前月コピー</span>
+                        <span class="help-feature-desc">記録タブの「前月コピー」ボタンで前月の数値を一括コピーできます。変化が少ない月に便利です</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 更新履歴 -->
+        <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v75 <span class="changelog-date">2026-05-23</span></div>
+                <ul class="changelog-items">
+                    <li>使い方・更新履歴モーダルを追加（バージョンバッジをクリックして開く）</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v74 <span class="changelog-date">2026-05-23</span></div>
+                <ul class="changelog-items">
+                    <li>トースト通知を改善（5秒表示・× 閉じるボタン追加）</li>
+                    <li>タイトルクリック時に未保存データの確認ダイアログを表示</li>
+                    <li>税率定数の一元化・コード品質改善</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v73</div>
+                <ul class="changelog-items">
+                    <li>スナップショット比較モーダルを追加</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v67</div>
+                <ul class="changelog-items">
+                    <li>PWA 対応（ホーム画面追加・オフライン使用可能）</li>
+                    <li>ポイント口座管理（楽天ポイント等を現金合計に含める）</li>
+                    <li>PDF レポート印刷機能を追加</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v60 台</div>
+                <ul class="changelog-items">
+                    <li>iDeCo 受取シミュレーション追加</li>
+                    <li>FIRE 取崩しシミュレーション追加</li>
+                    <li>税金概算セクション追加</li>
+                    <li>楽天証券 CSV インポート機能追加</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v50 台</div>
+                <ul class="changelog-items">
+                    <li>証券会社 CRUD・カスタム口座種別・銘柄種別 CRUD を追加</li>
+                    <li>配当カレンダー・配当シミュレーション追加</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v40 台以前</div>
+                <ul class="changelog-items">
+                    <li>ポートフォリオ・再投資シミュ・FIRE シミュレーション</li>
+                    <li>Excel 風フィルター・目標配分バー・クイックナビ</li>
+                    <li>ダークモード・スポット購入計画</li>
+                    <li>基本 CRUD・スナップショット・資産推移チャート</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 </main>
-<script src="app.js?v=74"></script>
+<script src="app.js?v=75"></script>
 </body>
 </html>
