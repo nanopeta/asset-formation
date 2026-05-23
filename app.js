@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v76';
+const APP_VERSION='v77';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -113,11 +113,8 @@ function customConfirm(msg,onOk,opts){opts=opts||{};const modal=el('confirm-moda
 function handleTitleClick(){if(_unsaved){customConfirm('保存されていない変更があります。リロードすると失われます。',()=>location.reload(),{okLabel:'リロード',okClass:'btn-d'});return;}location.reload();}
 
 // ===== 月末リマインダー通知 =====
-const NOTIF_CACHE='asset-notif-v1';
-function _updateNotifCache(month){if(!('caches' in window))return;caches.open(NOTIF_CACHE).then(c=>c.put('/last-recorded',new Response(JSON.stringify({month})))).catch(()=>{});}
-function _syncNotifCache(){if(!('caches' in window))return;const months=D.snapshots.map(s=>s.month).sort();const last=months[months.length-1];if(last)_updateNotifCache(last);}
 function _renderNotifStatus(){const s=el('notif-status');if(!s)return;const ok='Notification' in window&&Notification.permission==='granted';s.textContent=ok?'🔔 有効':'🔕 未設定';s.style.color=ok?'var(--success)':'var(--muted)';}
-async function requestNotifPermission(){if(!('Notification' in window)){toast('このブラウザは通知に対応していません','error');return;}if(Notification.permission==='granted'){toast('通知はすでに有効です');_renderNotifStatus();return;}const perm=await Notification.requestPermission();if(perm==='granted'){toast('月末リマインダーを有効にしました 🔔','success');await _registerPeriodicSync();_syncNotifCache();}else{toast('通知が許可されませんでした。ブラウザ設定から許可してください','error');}  _renderNotifStatus();}
+async function requestNotifPermission(){if(!('Notification' in window)){toast('このブラウザは通知に対応していません','error');return;}if(Notification.permission==='granted'){toast('通知はすでに有効です');_renderNotifStatus();return;}const perm=await Notification.requestPermission();if(perm==='granted'){toast('月末リマインダーを有効にしました 🔔','success');await _registerPeriodicSync();}else{toast('通知が許可されませんでした。ブラウザ設定から許可してください','error');}  _renderNotifStatus();}
 async function _registerPeriodicSync(){try{const reg=await navigator.serviceWorker.ready;if('periodicSync' in reg)await reg.periodicSync.register('monthly-reminder',{minInterval:12*60*60*1000});}catch(e){}}
 
 // ===== ヘルプモーダル =====
@@ -775,7 +772,7 @@ function saveSnapshot(){
     const snap={month,note:el('rec-note')?.value||'',bankValues:{...c.bankValues},cardValues:{...c.cardValues},pointValues:{...c.pointValues||{}},holdingValues:JSON.parse(JSON.stringify(c.holdingValues)),idecoValues:JSON.parse(JSON.stringify(c.idecoValues)),idecoActualPrincipal:c.idecoActualPrincipal,nisa:{...c.nisa},cash,investment:inv,idecoTotal:ideco,total:cash+inv+ideco};
     const idx=D.snapshots.findIndex(s=>s.month===month);
     if(idx>=0)D.snapshots[idx]=snap;else D.snapshots.push(snap);
-    persist();clearUnsaved();_updateNotifCache(month);renderDashboard();renderHistoryTable();renderHoldingInputs();renderIdecoInputs();
+    persist();clearUnsaved();renderDashboard();renderHistoryTable();renderHoldingInputs();renderIdecoInputs();
     showSnapSummary(month,snap,prevSnapForModal);
 }
 
@@ -1339,6 +1336,6 @@ function init(){
     renderRecordTab();
     // 通知初期化
     _renderNotifStatus();
-    if('Notification' in window&&Notification.permission==='granted'){_registerPeriodicSync();_syncNotifCache();}
+    if('Notification' in window&&Notification.permission==='granted')_registerPeriodicSync();
 }
 init();
