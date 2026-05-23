@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v77';
+const APP_VERSION='v78';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -91,6 +91,7 @@ const el=id=>document.getElementById(id);
 const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
 const formatMonth=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
+function updateTodayDate(){const d=new Date();const days=['日','月','火','水','木','金','土'];const s=el('today-date');if(s)s.textContent=`${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;}
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');el('last-updated').textContent=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
 function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);const tb=el('theme-toggle');if(tb)tb.textContent=dark?'☀️':'🌙';}
 function toggleTheme(){const dark=!document.body.classList.contains('dark-mode');localStorage.setItem('asset-theme',dark?'dark':'light');applyTheme(dark);}
@@ -1310,6 +1311,7 @@ function initSettingsEvents(){
 function init(){
     const now=new Date();
     el('rec-month').value=formatMonth(now);
+    updateTodayDate();
     const vb=el('app-version-badge');if(vb)vb.textContent=APP_VERSION;
     applyTheme(localStorage.getItem('asset-theme')==='dark');
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';

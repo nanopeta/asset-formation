@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=77">
+    <link rel="stylesheet" href="style.css?v=78">
 </head>
 <body>
 <header>
@@ -20,6 +20,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
         <button id="theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替">🌙</button>
+        <span id="today-date" style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;"></span>
         <span id="last-updated"></span>
     </div>
 </header>
@@ -1025,6 +1026,6 @@
 </div>
 
 </main>
-<script src="app.js?v=77"></script>
+<script src="app.js?v=78"></script>
 </body>
 </html>
