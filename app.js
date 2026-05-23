@@ -1,5 +1,6 @@
 // ===== 定数 =====
-const APP_VERSION='v73';
+const APP_VERSION='v74';
+const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
     'nisa-tsumitate': {label:'NISA積立',    color:'#5fad9b',badge:'b-purple', taxFree:true},
@@ -88,6 +89,7 @@ const fmt=n=>'¥'+Math.round(n||0).toLocaleString('ja-JP');
 const pct=(v,m)=>m>0?Math.min(100,(v/m)*100):0;
 const el=id=>document.getElementById(id);
 const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
+const formatMonth=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');el('last-updated').textContent=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
 function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);const tb=el('theme-toggle');if(tb)tb.textContent=dark?'☀️':'🌙';}
@@ -104,9 +106,11 @@ function spotDone(h){return(h.spotList||[]).filter(s=>s.done).reduce((a,s)=>a+(s
 function gainHtml(val,pri,size='11px'){if(!pri)return'';const g=val-pri,r=(g/pri*100),cls=g>=0?'positive':'negative',sign=g>=0?'+':'';return`<span class="${cls}" style="font-size:${size}">${sign}${fmt(g)}</span><span style="color:var(--muted);font-size:${size};margin-left:4px;">(${sign}${r.toFixed(2)}%)</span>`;}
 function holdingJpy(h){const hv=D.current.holdingValues[h.id]||{};const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;return{value:(hv.value||0)*mul,principal:(hv.principal||0)*mul};}
 
-function toast(msg,type='info'){const t=document.createElement('div');t.className='toast toast-'+type;t.setAttribute('role','alert');t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('toast-show'));setTimeout(()=>{t.classList.remove('toast-show');t.addEventListener('transitionend',()=>t.remove(),{once:true});},3200);}
+function toast(msg,type='info'){const t=document.createElement('div');t.className='toast toast-'+type;t.setAttribute('role','alert');const dismiss=()=>{t.classList.remove('toast-show');t.addEventListener('transitionend',()=>t.remove(),{once:true});};const msgSpan=document.createElement('span');msgSpan.textContent=msg;const closeBtn=document.createElement('button');closeBtn.className='toast-close';closeBtn.textContent='×';closeBtn.setAttribute('aria-label','閉じる');t.appendChild(msgSpan);t.appendChild(closeBtn);document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('toast-show'));const tid=setTimeout(dismiss,5000);closeBtn.onclick=()=>{clearTimeout(tid);dismiss();};}
 
 function customConfirm(msg,onOk,opts){opts=opts||{};const modal=el('confirm-modal');const bodyEl=el('confirm-modal-body');if(opts.html)bodyEl.innerHTML=msg;else bodyEl.textContent=msg;const okBtn=el('confirm-modal-ok');okBtn.textContent=opts.okLabel||'削除';okBtn.className='btn '+(opts.okClass||'btn-d')+' btn-sm';modal.style.display='flex';const close=()=>{modal.style.display='none';};okBtn.onclick=()=>{close();onOk();};el('confirm-modal-cancel').onclick=close;modal.onclick=(e)=>{if(e.target===modal)close();};}
+
+function handleTitleClick(){if(_unsaved){customConfirm('保存されていない変更があります。リロードすると失われます。',()=>location.reload(),{okLabel:'リロード',okClass:'btn-d'});return;}location.reload();}
 
 // ===== NISA バー =====
 function renderNisaBar(prefix,used,max){const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);barEl.style.width=Math.min(100,p)+'%';const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
@@ -167,7 +171,7 @@ function renderDashboard(){
     const c=D.current;
     const{cash,inv,ideco,total}=calcTotals();
     {const hidden=D.settings.hiddenSections||[];['sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-div-cal','sec-div-sim','sec-reinvest','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
-    {const rem=el('snap-reminder');if(rem){const now=new Date();const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const lastMonth=`${lm.getFullYear()}-${String(lm.getMonth()+1).padStart(2,'0')}`;const hasSnap=D.snapshots.some(s=>s.month===lastMonth);if(!hasSnap&&D.snapshots.length>0){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">⚠️ ${lastMonth} の記録がまだありません</span><button class="snap-reminder-btn" onclick="document.querySelector('[data-tab=record]').click();el('rec-month').value='${lastMonth}'">記録する</button>`;}else{rem.style.display='none';}}}
+    {const rem=el('snap-reminder');if(rem){const now=new Date();const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const lastMonth=formatMonth(lm);const hasSnap=D.snapshots.some(s=>s.month===lastMonth);if(!hasSnap&&D.snapshots.length>0){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">⚠️ ${lastMonth} の記録がまだありません</span><button class="snap-reminder-btn" onclick="document.querySelector('[data-tab=record]').click();el('rec-month').value='${lastMonth}'">記録する</button>`;}else{rem.style.display='none';}}}
     const invPri=D.holdings.reduce((a,h)=>a+holdingJpy(h).principal,0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
     const idecoActualPri=c.idecoActualPrincipal||0;
@@ -307,7 +311,7 @@ function renderSCHDReinvest(){
     const monthlyAdd=parseFloat(el('schd-monthly-add')?.value)||0;
     const reinvest=el('schd-reinvest')?.checked!==false;
     const taxAfter=el('schd-tax')?.checked||false;
-    const TAX=0.79685;// 1 - 20.315%
+    const TAX=1-TAX_RATE;
     const targetIncome=parseFloat(el('schd-target-income')?.value)||0;
     const rows=[];let val=startVal,cumDiv=0,reachYr=null;
     for(let yr=1;yr<=years;yr++){
@@ -364,7 +368,7 @@ function renderDividendSim(){
         const y=(h.dividendYield||0)/100;
         const before=v*y;
         const isTaxFree=(getAccounts()[h.account]?.taxFree)||h.isIdeco;
-        const taxRate=isTaxFree?0:0.20315;
+        const taxRate=isTaxFree?0:TAX_RATE;
         const after=before*(1-taxRate);
         const after5yr=after*Math.pow(1+divGrowthRate,5);
         const after10yr=after*Math.pow(1+divGrowthRate,10);
@@ -544,7 +548,7 @@ function renderTaxEstimate(){
         if(!(h.dividendYield||0))return;
         nisaDivPre+=(c.idecoValues[h.id]?.value||0)*(h.dividendYield/100);
     });
-    const divTax=taxableDivPre*0.20315;
+    const divTax=taxableDivPre*TAX_RATE;
     let taxableGain=0,nisaGain=0,idecoGain=0;
     D.holdings.forEach(h=>{
         const{value,principal}=holdingJpy(h);
@@ -558,14 +562,14 @@ function renderTaxEstimate(){
         const pri=c.idecoValues[h.id]?.principal||0;
         if(val-pri>0)idecoGain+=val-pri;
     });
-    const gainTax=taxableGain*0.20315;
+    const gainTax=taxableGain*TAX_RATE;
     const body=el('tax-result');if(!body)return;
     const taxableRows=D.holdings.filter(h=>!accs[h.account]?.taxFree);
     body.innerHTML=`<div class="g4 mb">
         <div class="card card-sm"><div class="clabel">配当税（特定口座）</div><div class="cval" style="color:var(--danger)">${fmt(divTax)}</div><div class="csub">税前配当 ${fmt(taxableDivPre)}</div></div>
         <div class="card card-sm"><div class="clabel">潜在税（特定口座含み益）</div><div class="cval" style="color:var(--warning)">${fmt(gainTax)}</div><div class="csub">含み益 ${fmt(taxableGain)}</div></div>
-        <div class="card card-sm"><div class="clabel">NISA非課税メリット</div><div class="cval positive">${fmt((nisaDivPre*0.20315)+(nisaGain*0.20315))}</div><div class="csub">配当+含み益節税分</div></div>
-        <div class="card card-sm"><div class="clabel">iDeCo非課税メリット</div><div class="cval positive">${fmt(idecoGain*0.20315)}</div><div class="csub">含み益節税分</div></div>
+        <div class="card card-sm"><div class="clabel">NISA非課税メリット</div><div class="cval positive">${fmt((nisaDivPre*TAX_RATE)+(nisaGain*TAX_RATE))}</div><div class="csub">配当+含み益節税分</div></div>
+        <div class="card card-sm"><div class="clabel">iDeCo非課税メリット</div><div class="cval positive">${fmt(idecoGain*TAX_RATE)}</div><div class="csub">含み益節税分</div></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">※ 配当税は今年の推定年間額。含み益潜在税は売却した場合の概算（20.315%）。実際の税額は確定申告等で確認してください。</div>
     ${taxableRows.length?`<div class="tbl-wrap tbl-scroll" id="tax-table"><div class="tbl-head">特定口座 銘柄別内訳</div>
@@ -581,7 +585,7 @@ function renderTaxEstimate(){
         const{value,principal}=holdingJpy(h);
         const annual=value*(h.dividendYield||0)/100;
         const gain=value-principal;
-        return`<tr><td><div class="td-name">${h.name}</div></td><td style="text-align:right">${fmt(value)}</td><td style="text-align:right">${fmt(annual)}</td><td style="text-align:right;color:var(--danger)">${fmt(annual*0.20315)}</td><td style="text-align:right">${gain>0?`<span class="positive">+${fmt(gain)}</span>`:'<span style="color:var(--muted)">--</span>'}</td><td style="text-align:right;color:var(--warning)">${gain>0?fmt(gain*0.20315):'--'}</td></tr>`;
+        return`<tr><td><div class="td-name">${h.name}</div></td><td style="text-align:right">${fmt(value)}</td><td style="text-align:right">${fmt(annual)}</td><td style="text-align:right;color:var(--danger)">${fmt(annual*TAX_RATE)}</td><td style="text-align:right">${gain>0?`<span class="positive">+${fmt(gain)}</span>`:'<span style="color:var(--muted)">--</span>'}</td><td style="text-align:right;color:var(--warning)">${gain>0?fmt(gain*TAX_RATE):'--'}</td></tr>`;
     }).join('')}</tbody></table></div>`:''}`;
     if(taxableRows.length)xfBind('tax-table','tax-holdings-body',{});
 }
@@ -1003,14 +1007,14 @@ async function _triggerExport(blob,filename,btnId){
     if(btnId)_flashBtn(btnId);
 }
 function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`,'btn-export-all');}
-function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);if(!parsed||!parsed.settings||!Array.isArray(parsed.holdings)){toast('ファイルの形式が正しくありません（必須フィールドが見つかりません）','error');return;}D=parsed;persist();renderSettings();renderDashboard();renderRecordTab();toast('インポート完了しました','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
+function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);if(!parsed||!parsed.settings||!Array.isArray(parsed.holdings)){toast('ファイルの形式が正しくありません（必須フィールドが見つかりません）','error');return;}D=parsed;persist();renderSettings();renderDashboard();renderRecordTab();toast('インポート完了しました','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');r.readAsText(f);}
 
 // 設定のみ（記録は保持）
 function exportSettings(){
     const s={settings:D.settings,bankAccounts:D.bankAccounts,creditCards:D.creditCards,holdings:D.holdings,idecoHoldings:D.idecoHoldings,customAccounts:D.customAccounts||[],customAssetTypes:D.customAssetTypes||[],accountTypeOverrides:D.accountTypeOverrides||{},assetTypeOverrides:D.assetTypeOverrides||{},current:D.current};
     const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});_triggerExport(b,`asset-settings-${today()}.json`,'btn-export-settings');
 }
-function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();toast('設定をインポートしました（記録は変更されていません）','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.readAsText(f);}
+function importSettings(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const s=JSON.parse(ev.target.result);D={...s,snapshots:D.snapshots};persist();renderSettings();renderDashboard();renderRecordTab();toast('設定をインポートしました（記録は変更されていません）','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');r.readAsText(f);}
 
 // 楽天証券CSV インポート
 const _RAKUTEN_ACC_MAP={'特定':'specific','一般':'specific','旧NISA':'old-nisa','つみたてNISA':'old-nisa','NISA成長投資枠':'nisa-growth','NISAつみたて投資枠':'nisa-tsumitate'};
@@ -1295,7 +1299,7 @@ function initSettingsEvents(){
 }
 function init(){
     const now=new Date();
-    el('rec-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    el('rec-month').value=formatMonth(now);
     const vb=el('app-version-badge');if(vb)vb.textContent=APP_VERSION;
     applyTheme(localStorage.getItem('asset-theme')==='dark');
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';

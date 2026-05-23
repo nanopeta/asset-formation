@@ -356,11 +356,13 @@
         .tbl-scroll table tbody tr:hover td:first-child{background:#f3f9fc;}
         #tbl-by-account tbody tr:hover td:first-child,#tbl-by-type tbody tr:hover td:first-child{background:#f3f9fc;}
         /* ===== トースト通知 ===== */
-        .toast{position:fixed;bottom:24px;right:20px;padding:10px 16px;border-radius:10px;background:#243447;color:#fff;font-size:13px;z-index:10000;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;max-width:360px;box-shadow:0 6px 20px rgba(0,0,0,.2);pointer-events:none;}
-        .toast.toast-show{opacity:1;transform:translateY(0);}
+        .toast{position:fixed;bottom:24px;right:20px;padding:10px 16px;border-radius:10px;background:#243447;color:#fff;font-size:13px;z-index:10000;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;max-width:360px;box-shadow:0 6px 20px rgba(0,0,0,.2);pointer-events:none;display:flex;align-items:center;gap:8px;}
+        .toast.toast-show{opacity:1;transform:translateY(0);pointer-events:auto;}
         .toast.toast-error{background:var(--danger);}
         .toast.toast-success{background:var(--accent);}
         .toast.toast-warn{background:var(--warning);}
+        .toast-close{background:none;border:none;color:rgba(255,255,255,.65);cursor:pointer;padding:0;font-size:16px;line-height:1;flex-shrink:0;margin-left:auto;}
+        .toast-close:hover{color:#fff;}
         /* ===== ダークモード ===== */
         .dark-mode{--primary:#6fa9c4;--primary-dark:#5b9ab5;--primary-light:#1a2e3a;--accent:#6dbfad;--accent-light:#1a2e28;--bg:#111c24;--card:#1a2a36;--text:#dde8f0;--muted:#6a8898;--border:#243342;--success:#5fad9b;--danger:#d06868;--warning:#c9915a;}
         .dark-mode header,.dark-mode .main-nav,.dark-mode .sub-nav{background:var(--card);}

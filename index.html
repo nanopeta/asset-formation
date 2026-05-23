@@ -10,12 +10,12 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=73">
+    <link rel="stylesheet" href="style.css?v=74">
 </head>
 <body>
 <header>
     <div style="display:flex;align-items:center;gap:8px;">
-        <h1 onclick="location.reload()" style="cursor:pointer;">資産形成ダッシュボード</h1>
+        <h1 onclick="handleTitleClick()" style="cursor:pointer;">資産形成ダッシュボード</h1>
         <span id="app-version-badge" style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;"></span>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
@@ -825,6 +825,6 @@
 </div>
 
 </main>
-<script src="app.js?v=73"></script>
+<script src="app.js?v=74"></script>
 </body>
 </html>
