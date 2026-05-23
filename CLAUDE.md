@@ -23,6 +23,13 @@
 | `app.js` | ロジック全般・レンダリング | ~1200行 |
 | `style.css` | スタイル | ~360行 |
 
+## グローバル定数（app.js 先頭）
+```js
+APP_VERSION  // バージョン文字列（例: 'v74'）。キャッシュバスターと同じ番号
+TAX_RATE     // 0.20315 — 源泉分離課税率（所得税 15% + 住民税 5% + 復興税 0.315%）
+             // 税率を直書きせず必ずこの定数を使うこと。6箇所以上で参照
+```
+
 ## キャッシュバスター（重要）
 `index.html` の末尾付近で `app.js` と `style.css` をバージョン付きで読み込んでいる。
 **`app.js` または `style.css` を変更したときは、必ず以下の4箇所を同時に上げること。**
@@ -215,6 +222,7 @@ xfApply(tableId)                         // フィルター＆ソート適用
 ```js
 fmt(n)            // ¥1,234,567 形式
 fmtMonths(months) // 月数を「N年Mヶ月」形式に変換
+formatMonth(d)    // Date → 'YYYY-MM' 文字列（月セレクト・スナップキー生成に使用）
 el(id)            // document.getElementById 省略形
 uid()             // ユニークID生成（※load()内では使用不可→インラインIDを使うこと）
 persist()         // D を localStorage に保存
@@ -241,6 +249,7 @@ _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share
 exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
 exportAll()       // 全体バックアップJSONエクスポート
 printReport()     // 印刷ヘッダー(#print-header)にKPIを書き込んでwindow.print()を呼び出す
+handleTitleClick() // h1クリック時のリロード処理。_unsaved=true の場合は customConfirm() を表示してリロードをブロック
 renderPointInputs() // 記録タブのポイント残高グリッドを再描画
 renderPointsTable() // 設定タブのポイント口座テーブルを再描画
 // ポイント口座 CRUD: openPointPanel / closePointPanel / editPoint / savePoint / deletePoint
@@ -318,7 +327,8 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.alloc-title` / `.alloc-table` | 目標配分セクション |
 | `.chart-wrap` / `.chart-h300` | チャートコンテナ（標準220px / 高さ300px） |
 | `.fill-blue` `.fill-orange` `.fill-green` `.fill-purple` `.fill-red` | プログレスバー色 |
-| `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知 |
+| `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知（5秒・× 閉じるボタン付き） |
+| `.toast-close` | トースト内 × 閉じるボタン |
 
 ## init() の主な初期化処理
 ```js
