@@ -323,6 +323,8 @@
             .main-nav button{padding:8px 10px;}
             .an-body{padding:12px;}
             .an-summary{padding:10px 14px;}
+            #last-updated{display:none;}
+            h1{font-size:15px;}
         }
 
         /* ===== 月次サマリーモーダル ===== */
