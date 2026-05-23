@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=75">
+    <link rel="stylesheet" href="style.css?v=76">
 </head>
 <body>
 <header>
@@ -746,6 +746,17 @@
             <div id="s-hidden-sections" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;"></div>
             <button class="btn btn-p btn-sm" onclick="saveHiddenSections()" style="margin-top:12px;">表示設定を保存</button>
         </div>
+        <div class="sec-label">月末リマインダー</div>
+        <div class="card" style="max-width:480px;margin-bottom:20px;">
+            <div style="font-size:13px;color:var(--text);line-height:1.8;margin-bottom:12px;">
+                月の末日に「記録してください」という通知をスマートフォンに送ります。<br>
+                <span style="font-size:11px;color:var(--muted);">※ PWA（ホーム画面に追加）としてインストール済みの Android Chrome でのみ動作します</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+                <button class="btn btn-p btn-sm" onclick="requestNotifPermission()">通知を有効にする</button>
+                <span id="notif-status" style="font-size:12px;font-weight:600;"></span>
+            </div>
+        </div>
         <div class="sec-label">データ管理</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <div class="rec-sec" style="flex:1;min-width:160px;margin-bottom:0;">
@@ -1014,6 +1025,6 @@
 </div>
 
 </main>
-<script src="app.js?v=75"></script>
+<script src="app.js?v=76"></script>
 </body>
 </html>
