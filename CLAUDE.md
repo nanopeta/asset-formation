@@ -5,6 +5,20 @@
 - `README.md` — 機能一覧・使い方の説明を最新状態に
 - `TODO.md` — 完了タスクを `[x]` に、新規検討事項を `[ ]` に追加
 - `CLAUDE.md` — データ構造・関数・CSS クラス等の変更を反映
+- `CHANGELOG.md` — バージョンと変更内容を記録
+
+### 自動チェック（二重防止策）
+ドキュメント更新漏れを防ぐ2つのフックが設定されている。
+
+**① git pre-commit フック**（`scripts/pre-commit`）
+- `app.js` / `style.css` / `index.html` が変更されたのに MD ファイルが1つも変更されていない場合、コミットをブロック
+- キャッシュバスターの4箇所（APP_VERSION / CACHE / ?v=N × 2）が不一致の場合もブロック
+- `git config core.hooksPath scripts` で有効化済み（新規クローン時は再実行が必要）
+- スキップする場合: `git commit --no-verify`（意図的な場合のみ）
+
+**② Claude Code PostToolUse フック**（`.claude/hooks/doc-reminder.sh`）
+- Claude が `Edit` / `Write` ツールで `app.js` / `style.css` / `index.html` を変更した直後に、ドキュメント更新チェックリストをターミナルに表示
+- `.claude/settings.json` で設定済み（`PostToolUse` → `Edit` / `Write`）
 
 ## PR マージルール（必須）
 - PR 作成後は確認なしで即マージすること（「マージしますか？」と聞かない）
@@ -16,16 +30,18 @@
 - 正しい順序: 変更 → コミット → `git push --force-with-lease`
 - mainとの同期が必要な場合も、先にコミットしてからpushする
 
-## ファイル構成（3ファイル）
+## ファイル構成
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~750行 |
-| `app.js` | ロジック全般・レンダリング | ~1200行 |
-| `style.css` | スタイル | ~360行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~1,045行 |
+| `app.js` | ロジック全般・レンダリング | ~1,462行 |
+| `style.css` | スタイル | ~477行 |
+| `sw.js` | Service Worker（キャッシュ・通知） | ~80行 |
+| `manifest.json` | PWA マニフェスト | ~30行 |
 
 ## グローバル定数（app.js 先頭）
 ```js
-APP_VERSION  // バージョン文字列（例: 'v74'）。キャッシュバスターと同じ番号
+APP_VERSION  // バージョン文字列（例: 'v83'）。キャッシュバスターと同じ番号
 TAX_RATE     // 0.20315 — 源泉分離課税率（所得税 15% + 住民税 5% + 復興税 0.315%）
              // 税率を直書きせず必ずこの定数を使うこと。6箇所以上で参照
 ```
@@ -63,6 +79,7 @@ D = {
     idecoMonthlyTotal: 0,      // iDeCo月次拠出合計（円）
     usdJpy: 150,               // USD/JPY レート（USD銘柄の円換算に使用）
     targetAllocation: {},      // 目標配分 { [assetTypeId]: number（%） }
+    hiddenSections: {},        // ダッシュボードセクションの非表示設定 { [sectionId]: boolean }
   },
   brokers:      [ {id, name, order} ],
   bankAccounts: [ {id, name, note, order} ],
@@ -90,7 +107,8 @@ D = {
     pointValues:  { [id]: 数値 },  // ポイント残高（calcTotals()で現金合計に加算）
     nisa: { year, seichouUsed, tsumitateUsed, lifetimeUsed, seichouLifetimeUsed }
   },
-  snapshots: [ {month, bankValues, cardValues, pointValues, holdingValues, idecoValues, idecoActualPrincipal, nisa, cash, investment, idecoTotal, total} ]
+  snapshots: [ {month, note, bankValues, cardValues, pointValues, holdingValues, idecoValues, idecoActualPrincipal, nisa, cash, investment, idecoTotal, total} ]
+  //  note: スナップショットメモ（記録タブの「メモ」欄、任意）
 }
 ```
 
@@ -109,6 +127,7 @@ BUILT_IN_ASSET_TYPES = {
   'domestic-stock': {label, badge:'b-teal',   color:'#5fad9b'},
   'us-stock':       {label, badge:'b-orange', color:'#c9915a'},
   'other':          {label, badge:'b-purple', color:'#9b8fc4'},
+  'cash':           {label, badge:'b-gray',   color: 設定で変更可能},  // 現金（銀行残高）種別合計ドーナツに使用
 }
 // 銘柄種別カラーパレット（ASSET_TYPE_COLORS は後方互換フォールバック用として残存）
 ASSET_TYPE_COLORS = { 'fund':'#5b8fa8', 'domestic-stock':'#5fad9b', 'us-stock':'#c9915a', 'other':'#9b8fc4' }
@@ -134,6 +153,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
   record    → rec-banks / rec-holdings
   settings  → set-holdings / set-accounts / set-basic
 ```
+- セクションの表示/非表示は `D.settings.hiddenSections` で制御（`renderHiddenSectionSettings()` / `saveHiddenSections()`）
 
 ## 主要関数の場所（app.js）
 
@@ -146,7 +166,10 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `renderDashNisaSection(mo)` | NISAカード＋今年の投資計画描画 |
 | `renderPortfolio(totalInv)` | ドーナツチャート＋銘柄比率テーブル＋目標配分バー |
 | `renderAllocationBars(items)` | 目標配分テーブル（実績・目標・差分・買い増し目安額） |
-| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧、到達シミュ） |
+| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧、到達シミュ）。種別合計に現金を含み、凡例クリックでテーブル行連動 |
+| `renderAssetReport()` | 資産分析レポート（口座別・種別バー比較＋インサイト12条件の自動診断）|
+| `openAssetReport()` | レポートモーダル表示（`#report-modal`）＋`renderAssetReport()` 呼び出し |
+| `closeAssetReport()` | レポートモーダル非表示 |
 | `renderDivCalendar()` | 配当カレンダー（月別受取スケジュール・棒グラフ） |
 | `renderDividendSim()` | 配当シミュレーションテーブル |
 | `renderSCHDReinvest()` | 分配金再投資シミュレーション（年数・積立・再投資なし・目標月収・折れ線チャート） |
@@ -167,7 +190,40 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `customConfirm(msg, onOk, opts)` | ブランデッド確認ダイアログ（`#confirm-modal`）。`opts.okLabel` / `opts.okClass` / `opts.html` を指定可。ブラウザ標準 `confirm()` の代替 |
 | `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示 |
 | `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`、異なる場合は `destroy`＋`new Chart()` |
-| `APP_VERSION` | バージョン文字列定数（例: `'v64'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
+| `APP_VERSION` | バージョン文字列定数（例: `'v83'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
+| `applyTheme(dark)` | ダークモードクラス（`.dark-mode`）を付け替え＋🌙/☀ボタンテキスト更新 |
+| `toggleTheme()` | ダークモード設定を localStorage に保存して `applyTheme()` を呼び出し |
+| `updateTodayDate()` | `#today-date` に当日の日付（曜日付き）をセット |
+| `updateTs()` | `#last-updated` に最終保存タイムスタンプをセット |
+| `prevSnap()` | `D.snapshots` の最終エントリを返す（前月比計算・スナップ差分表示に使用） |
+| `copyPrevSnap()` | 前月スナップを当月の入力フィールドに一括コピー（確認トースト付き） |
+| `openSnapCompare()` | スナップ比較モーダル（`#snap-compare-modal`）を表示 |
+| `markUnsaved()` | `_unsaved = true` ＋未保存インジケーター表示（`.rec-unsaved` アニメーション） |
+| `clearUnsaved()` | `_unsaved = false` ＋未保存インジケーター非表示 |
+| `requestNotifPermission()` | ブラウザ通知権限リクエスト＋Periodic Background Sync 登録 |
+| `_registerPeriodicSync()` | Service Worker Periodic Sync 登録（月末リマインダー用） |
+| `_renderNotifStatus()` | ヘッダーの通知ステータス（🔔/🔕）を更新 |
+| `openHelp(tab)` | ヘルプモーダル（`#help-modal`）を表示。`tab`: `'usage'`\|`'changelog'` |
+| `closeHelp()` | ヘルプモーダル非表示 |
+| `switchHelpTab(tab)` | ヘルプモーダル内タブ切り替え |
+| `exportCsvSelected()` | 列選択ダイアログ付きスナップショット CSV エクスポート |
+| `_exportCsv(rows, filename)` | rows 配列を CSV フォーマットしてダウンロード |
+| `_csvRow(cells)` | CSV 行をクォート/エスケープして文字列化 |
+| `importRakuten(e)` | 楽天証券 CSV インポート（Shift-JIS/UTF-8 自動判定） |
+| `_parseRakutenRows(text)` | 楽天 CSV 解析（カテゴリ→銘柄種別マッピング・USD 検出） |
+| `_parseJpNum(str)` | 「¥1,234」形式 → 数値変換 |
+| `_parseCsvLine(line)` | クォート対応 CSV ライン解析 |
+| `_applyRakutenRows(result)` | 楽天 CSV 結果を保有銘柄にマージ（確認ダイアログ付き） |
+| `renderHiddenSectionSettings()` | ダッシュボードセクション表示/非表示チェックボックスを設定タブに描画 |
+| `saveHiddenSections()` | 非表示設定を `D.settings.hiddenSections` に保存 |
+| `renderCsvYearSel()` | CSV エクスポートの年フィルターセレクトを生成 |
+| `getDivMonthsFromPanel()` | 配当月チェックボックスグリッドから `[1-12]` 配列を読み取り |
+| `setDivMonthsOnPanel(months)` | 配当月チェックボックスグリッドに状態をセット |
+| `dragStart(e)` | ドラッグ開始: `data-drag` 属性をセット |
+| `dragOver(e)` | デフォルト抑止＋ドロップ視覚フィードバック |
+| `dragLeave(e)` | ドロップ視覚フィードバック除去 |
+| `drop(e)` | 配列を再並び替えして `persist()` |
+| `dragEnd(e)` | ドラッグ状態クリア |
 
 ### NISAカード「今年の投資計画」
 `renderDashboard()` 内で計算・描画。
@@ -205,7 +261,7 @@ qScroll(id)            // 指定セクションIDへスムーズスクロール�
 - ナビ構成: 概要・SCHD・NISA・ポートフォリオ ｜ 資産推移・詳細分析 ｜ シミュレーション▾（ドロップダウン6項目）
 - ドロップダウン6項目: 資産シミュ / 配当カレンダー / iDeCoシミュ / FIRE / 取崩し / 税金概算
 - ドロップダウン: `.qnav-group > .qnav-dropdown.open` パターン
-- シミュ系セクションID（`simIds`）: `sec-sim`, `sec-div-cal`, `sec-ideco-sim`, `sec-fire`, `sec-drawdown`, `sec-tax`
+- シミュ系セクションID（`simIds`）: `sec-sim`, `sec-reinvest`, `sec-div-cal`, `sec-div-sim`, `sec-ideco-sim`, `sec-fire`, `sec-drawdown`, `sec-tax`
 
 ### フィルター（Excel風）
 ```js
@@ -269,6 +325,7 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 チャートの再描画は `_chartRender(chart, ctx, config)` ヘルパーを使うこと（直接 `new Chart()` しない）。
 データ数が同じ場合はインプレース更新（`chart.update('active')`）、異なる場合のみ destroy＋再生成。
 配当カレンダー（`renderDivCalendar`）は `<canvas id="div-cal-chart">` を永続化しているため innerHTML を毎回上書きしないこと。
+**注意**: `chartDrawdown` のみ `_chartRender` 未使用（`new Chart()` で都度再生成）— 既知の TODO。
 
 ## HTML パターン
 
@@ -295,15 +352,19 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 ## CSS 主要クラス
 | クラス | 用途 |
 |---|---|
+| `.dark-mode` | ダークモード ルートクラス（CSS変数を一括オーバーライド） |
 | `.rec-sec` / `.rec-sec-head` / `.rec-sec-body` | 記録・設定タブの白カードセクション |
-| `.an-block` / `.an-summary` / `.an-body` | ダッシュボード分析セクション |
+| `.an-block` / `.an-summary` / `.an-body` / `.an-divider` | ダッシュボード分析セクション / 区切り線 |
 | `.tbl-wrap` | テーブルを角丸枠で囲む（overflow-x:auto） |
 | `.tbl-wrap.tbl-scroll` | スクロール固定テーブル（max-height:380px・sticky thead） |
 | `.tbl-head` | テーブル上部のsticky見出し（白背景グラデーション） |
 | `.add-panel` / `.add-panel.open` | 追加/編集フォームパネル（`.open`時はモーダルとして表示） |
 | `#settings-backdrop` / `#settings-backdrop.active` | モーダル背景オーバーレイ（blur付き） |
 | `.xf-btn` / `.xf-active` | フィルターボタン（▾） |
+| `.xf-dropdown` | フィルタードロップダウン本体（`position:fixed` / `body`直下） |
+| `.xf-sort-btns` / `.xf-sep` / `.xf-scroll` / `.xf-row` / `.xf-actions` | フィルタードロップダウン内部構造 |
 | `.g2` `.g3` `.g4` | 2/3/4カラムグリッド |
+| `.fi` / `.fi-wrap` | フレキシブル入力グループ（モバイルで折り返し） |
 | `.plan-row` / `.plan-total` / `.plan-ideco` | 投資計画表示行 |
 | `.spot-row` / `.spot-check` / `.spot-badge` / `.spot-done-row` | スポット購入パネル行・完了状態 |
 | `.spot-badge.spot-done` | スポット全完了バッジ（緑） |
@@ -321,22 +382,35 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.b-ideco` | iDeCo専用バッジ（薄橙色） |
 | `.b-rose` | ローズ色バッジ（カスタム用） |
 | `.div-tax-free` / `.div-tax` | 配当シミュ 非課税/課税ラベル |
-| `.hi-warn` | 含み損ハイライト（黄色背景） |
+| `.hi` / `.hi-warn` | 入力欄ハイライト / 含み損ハイライト（黄色背景） |
 | `.div-months-grid` / `.div-month-cb` | 配当月チェックボックスグリッド |
+| `.div-cal-grid` / `.div-cal-col` / `.div-cal-val` / `.div-cal-bar-wrap` / `.div-cal-bar` / `.div-cal-label` | 配当カレンダーカスタム棒グラフ（12ヶ月グリッド） |
 | `.snap-modal` / `.snap-modal-card` / `.snap-row` | 月次サマリーモーダル |
 | `.alloc-title` / `.alloc-table` | 目標配分セクション |
 | `.chart-wrap` / `.chart-h300` | チャートコンテナ（標準220px / 高さ300px） |
 | `.fill-blue` `.fill-orange` `.fill-green` `.fill-purple` `.fill-red` | プログレスバー色 |
 | `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知（5秒・× 閉じるボタン付き） |
 | `.toast-close` | トースト内 × 閉じるボタン |
+| `.help-modal-card` / `.help-modal-header` / `.help-tabs` / `.help-tab-btn` / `.help-pane` | ヘルプモーダル構造 |
+| `.help-section` / `.help-step` / `.help-feature-list` / `.changelog-entry` | ヘルプモーダル内コンテンツ |
+| `.report-trigger-btn` / `.report-modal-card` / `.report-modal-head` | 資産分析レポートモーダル |
+| `.report-bars` / `.report-bar-row` / `.report-bar-track` / `.report-bar-fill` / `.report-bar-val` | レポートモーダル バー要素 |
+| `.report-insight` / `.report-insight-good` / `.report-insight-warn` / `.report-insight-info` / `.report-insight-danger` | インサイト診断表示 |
+| `.print-hdr-title` / `.print-hdr-date` / `.print-kpi` / `.print-kpi-item` / `.print-kpi-label` / `.print-kpi-val` | 印刷/PDF ヘッダーとKPI（`@media print` で表示） |
+| `.fire-hint` | FIRE シミュレーションのプレースホルダーテキスト |
+| `.strip-eta-pre` | SCHD ストリップの到達予想プレラベル |
+| `.clabel` / `.cval` / `.cval-lg` / `.csub` | 詳細分析カードのラベル/値/サブテキスト |
 
 ## init() の主な初期化処理
 ```js
 init()  // アプリ起動時の初期化
   // - 記録月を当月に設定
+  // - ダークモード適用（localStorage 読み込み → applyTheme()）
+  // - 今日の日付表示（updateTodayDate()）
+  // - 通知ステータス表示（_renderNotifStatus()）
   // - クイックナビを表示
   // - settings-backdrop クリックでパネルを一括閉じ
-  // - ESCキーでモーダル（snap-modal）またはパネル（.add-panel.open）を閉じる
+  // - ESCキーでモーダル（snap-modal / help-modal / report-modal）またはパネル（.add-panel.open）を閉じる
   // - initTabEvents / initRecordEvents / initSettingsEvents / initQnavHighlight 呼び出し
   // - renderDashboard / renderRecordTab 呼び出し
 ```

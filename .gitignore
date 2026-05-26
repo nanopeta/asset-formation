@@ -6,8 +6,10 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Claude Code
-.claude/
+# Claude Code（個人設定は除外、プロジェクト共有ファイルは追跡）
+.claude/*
+!.claude/settings.json
+!.claude/hooks
 
 # バックアップ
 *.bak
