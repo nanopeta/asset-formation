@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v83';
+const APP_VERSION='v84';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -515,7 +515,7 @@ function renderDrawdown(){
     const inflation=parseFloat(el('dd-inflation')?.value||0)/100;
     const years=parseInt(el('dd-years')?.value||40);
     const res=el('drawdown-result');if(!res)return;
-    if(monthlyWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div>';return;}
+    if(monthlyWithdraw<=0){res.innerHTML='<div style="color:var(--muted);font-size:13px;">月間取り崩し額を入力してください</div>';if(chartDrawdown){chartDrawdown.destroy();chartDrawdown=null;}return;}
     const rows=[];let val=initAsset,depletedYr=null,curWithdraw=annualWithdraw;
     for(let yr=1;yr<=years;yr++){
         val=val*(1+ret)-curWithdraw;
@@ -525,13 +525,13 @@ function renderDrawdown(){
         curWithdraw*=(1+inflation);
     }
     const isSafe=depletedYr===null;
-    res.innerHTML=`<div class="g3 mb">
+    if(!el('drawdown-stats')){res.innerHTML='<div id="drawdown-stats"></div><div class="chart-wrap chart-h300" id="drawdown-chart-wrap" style="margin-bottom:12px"><canvas id="drawdown-chart"></canvas></div><div id="drawdown-table-wrap" class="tbl-wrap tbl-scroll"></div>';}
+    el('drawdown-stats').innerHTML=`<div class="g3 mb">
         <div class="card card-sm"><div class="clabel">初期資産</div><div class="cval">${fmt(initAsset)}</div></div>
         <div class="card card-sm"><div class="clabel">月間取り崩し（初年）</div><div class="cval">${fmt(monthlyWithdraw)}</div><div class="csub">年間 ${fmt(annualWithdraw)}${inflation>0?` (+${(inflation*100).toFixed(1)}%/年)`:''}</div></div>
         <div class="card card-sm"><div class="clabel">資産枯渇</div><div class="cval" style="color:${isSafe?'var(--success)':'var(--danger)'}">${isSafe?years+'年超 安全':depletedYr+'年目'}</div></div>
-    </div>
-    <div class="chart-wrap chart-h300" style="margin-bottom:12px"><canvas id="drawdown-chart"></canvas></div>
-    <div class="tbl-wrap tbl-scroll"><table>
+    </div>`;
+    el('drawdown-table-wrap').innerHTML=`<table>
         <thead><tr><th>経過年</th><th style="text-align:right">残高</th><th style="text-align:right">年間取崩</th><th style="text-align:right">運用損益</th></tr></thead>
         <tbody>${rows.map((r,i)=>{
             const prevVal=i===0?initAsset:rows[i-1].val;
@@ -539,10 +539,9 @@ function renderDrawdown(){
             const depleted=r.val===0;
             return`<tr${depleted?' style="background:#fef2f2"':''}><td>${r.yr}年目</td><td style="text-align:right;font-weight:600">${depleted?'<span style="color:var(--danger)">枯渇</span>':fmt(r.val)}</td><td style="text-align:right;color:var(--muted)">${fmt(r.withdraw)}</td><td style="text-align:right"><span class="${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${fmt(gain)}</span></td></tr>`;
         }).join('')}</tbody>
-    </table></div>`;
-    if(chartDrawdown)chartDrawdown.destroy();
+    </table>`;
     const ctx=el('drawdown-chart')?.getContext('2d');
-    if(ctx)chartDrawdown=new Chart(ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
+    if(ctx)chartDrawdown=_chartRender(chartDrawdown,ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
         {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.12)',fill:true,tension:.3,pointRadius:2},
         {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'},beginAtZero:true}}}});
@@ -1038,7 +1037,7 @@ function _parseCsvLine(line){const cols=[];let i=0;while(i<line.length){if(line[
 function _parseJpNum(s){return Number((s||'').replace(/[¥,+\s]/g,''))||0;}
 function _parseRakutenRows(text){const lines=text.split(/\r?\n/);const di=lines.findIndex(l=>l.includes('保有商品詳細'));if(di===-1)throw new Error('保有商品詳細セクションが見つかりません');let hi=-1;for(let i=di;i<Math.min(di+10,lines.length);i++){const c=_parseCsvLine(lines[i]);if(c[0]==='種別'){hi=i;break;}}if(hi===-1)throw new Error('ヘッダー行が見つかりません');const rows=[];for(let i=hi+1;i<lines.length;i++){const line=lines[i].trim();if(!line)break;const c=_parseCsvLine(line);const cat=c[0];if(!cat||!_RAKUTEN_TYPE_MAP[cat])continue;const value=_parseJpNum(c[14]);if(!value)continue;const gain=_parseJpNum(c[16]);rows.push({cat,name:c[2],accountStr:c[3],account:_RAKUTEN_ACC_MAP[c[3]]||'specific',assetType:_RAKUTEN_TYPE_MAP[cat],value,principal:value-gain});}let usdJpy=null;const fi=lines.findIndex(l=>l.includes('参考為替レート'));if(fi!==-1){for(let i=fi+1;i<Math.min(fi+15,lines.length);i++){const c=_parseCsvLine(lines[i]);if(c[0]==='米ドル'){usdJpy=parseFloat(c[1])||null;break;}}}return{rows,usdJpy};}
 function _applyRakutenRows({rows,usdJpy}){if(!rows.length){toast('保有商品が見つかりませんでした','error');return;}const rakutenBroker=(D.brokers||[]).find(b=>b.name==='楽天証券');const rakutenBrokerId=rakutenBroker?.id||'';const matched=[],toAdd=[];rows.forEach(row=>{const h=D.holdings.find(h=>{if(h.account!==row.account)return false;return h.name===row.name||row.name.includes(h.name)||h.name.includes(row.name);});if(h)matched.push({h,row});else toAdd.push(row);});const matchedIds=new Set(matched.map(({h})=>h.id));const toDelete=D.holdings.filter(h=>!matchedIds.has(h.id)&&(!h.brokerId||h.brokerId===rakutenBrokerId));if(!matched.length&&!toAdd.length&&!toDelete.length&&!usdJpy){toast('処理対象の銘柄がありません','error');return;}const accs=getAccounts();let msg='【楽天証券CSV インポート確認】\n\n';if(usdJpy){msg+=`💱 USD/JPY: ${D.settings.usdJpy||150} → ${usdJpy}\n\n`;}if(matched.length){msg+='✅ 更新: '+matched.length+'件\n';matched.forEach(({h,row})=>{const old=D.current.holdingValues[h.id]?.value||0;msg+=`  ${h.name}: ${fmt(old)} → ${fmt(row.value)}\n`;});}if(toAdd.length){msg+='\n➕ 新規追加: '+toAdd.length+'件\n';toAdd.forEach(row=>msg+=`  ${row.name}（${row.accountStr}）\n`);msg+='  ※ 月次積立額・利回りは後で設定できます\n';}if(toDelete.length){msg+='\n🗑️ 削除（CSVに存在しない銘柄）: '+toDelete.length+'件\n';toDelete.forEach(h=>{const v=D.current.holdingValues[h.id]?.value||0;msg+=`  ${h.name}（${accs[h.account]?.label||h.account}）: ${fmt(v)}\n`;});}msg+='\n更新・追加・削除してよろしいですか？';const _safeHtml=msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');customConfirm(_safeHtml,()=>{if(usdJpy){D.settings.usdJpy=usdJpy;const uel=el('s-usd-jpy');if(uel)uel.value=usdJpy;}matched.forEach(({h,row})=>{D.current.holdingValues[h.id]={value:row.value,principal:row.principal};});toAdd.forEach(row=>{const nh={id:uid(),name:row.name,account:row.account,assetType:row.assetType,brokerId:rakutenBrokerId,monthlyAmount:0,spotList:[],dividendYield:0,dividendMonths:[],order:D.holdings.length};D.holdings.push(nh);D.current.holdingValues[nh.id]={value:row.value,principal:row.principal};});toDelete.forEach(h=>{D.holdings=D.holdings.filter(hh=>hh.id!==h.id);delete D.current.holdingValues[h.id];});persist();if(toAdd.length||toDelete.length)renderSettings();renderDashboard();renderRecordTab();const parts=[];if(usdJpy)parts.push('USD/JPY更新');if(matched.length)parts.push(matched.length+'件更新');if(toAdd.length)parts.push(toAdd.length+'件追加');if(toDelete.length)parts.push(toDelete.length+'件削除');toast(parts.join('・')+'しました','success');},{okLabel:'更新する',okClass:'btn-p',html:true});}
-function importRakuten(e){const f=e.target.files[0];if(!f)return;e.target.value='';const r=new FileReader();r.onload=ev=>{try{const buf=ev.target.result;let result=null,lastErr=null;for(const enc of['shift-jis','utf-8']){try{const text=new TextDecoder(enc).decode(buf);result=_parseRakutenRows(text);break;}catch(e){lastErr=e;}}if(!result)throw lastErr;_applyRakutenRows(result);}catch(err){toast('CSVの読み込みに失敗しました: '+err.message,'error');}};r.readAsArrayBuffer(f);}
+function importRakuten(e){const f=e.target.files[0];if(!f)return;e.target.value='';const r=new FileReader();r.onload=ev=>{try{const buf=ev.target.result;let result=null,lastErr=null;for(const enc of['shift-jis','utf-8']){try{const text=new TextDecoder(enc).decode(buf);result=_parseRakutenRows(text);break;}catch(e){lastErr=e;}}if(!result)throw lastErr;_applyRakutenRows(result);}catch(err){toast('CSVの読み込みに失敗しました: '+err.message,'error');}};r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');r.readAsArrayBuffer(f);}
 
 // CSV エクスポート
 function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
@@ -1327,8 +1326,8 @@ function printReport(){
 // ===== クイックナビ スクロール連動 =====
 function toggleQnavSim(e){e.stopPropagation();const dd=el('qnav-sim-dropdown');const isOpen=dd.classList.toggle('open');if(isOpen){setTimeout(()=>document.addEventListener('click',function h(ev){if(!el('qnav-sim-group')?.contains(ev.target)){dd.classList.remove('open');}document.removeEventListener('click',h);},{once:true}),0);}}
 function initQnavHighlight(){
-    const simIds=new Set(['sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax']);
-    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-div-cal','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
+    const simIds=new Set(['sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax']);
+    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
     const pills={};
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
     document.querySelectorAll('.qnav-drop-item[data-scroll]').forEach(b=>{pills[b.dataset.scroll]=b;b.addEventListener('click',()=>{el('qnav-sim-dropdown')?.classList.remove('open');qScroll(b.dataset.scroll);});});

@@ -146,8 +146,9 @@ asset-formation/
 
 ### バグ修正
 
-- [ ] **[バグ] `importRakuten` に `FileReader.onerror` がない** — `importAll`/`importSettings` は v74 で対応済みだが楽天CSV インポートのみ漏れ。ファイル読み込み失敗が無音で失敗する
-- [ ] **[バグ] `chartDrawdown` が `_chartRender()` を使っていない** — drawdown のみ毎回 `new Chart()` で DOM 再生成。他の5チャートは最適化済み（`_chartRender` 適用範囲拡大 TODO と統合可能）
+- [x] **[修正済 v84] `importRakuten` に `FileReader.onerror` がない** — `importAll`/`importSettings` は v74 で対応済みだが楽天CSV インポートのみ漏れ。ファイル読み込み失敗が無音で失敗する
+- [x] **[修正済 v84] `chartDrawdown` が `_chartRender()` を使っていない** — renderDrawdown を改修: canvas 永続化・インプレース更新対応・クリア時の確実なチャート破棄
+- [x] **[修正済 v84] クイックナビ `simIds` に `sec-reinvest`・`sec-div-sim` が漏れていた** — 再投資シミュ・配当シミュセクションへスクロール時にシミュボタンがハイライトされない
 
 ### 改善提案
 
@@ -161,5 +162,5 @@ asset-formation/
 - [ ] API 連携（楽天証券・楽天銀行）※将来検討
 - [ ] Undo スタック（直近5件の状態を保持、Ctrl+Z で戻れるように）
 - [ ] ドラッグ&ドロップに挿入位置インジケータ（drop target の細線表示）
-- [ ] `_chartRender` の適用範囲拡大（drawdown は innerHTML でキャンバス都度再生成のため現状対象外）← バグ修正セクションと統合予定
+- [x] `_chartRender` の適用範囲拡大（v84で drawdown を対応、全チャート最適化完了）
 - [ ] アイコンボタンへの `aria-label` 追加（🌙 / ▾フィルター など）
