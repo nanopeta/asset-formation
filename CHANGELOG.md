@@ -4,6 +4,17 @@
 
 ---
 
+## v85（2026-05-26）
+
+### 修正
+- **ヘルプモーダル更新履歴・使い方を最新化** — v76〜v84 の変更内容をアプリ内ヘルプ（更新履歴タブ・使い方タブ）に反映
+- **Service Worker キャッシュ更新** — v84 のキャッシュバスター未更新により古い index.html が PWA に配信され続けていた問題を修正（CACHE を v85 に更新し強制リフレッシュ）
+- **ドキュメント整備** — CLAUDE.md / README.md / TODO.md / CHANGELOG.md を v75〜v84 の実装内容に合わせ更新（未ドキュメント関数 30+ 件・CSS クラス追記・データ構造補完）
+- **git pre-commit フック強化** — CHANGELOG.md 更新時にヘルプモーダル（index.html の `#help-pane-changelog`）も同時更新しないとコミットをブロックするチェックを追加
+- **Claude Code PostToolUse フック追加** — app.js / style.css / index.html 編集後にドキュメント更新チェックリストを自動表示
+
+---
+
 ## v84（2026-05-26）
 
 ### 修正
