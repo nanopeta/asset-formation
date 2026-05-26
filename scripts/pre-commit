@@ -9,13 +9,16 @@
 STAGED=$(git diff --cached --name-only 2>/dev/null)
 CODE_CHANGED=0
 DOC_CHANGED=0
-ERRORS=()
+CHANGELOG_CHANGED=0
+INDEX_CHANGED=0
 
 for f in $STAGED; do
   case "$f" in
-    app.js|style.css|index.html) CODE_CHANGED=1 ;;
+    app.js|style.css) CODE_CHANGED=1 ;;
+    index.html) CODE_CHANGED=1; INDEX_CHANGED=1 ;;
     README.md|TODO.md|CLAUDE.md|CHANGELOG.md) DOC_CHANGED=1 ;;
   esac
+  [ "$f" = "CHANGELOG.md" ] && CHANGELOG_CHANGED=1
 done
 
 # ─── 1. ドキュメント更新チェック ─────────────────────────────────────────
@@ -28,20 +31,39 @@ if [ "$CODE_CHANGED" -eq 1 ] && [ "$DOC_CHANGED" -eq 0 ]; then
     case "$f" in app.js|style.css|index.html) echo "     • $f" ;; esac
   done
   echo ""
-  echo "   CLAUDE.md のルール:"
-  echo "   機能を実装・変更したら以下を更新すること:"
-  echo "     • README.md  — 機能一覧・使い方"
-  echo "     • TODO.md    — 完了タスクを [x] に / 新規検討事項を [ ] に"
-  echo "     • CLAUDE.md  — データ構造・関数・CSSクラス等の変更"
+  echo "   機能を実装・変更したら以下をすべて更新すること:"
+  echo "     • README.md    — 機能一覧・使い方"
+  echo "     • TODO.md      — 完了タスクを [x] に / 新規検討事項を [ ] に"
+  echo "     • CLAUDE.md    — データ構造・関数・CSSクラス等の変更"
   echo "     • CHANGELOG.md — バージョンごとの変更内容"
+  echo "     • index.html   — ヘルプモーダル更新履歴（#help-pane-changelog）"
   echo ""
-  echo "   ドキュメントを更新してから再コミットしてください。"
   echo "   意図的にスキップする場合: git commit --no-verify"
   echo ""
   exit 1
 fi
 
-# ─── 2. キャッシュバスター同期チェック ───────────────────────────────────
+# ─── 2. ヘルプモーダル更新チェック ──────────────────────────────────────
+# CHANGELOG.md が変更されたのに index.html（ヘルプモーダル）が未変更ならブロック
+if [ "$CHANGELOG_CHANGED" -eq 1 ] && [ "$INDEX_CHANGED" -eq 0 ]; then
+  echo ""
+  echo "⚠️  [pre-commit] CHANGELOG.md が更新されましたが、アプリ内ヘルプモーダルが更新されていません。"
+  echo ""
+  echo "   index.html の以下の箇所に changelog-entry を追記してください:"
+  echo "     id=\"help-pane-changelog\" 内の先頭（最新バージョンが上になるよう追加）"
+  echo ""
+  echo "   例:"
+  echo "     <div class=\"changelog-entry\">"
+  echo "       <div class=\"changelog-ver\">vN <span class=\"changelog-date\">YYYY-MM-DD</span></div>"
+  echo "       <ul class=\"changelog-items\"><li>変更内容</li></ul>"
+  echo "     </div>"
+  echo ""
+  echo "   意図的にスキップする場合: git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+# ─── 3. キャッシュバスター同期チェック ───────────────────────────────────
 APP_STAGED=$(echo "$STAGED" | grep -w "app.js" || true)
 SW_STAGED=$(echo "$STAGED"  | grep -w "sw.js"  || true)
 IDX_STAGED=$(echo "$STAGED" | grep -w "index.html" || true)
