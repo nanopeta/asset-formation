@@ -963,12 +963,59 @@
                         <span class="help-feature-key">前月コピー</span>
                         <span class="help-feature-desc">記録タブの「前月コピー」ボタンで前月の数値を一括コピーできます。変化が少ない月に便利です</span>
                     </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">ダークモード</span>
+                        <span class="help-feature-desc">ヘッダー右の 🌙 ボタンでダーク／ライトを切り替えられます。設定はブラウザに記憶されます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">分析レポート</span>
+                        <span class="help-feature-desc">ダッシュボード右上の 🔍 ボタンで資産の自動診断レポートを表示。口座集中リスク・NISA 活用率・配当バランスなど 12 条件を自動チェック</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">月末通知</span>
+                        <span class="help-feature-desc">Android Chrome でホーム画面に追加（PWA インストール）すると、月末にスナップ記録をうながす通知を受け取れます（ヘッダーの 🔔 ボタンで許可）</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v84 <span class="changelog-date">2026-05-26</span></div>
+                <ul class="changelog-items">
+                    <li>楽天証券 CSV インポートのファイル読み込みエラーを正しくトースト通知するよう修正</li>
+                    <li>取崩しシミュレーションのグラフ再描画を最適化（再実行時の DOM 再生成をなくし、同条件ではインプレース更新）</li>
+                    <li>再投資シミュ・配当シミュへスクロール中にクイックナビのシミュボタンがハイライトされない問題を修正</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v82〜v83 <span class="changelog-date">2026-05-26</span></div>
+                <ul class="changelog-items">
+                    <li>資産分析レポート機能を追加（ダッシュボード右上の 🔍 ボタン）</li>
+                    <li>口座別・銘柄種別のバー比較と 12 条件の自動インサイト診断（集中リスク・NISA 活用状況・配当バランス等）</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v80〜v81 <span class="changelog-date">2026-05-23</span></div>
+                <ul class="changelog-items">
+                    <li>種別合計ドーナツに「現金」を追加・現金の色を設定タブで変更可能に</li>
+                    <li>ドーナツグラフの凡例クリックで詳細テーブルの対応行をハイライト</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v78〜v79 <span class="changelog-date">2026-05-23</span></div>
+                <ul class="changelog-items">
+                    <li>ヘッダーに今日の日付（曜日）を表示</li>
+                    <li>スマホ（480px 以下）のヘッダーレイアウトを修正</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
+                <div class="changelog-ver">v76〜v77 <span class="changelog-date">2026-05-23</span></div>
+                <ul class="changelog-items">
+                    <li>月末リマインダー通知を追加（Android Chrome PWA で Periodic Background Sync）</li>
+                </ul>
+            </div>
             <div class="changelog-entry">
                 <div class="changelog-ver">v75 <span class="changelog-date">2026-05-23</span></div>
                 <ul class="changelog-items">
