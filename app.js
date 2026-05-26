@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v82';
+const APP_VERSION='v83';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -1228,10 +1228,10 @@ function renderAssetReport(){
     const cashRatio=total>0?(cash/total*100):0;
     const invRatio=total>0?(totalInv/total*100):0;
 
-    // NISA
-    const nisa=c.nisa||{};
-    const seichouUsed=nisa.seichouUsed||0;
-    const tsumitateUsed=nisa.tsumitateUsed||0;
+    // NISA（ダッシュボードと同じ計算式: monthlyAmount × 経過月数 + spotDone）
+    const mo=new Date().getMonth()+1;
+    const seichouUsed=D.holdings.filter(h=>h.account==='nisa-growth').reduce((a,h)=>a+(h.monthlyAmount||0)*mo+spotDone(h),0);
+    const tsumitateUsed=D.holdings.filter(h=>h.account==='nisa-tsumitate').reduce((a,h)=>a+(h.monthlyAmount||0)*mo,0);
     const seichouMax=2400000;const tsumitateMax=1200000;
     const seichouRem=Math.max(0,seichouMax-seichouUsed);
 
