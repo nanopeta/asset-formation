@@ -3,9 +3,11 @@
 ## ファイル構成
 ```
 asset-formation/
-├── index.html   (~750行) — マークアップのみ
-├── style.css    (~360行) — スタイル
-├── app.js       (~1200行) — ロジック
+├── index.html   (~1,045行) — マークアップのみ
+├── style.css    (~477行) — スタイル
+├── app.js       (~1,462行) — ロジック
+├── sw.js        — Service Worker（PWA・通知）
+├── manifest.json — PWA マニフェスト
 ├── CLAUDE.md    — AI向けコードベース概要
 ├── README.md    — 機能概要
 └── TODO.md      — このファイル
@@ -106,8 +108,25 @@ asset-formation/
   - 適用チャート: ポートフォリオ / 口座別 / 種別別 / 配当カレンダー / 再投資シミュ / 資産推移
   - 配当カレンダーは `<canvas>` 要素の永続化も合わせて対応
 
-### D: 大規模機能（v67）
+### E: 機能追加（v76〜v83）
 
+- [x] 月末リマインダー通知（PWA / Android Chrome Periodic Background Sync）— `requestNotifPermission()` / `_registerPeriodicSync()` / `_renderNotifStatus()`
+- [x] 月末リマインダーは記録済み判定を廃止（毎月末に通知、`_registerPeriodicSync()` で管理）
+- [x] ヘッダーに今日の日付（曜日）を表示（`updateTodayDate()`・`#today-date`）
+- [x] スマホヘッダーレイアウト修正（480px以下で最終更新非表示・h1縮小）
+- [x] 種別合計ドーナツに「現金」を追加（銀行残高を種別ポートフォリオに含める）
+- [x] 現金の色を設定タブで変更可能に（設定保存・ドーナツ即反映）
+- [x] 凡例クリックでテーブル行連動（種別合計ドーナツ凡例 → 詳細テーブル行ハイライト）
+- [x] 資産分析レポート機能（`renderAssetReport()` / `openAssetReport()` / `closeAssetReport()`）
+  - 口座別・銘柄種別バー比較（実額・比率付き）
+  - インサイト自動診断（12条件: 集中リスク・NISA活用状況・iDeCo進捗・配当バランス等）
+- [x] 分析レポート NISA 成長枠計算バグ修正（v83）
+
+### D: 大規模機能（v67〜v75）
+
+- [x] ヘルプ・更新履歴モーダル（バージョンバッジクリックで開く、使い方タブ＋更新履歴タブ）— v75
+- [x] ダークモード（🌙ボタンでテーマ切り替え、localStorage に保存）— v68/v69
+- [x] スナップショット比較モーダル（過去月との差分をモーダル表示）— v73
 - [x] PWA 化 — manifest.json + Service Worker (sw.js) + アイコン SVG (192/512px) + `<head>` 登録
 - [x] ポイント口座管理
   - `D.pointAccounts[]` + `D.current.pointValues{}` データ構造
@@ -125,9 +144,22 @@ asset-formation/
 
 ## 未完了 / 検討中 🔧
 
+### バグ修正
+
+- [ ] **[バグ] `importRakuten` に `FileReader.onerror` がない** — `importAll`/`importSettings` は v74 で対応済みだが楽天CSV インポートのみ漏れ。ファイル読み込み失敗が無音で失敗する
+- [ ] **[バグ] `chartDrawdown` が `_chartRender()` を使っていない** — drawdown のみ毎回 `new Chart()` で DOM 再生成。他の5チャートは最適化済み（`_chartRender` 適用範囲拡大 TODO と統合可能）
+
+### 改善提案
+
+- [ ] `sec-reinvest` / `sec-div-sim` をクイックナビのドロップダウンに追加（simIds に含まれているがナビ未表示）
+- [ ] スポット ID 生成を `uid()` に変更（現状 `'sp'+Date.now()+i` — 同ミリ秒内で衝突する極低リスクあり）
+- [ ] NISA 超過表示で入力値が負の場合「超過 ¥-xxx」と表示される問題の改善
+
+### 機能検討
+
 - [ ] 損益推移グラフ（スナップから含み損益の時系列を可視化）
 - [ ] API 連携（楽天証券・楽天銀行）※将来検討
 - [ ] Undo スタック（直近5件の状態を保持、Ctrl+Z で戻れるように）
 - [ ] ドラッグ&ドロップに挿入位置インジケータ（drop target の細線表示）
-- [ ] `_chartRender` の適用範囲拡大（drawdown は innerHTML でキャンバス都度再生成のため現状対象外）
+- [ ] `_chartRender` の適用範囲拡大（drawdown は innerHTML でキャンバス都度再生成のため現状対象外）← バグ修正セクションと統合予定
 - [ ] アイコンボタンへの `aria-label` 追加（🌙 / ▾フィルター など）
