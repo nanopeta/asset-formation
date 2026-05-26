@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=81">
+    <link rel="stylesheet" href="style.css?v=82">
 </head>
 <body>
 <header>
@@ -71,6 +71,7 @@
         <div class="hero-right">
             <div class="hero-month">先月比</div>
             <div class="hero-month-val" id="db-month-diff">--</div>
+            <button class="btn report-trigger-btn" onclick="showAssetReport()">📊 分析レポート</button>
         </div>
     </div>
 
@@ -1025,7 +1026,20 @@
     </div>
 </div>
 
+<!-- 分析レポートモーダル -->
+<div id="report-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 0 40px;" onclick="if(event.target===this)closeAssetReport()">
+    <div class="report-modal-card">
+        <div class="report-modal-head">
+            <span>📊 資産分析レポート</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="report-date" style="font-size:12px;color:var(--muted)"></span>
+                <button class="btn btn-s" onclick="closeAssetReport()">✕ 閉じる</button>
+            </div>
+        </div>
+        <div id="report-body" style="padding:20px;"></div>
+    </div>
+</div>
 </main>
-<script src="app.js?v=81"></script>
+<script src="app.js?v=82"></script>
 </body>
 </html>
