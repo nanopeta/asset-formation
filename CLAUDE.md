@@ -5,6 +5,20 @@
 - `README.md` — 機能一覧・使い方の説明を最新状態に
 - `TODO.md` — 完了タスクを `[x]` に、新規検討事項を `[ ]` に追加
 - `CLAUDE.md` — データ構造・関数・CSS クラス等の変更を反映
+- `CHANGELOG.md` — バージョンと変更内容を記録
+
+### 自動チェック（二重防止策）
+ドキュメント更新漏れを防ぐ2つのフックが設定されている。
+
+**① git pre-commit フック**（`scripts/pre-commit`）
+- `app.js` / `style.css` / `index.html` が変更されたのに MD ファイルが1つも変更されていない場合、コミットをブロック
+- キャッシュバスターの4箇所（APP_VERSION / CACHE / ?v=N × 2）が不一致の場合もブロック
+- `git config core.hooksPath scripts` で有効化済み（新規クローン時は再実行が必要）
+- スキップする場合: `git commit --no-verify`（意図的な場合のみ）
+
+**② Claude Code PostToolUse フック**（`.claude/hooks/doc-reminder.sh`）
+- Claude が `Edit` / `Write` ツールで `app.js` / `style.css` / `index.html` を変更した直後に、ドキュメント更新チェックリストをターミナルに表示
+- `.claude/settings.json` で設定済み（`PostToolUse` → `Edit` / `Write`）
 
 ## PR マージルール（必須）
 - PR 作成後は確認なしで即マージすること（「マージしますか？」と聞かない）

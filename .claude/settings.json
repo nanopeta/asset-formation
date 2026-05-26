@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/user/asset-formation/.claude/hooks/doc-reminder.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/user/asset-formation/.claude/hooks/doc-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

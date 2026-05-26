@@ -1,0 +1,86 @@
+#!/bin/bash
+# pre-commit フック: ドキュメント更新漏れ・キャッシュバスター不一致を検知してコミットをブロック
+#
+# インストール方法:
+#   git config core.hooksPath scripts
+# または手動:
+#   cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+STAGED=$(git diff --cached --name-only 2>/dev/null)
+CODE_CHANGED=0
+DOC_CHANGED=0
+ERRORS=()
+
+for f in $STAGED; do
+  case "$f" in
+    app.js|style.css|index.html) CODE_CHANGED=1 ;;
+    README.md|TODO.md|CLAUDE.md|CHANGELOG.md) DOC_CHANGED=1 ;;
+  esac
+done
+
+# ─── 1. ドキュメント更新チェック ─────────────────────────────────────────
+if [ "$CODE_CHANGED" -eq 1 ] && [ "$DOC_CHANGED" -eq 0 ]; then
+  echo ""
+  echo "⚠️  [pre-commit] コードが変更されましたが、ドキュメントが更新されていません。"
+  echo ""
+  echo "   変更されたコードファイル:"
+  for f in $STAGED; do
+    case "$f" in app.js|style.css|index.html) echo "     • $f" ;; esac
+  done
+  echo ""
+  echo "   CLAUDE.md のルール:"
+  echo "   機能を実装・変更したら以下を更新すること:"
+  echo "     • README.md  — 機能一覧・使い方"
+  echo "     • TODO.md    — 完了タスクを [x] に / 新規検討事項を [ ] に"
+  echo "     • CLAUDE.md  — データ構造・関数・CSSクラス等の変更"
+  echo "     • CHANGELOG.md — バージョンごとの変更内容"
+  echo ""
+  echo "   ドキュメントを更新してから再コミットしてください。"
+  echo "   意図的にスキップする場合: git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+# ─── 2. キャッシュバスター同期チェック ───────────────────────────────────
+APP_STAGED=$(echo "$STAGED" | grep -w "app.js" || true)
+SW_STAGED=$(echo "$STAGED"  | grep -w "sw.js"  || true)
+IDX_STAGED=$(echo "$STAGED" | grep -w "index.html" || true)
+
+if [ -n "$APP_STAGED" ] || [ -n "$SW_STAGED" ] || [ -n "$IDX_STAGED" ]; then
+  APP_VER=$(git show :app.js    2>/dev/null | grep -oE "APP_VERSION='v[0-9]+'" | grep -oE "v[0-9]+" | head -1)
+  CACHE_VER=$(git show :sw.js   2>/dev/null | grep -oE "asset-dashboard-v[0-9]+" | grep -oE "v[0-9]+" | head -1)
+  CSS_VER=$(git show :index.html 2>/dev/null | grep -oE "style\.css\?v=[0-9]+" | grep -oE "v[0-9]+" | head -1)
+  JS_VER=$(git show :index.html  2>/dev/null | grep -oE "app\.js\?v=[0-9]+" | grep -oE "v[0-9]+" | head -1)
+
+  SYNC_OK=1
+  check_sync() {
+    local actual="$1" expected="$2" label="$3"
+    if [ -n "$actual" ] && [ -n "$expected" ] && [ "$actual" != "$expected" ]; then
+      echo "     ❌ $label: $actual（期待: $expected）"
+      SYNC_OK=0
+    fi
+  }
+
+  if [ -n "$APP_VER" ]; then
+    check_sync "$CACHE_VER" "$APP_VER" "sw.js          CACHE"
+    check_sync "$CSS_VER"   "$APP_VER" "index.html     style.css?v="
+    check_sync "$JS_VER"    "$APP_VER" "index.html     app.js?v="
+  fi
+
+  if [ "$SYNC_OK" -eq 0 ]; then
+    echo ""
+    echo "❌ [pre-commit] キャッシュバスターのバージョンが不一致です。"
+    echo ""
+    echo "   4箇所すべてを同じ番号に更新してください:"
+    echo "     1. app.js      APP_VERSION='vN'"
+    echo "     2. sw.js       const CACHE = 'asset-dashboard-vN'"
+    echo "     3. index.html  style.css?v=N"
+    echo "     4. index.html  app.js?v=N"
+    echo ""
+    echo "   意図的にスキップする場合: git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+fi
+
+exit 0
