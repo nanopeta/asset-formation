@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v81';
+const APP_VERSION='v82';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -1203,6 +1203,118 @@ function xfUpdateBtnState(tableId){
     });
 }
 
+// ===== 分析レポート =====
+function showAssetReport(){
+    renderAssetReport();
+    const m=el('report-modal');
+    if(m){m.style.display='';document.body.style.overflow='hidden';}
+}
+function closeAssetReport(){
+    const m=el('report-modal');
+    if(m){m.style.display='none';document.body.style.overflow='';}
+}
+function renderAssetReport(){
+    const c=D.current;
+    const{cash,inv,ideco,total}=calcTotals();
+    const totalInv=inv+ideco;
+    const accs=getAccounts();
+
+    // KPI
+    const invPri=D.holdings.reduce((a,h)=>a+holdingJpy(h).principal,0);
+    const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
+    const totalPri=invPri+idecoPri;
+    const totalGain=totalPri>0?totalInv-totalPri:null;
+    const totalGainRate=totalPri>0?(totalGain/totalPri*100):null;
+    const cashRatio=total>0?(cash/total*100):0;
+    const invRatio=total>0?(totalInv/total*100):0;
+
+    // NISA
+    const nisa=c.nisa||{};
+    const seichouUsed=nisa.seichouUsed||0;
+    const tsumitateUsed=nisa.tsumitateUsed||0;
+    const seichouMax=2400000;const tsumitateMax=1200000;
+    const seichouRem=Math.max(0,seichouMax-seichouUsed);
+
+    // 月次積立
+    const monthlyInvest=D.holdings.reduce((a,h)=>a+(h.monthlyAmount||0),0)+(D.settings.idecoMonthlyTotal||0);
+
+    // 配当
+    let annualDivNisa=0,annualDivTaxable=0;
+    D.holdings.forEach(h=>{const val=holdingJpy(h).value;const annual=val*(h.dividendYield||0)/100;if(accs[h.account]?.taxFree)annualDivNisa+=annual;else annualDivTaxable+=annual;});
+    D.idecoHoldings.forEach(h=>{annualDivNisa+=(c.idecoValues[h.id]?.value||0)*(h.dividendYield||0)/100;});
+    const annualDivNet=annualDivNisa+(annualDivTaxable*(1-TAX_RATE));
+    const monthlyDivNet=annualDivNet/12;
+
+    // 口座別内訳
+    const byAcc={};
+    D.holdings.forEach(h=>{byAcc[h.account]=(byAcc[h.account]||0)+holdingJpy(h).value;});
+    D.idecoHoldings.forEach(h=>{byAcc['ideco']=(byAcc['ideco']||0)+(c.idecoValues[h.id]?.value||0);});
+
+    // 銘柄別（ソート済み）
+    const allH=[
+        ...D.holdings.map(h=>({name:h.name,value:holdingJpy(h).value})),
+        ...D.idecoHoldings.map(h=>({name:h.name,value:c.idecoValues[h.id]?.value||0})),
+    ].filter(h=>h.value>0).sort((a,b)=>b.value-a.value);
+    const topHolding=allH[0];
+    const topRatio=totalInv>0&&topHolding?(topHolding.value/totalInv*100):0;
+
+    // 特定口座の含み益（潜在税リスク）
+    let specificGain=0;
+    D.holdings.forEach(h=>{if(!accs[h.account]?.taxFree){const{value,principal}=holdingJpy(h);if(value>principal)specificGain+=value-principal;}});
+
+    // スナップ推移（直近6件）
+    const snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+    const rec=snaps.slice(-6);
+    let monthlyGrowth=null;
+    if(rec.length>=2){const months=rec.length-1;monthlyGrowth=(rec[rec.length-1].total-rec[0].total)/months;}
+
+    // インサイト生成
+    const insights=[];
+    if(total>0){
+        if(cashRatio>40)insights.push({type:'warn',msg:`現金比率が ${cashRatio.toFixed(0)}% と高めです。余剰資金のNISA・iDeCo活用を検討してください。`});
+        else if(cashRatio<5)insights.push({type:'warn',msg:`現金比率が ${cashRatio.toFixed(0)}% と低めです。生活防衛資金（3〜6ヶ月分）の確保を確認してください。`});
+        else insights.push({type:'good',msg:`現金比率 ${cashRatio.toFixed(0)}% はバランスが取れています。`});
+    }
+    if(seichouUsed===0&&total>0)insights.push({type:'warn',msg:`NISA成長投資枠（年間240万円）が今年まだ未使用です。非課税メリットを活用してください。`});
+    else if(seichouRem>seichouMax*0.5&&seichouUsed>0)insights.push({type:'warn',msg:`NISA成長投資枠の ${((seichouUsed/seichouMax)*100).toFixed(0)}% を使用中。残り ${fmt(seichouRem)} があります。年内の追加投資を検討しましょう。`});
+    else if(seichouUsed>0)insights.push({type:'good',msg:`NISA成長投資枠を ${((seichouUsed/seichouMax)*100).toFixed(0)}% 活用中（残 ${fmt(seichouRem)}）。`});
+    if(topRatio>60&&topHolding)insights.push({type:'warn',msg:`「${topHolding.name}」が投資資産の ${topRatio.toFixed(0)}% を占めています。集中リスクに注意が必要です。`});
+    else if(topRatio>40&&topHolding)insights.push({type:'info',msg:`「${topHolding.name}」が投資資産の ${topRatio.toFixed(0)}% を占めています。分散状況を定期的に確認しましょう。`});
+    if(specificGain>0)insights.push({type:'info',msg:`特定口座の含み益合計: ${fmt(specificGain)} → 売却時の潜在税: 約${fmt(specificGain*TAX_RATE)}`});
+    if(monthlyDivNet>=10000)insights.push({type:'good',msg:`推定月間手取り配当: ${fmt(monthlyDivNet)}（年間 ${fmt(annualDivNet)}）。配当再投資で複利効果を高めましょう。`});
+    else if(annualDivNet>0)insights.push({type:'good',msg:`推定年間手取り配当: ${fmt(annualDivNet)}（月平均 ${fmt(monthlyDivNet)}）`});
+    if(totalGainRate!==null&&totalGainRate>10)insights.push({type:'good',msg:`投資資産全体の含み益: +${totalGainRate.toFixed(1)}%（+${fmt(totalGain)}）と好調です。`});
+    else if(totalGainRate!==null&&totalGainRate<-10)insights.push({type:'warn',msg:`投資資産全体の含み損: ${totalGainRate.toFixed(1)}%（${fmt(totalGain)}）。長期投資継続が有効です。`});
+    if(monthlyGrowth!==null&&monthlyGrowth>0)insights.push({type:'good',msg:`直近${rec.length-1}ヶ月の平均月次増加額: ${fmt(monthlyGrowth)}`});
+
+    // レポートHTML生成
+    const now=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+    el('report-date').textContent=now+'時点';
+    const iCls={good:'report-insight-good',warn:'report-insight-warn',info:'report-insight-info',danger:'report-insight-danger'};
+    const iClr={good:'#16a34a',warn:'#ca8a04',info:'#2563eb',danger:'#dc2626'};
+    const iIc={good:'✓',warn:'⚠',info:'ℹ',danger:'✕'};
+
+    el('report-body').innerHTML=`
+<div class="g4 mb" style="gap:12px;">
+    <div class="card card-sm"><div class="clabel">総資産</div><div class="cval">${fmt(total)}</div></div>
+    <div class="card card-sm"><div class="clabel">投資資産</div><div class="cval">${fmt(totalInv)}</div><div class="csub">総資産の ${invRatio.toFixed(1)}%</div></div>
+    <div class="card card-sm"><div class="clabel">投資含み損益</div><div class="cval ${(totalGain||0)>=0?'positive':'negative'}">${totalGain!==null?((totalGain>=0?'+':'')+fmt(totalGain)):'--'}</div><div class="csub">${totalGainRate!==null?((totalGainRate>=0?'+':'')+totalGainRate.toFixed(2)+'%'):'--'}</div></div>
+    <div class="card card-sm"><div class="clabel">推定月間配当（手取）</div><div class="cval">${fmt(monthlyDivNet)}</div><div class="csub">年間 ${fmt(annualDivNet)}</div></div>
+</div>
+<div class="g3 mb" style="gap:12px;">
+    <div class="card card-sm"><div class="clabel">現金比率</div><div class="cval">${cashRatio.toFixed(1)}%</div><div class="pb" style="margin-top:6px;height:6px;"><div class="pb-fill fill-blue" style="width:${Math.min(cashRatio,100)}%"></div></div></div>
+    <div class="card card-sm"><div class="clabel">NISA成長枠（今年）</div><div class="cval">${((seichouUsed/seichouMax)*100).toFixed(0)}%</div><div class="pb" style="margin-top:6px;height:6px;"><div class="pb-fill fill-orange" style="width:${Math.min(seichouUsed/seichouMax*100,100)}%"></div></div><div class="csub" style="margin-top:4px;">残 ${fmt(seichouRem)}</div></div>
+    <div class="card card-sm"><div class="clabel">月次積立合計</div><div class="cval">${fmt(monthlyInvest)}</div><div class="csub">/月</div></div>
+</div>
+<div style="margin-bottom:18px;">
+    <div class="report-section-title">口座別内訳</div>
+    <div class="report-bars">${Object.entries(byAcc).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const label=k==='ideco'?'iDeCo':(accs[k]?.label||k);const color=k==='ideco'?IDECO_COLOR:(accs[k]?.color||'#9ca3af');const r=totalInv>0?(v/totalInv*100):0;return`<div class="report-bar-row"><div class="report-bar-label">${label}</div><div class="report-bar-track"><div class="report-bar-fill" style="width:${r.toFixed(1)}%;background:${color}"></div></div><div class="report-bar-val">${r.toFixed(1)}%<span style="color:var(--muted);margin-left:5px;font-size:11px;">${fmt(v)}</span></div></div>`;}).join('')}</div>
+</div>
+${allH.length?`<div style="margin-bottom:18px;"><div class="report-section-title">銘柄別比率（上位8件）</div><div class="report-bars">${allH.slice(0,8).map(h=>{const r=totalInv>0?(h.value/totalInv*100):0;return`<div class="report-bar-row"><div class="report-bar-label" title="${h.name}">${h.name.length>12?h.name.slice(0,12)+'…':h.name}</div><div class="report-bar-track"><div class="report-bar-fill" style="width:${r.toFixed(1)}%;background:#5b8fa8"></div></div><div class="report-bar-val">${r.toFixed(1)}%<span style="color:var(--muted);margin-left:5px;font-size:11px;">${fmt(h.value)}</span></div></div>`;}).join('')}</div></div>`:''}
+${insights.length?`<div><div class="report-section-title">インサイト・提言</div><div style="display:flex;flex-direction:column;gap:8px;">${insights.map(i=>`<div class="report-insight ${iCls[i.type]}"><span style="color:${iClr[i.type]};font-weight:700;flex-shrink:0;line-height:1.5;">${iIc[i.type]}</span><span>${i.msg}</span></div>`).join('')}</div></div>`:''}
+    `;
+}
+
 // ===== PDF 印刷 =====
 function printReport(){
     const{cash,inv,ideco,total}=calcTotals();
@@ -1329,6 +1441,8 @@ function init(){
         if(confirmM&&confirmM.style.display!=='none'){confirmM.style.display='none';return;}
         const compareM=el('snap-compare-modal');
         if(compareM&&compareM.style.display!=='none'){compareM.style.display='none';return;}
+        const reportM=el('report-modal');
+        if(reportM&&reportM.style.display!=='none'){closeAssetReport();return;}
         const modal=el('snap-modal');
         if(modal&&modal.style.display!=='none'){modal.style.display='none';return;}
         const open=document.querySelector('.add-panel.open');
