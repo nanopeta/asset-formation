@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v85';
+const APP_VERSION='v86';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -146,10 +146,44 @@ function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoA
     const cards=D.creditCards;
     el('db-bank-mini').innerHTML=D.bankAccounts.map(b=>{const linked=cards.filter(cd=>cd.bankId===b.id&&(c.cardValues[cd.id]||0)>0);const cardRows=linked.map(cd=>`<div class="bank-mini-row" style="padding-left:10px;"><span style="color:var(--danger)">└ ${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('');return`<div class="bank-mini-row"><span>${b.name}${b.note?` (${b.note})`:''}</span><span>${fmt(c.bankValues[b.id]||0)}</span></div>${cardRows}`;}).join('')+cards.filter(cd=>!cd.bankId&&(c.cardValues[cd.id]||0)>0).map(cd=>`<div class="bank-mini-row"><span style="color:var(--danger)">${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('')+(D.pointAccounts||[]).filter(p=>(c.pointValues?.[p.id]||0)>0).map(p=>`<div class="bank-mini-row"><span style="color:var(--muted)">🎁 ${p.name}</span><span style="color:var(--muted)">${Math.round(c.pointValues[p.id]).toLocaleString('ja-JP')} pt</span></div>`).join('');
 }
+function scdExDate(year,month){
+    const d=new Date(year,month-1,25);
+    const dow=d.getDay();
+    if(dow===6)d.setDate(27);
+    else if(dow===0)d.setDate(26);
+    return d;
+}
+function scdSpotAdvice(accountType){
+    const today=new Date();today.setHours(0,0,0,0);
+    const months=[2,5,8,11];
+    const dates=[];
+    for(const y of[today.getFullYear()-1,today.getFullYear(),today.getFullYear()+1])
+        for(const m of months)dates.push(scdExDate(y,m));
+    dates.sort((a,b)=>a-b);
+    const prev=dates.filter(d=>d<=today).pop();
+    const next=dates.find(d=>d>today);
+    const daysSince=prev?Math.floor((today-prev)/86400000):999;
+    const daysUntil=next?Math.floor((next-today)/86400000):999;
+    const isNisa=accountType&&(accountType.startsWith('nisa')||accountType==='old-nisa');
+    const nextLabel=next?`${next.getMonth()+1}月${next.getDate()}日`:'--';
+    let type,msg;
+    if(isNisa){
+        if(daysUntil<=14){type='good';msg=`決算まであと${daysUntil}日。NISA枠なら今が買い時！`;}
+        else if(daysSince<=30){type='good';msg=`権利落ち後${daysSince}日。NISA枠は配当非課税なのでいつでも◎`;}
+        else{type='info';msg=`次回決算: ${nextLabel}（あと${daysUntil}日）。NISA枠はいつ買っても◎`;}
+    }else{
+        if(daysSince<=45){type='good';msg=`権利落ち後${daysSince}日 — 特定口座での買い時！（次回決算まで${daysUntil}日）`;}
+        else if(daysUntil<=21){type='warn';msg=`決算まであと${daysUntil}日。特定口座は権利落ち後（${nextLabel}以降）を検討。`;}
+        else{type='info';msg=`次回決算: ${nextLabel}（あと${daysUntil}日）。特定口座は権利落ち後が買い時。`;}
+    }
+    return{type,msg};
+}
 function renderDashScdStrip(scdH,scdJpy,target){
     const principal=scdJpy.principal,p=pct(principal,target);
     el('ss-val').textContent=fmt(principal);el('ss-meta').textContent=`/ ${fmt(target)}`;el('ss-pct').textContent=p.toFixed(1)+'%';el('ss-rem').textContent=`残り ${fmt(Math.max(0,target-principal))}`;el('ss-bar').style.width=p+'%';
     if(scdH){const rate=(scdH.monthlyAmount||0)+spotTotal(scdH)/12,rem=target-principal;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('ss-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月（${fmtMonths(months)}）`;}else el('ss-eta').textContent=rem<=0?'達成済み':'--';}
+    const advEl=el('ss-spot-advice');
+    if(advEl){const adv=scdSpotAdvice(scdH?scdH.account:'');advEl.className=`spot-advice spot-advice-${adv.type}`;advEl.textContent=adv.msg;}
 }
 function renderDashNisaSection(mo){
     const now=new Date();
