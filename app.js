@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v94';
+const APP_VERSION='v95';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -1088,6 +1088,168 @@ function exportCsvSelected(){
     if(!snaps.length){toast('記録がありません','error');return;}
     _exportCsv(snaps,val==='all'?'asset-records-all.csv':`asset-records-${val}.csv`);
 }
+function exportAiReport(){
+    const accs=getAccounts();
+    const ats=getAssetTypes();
+    const {cash,inv,ideco,total}=calcTotals();
+    const d=today();
+    const lines=[];
+
+    // ヘッダー
+    lines.push(`# 資産状況レポート — ${d}`);
+    lines.push(`\nアプリバージョン: ${APP_VERSION}`);
+    lines.push('\n---\n');
+
+    // サマリー
+    lines.push('## サマリー\n');
+    lines.push('| 項目 | 金額 |');
+    lines.push('|---|---|');
+    lines.push(`| 総資産 | ${fmt(Math.round(total))} |`);
+    lines.push(`| 投資（特定・NISA等） | ${fmt(Math.round(inv))} |`);
+    lines.push(`| iDeCo | ${fmt(Math.round(ideco))} |`);
+    lines.push(`| 現金（銀行 - カード + ポイント） | ${fmt(Math.round(cash))} |`);
+
+    // 銀行口座
+    if(D.bankAccounts.length>0){
+        lines.push('\n---\n');
+        lines.push('## 銀行口座\n');
+        lines.push('| 口座名 | メモ | 残高 |');
+        lines.push('|---|---|---|');
+        let bankTotal=0;
+        D.bankAccounts.slice().sort((a,b)=>a.order-b.order).forEach(b=>{
+            const v=D.current.bankValues[b.id]||0;
+            bankTotal+=v;
+            lines.push(`| ${b.name} | ${b.note||''} | ${fmt(v)} |`);
+        });
+        lines.push(`| **合計** | | **${fmt(bankTotal)}** |`);
+    }
+
+    // クレジットカード
+    if(D.creditCards.length>0){
+        lines.push('\n---\n');
+        lines.push('## クレジットカード（今月利用額）\n');
+        lines.push('| カード名 | メモ | 引き落とし口座 | 利用額 |');
+        lines.push('|---|---|---|---|');
+        let cardTotal=0;
+        D.creditCards.slice().sort((a,b)=>a.order-b.order).forEach(c=>{
+            const v=D.current.cardValues[c.id]||0;
+            cardTotal+=v;
+            const bank=D.bankAccounts.find(b=>b.id===c.bankId)?.name||'';
+            lines.push(`| ${c.name} | ${c.note||''} | ${bank} | ${fmt(v)} |`);
+        });
+        lines.push(`| **合計** | | | **${fmt(cardTotal)}** |`);
+    }
+
+    // ポイント口座
+    const pointAccs=(D.pointAccounts||[]).slice().sort((a,b)=>a.order-b.order);
+    const pointVals=D.current.pointValues||{};
+    const anyPoint=pointAccs.some(p=>(pointVals[p.id]||0)>0);
+    if(pointAccs.length>0&&anyPoint){
+        lines.push('\n---\n');
+        lines.push('## ポイント口座\n');
+        lines.push('| 口座名 | メモ | 残高（pt） |');
+        lines.push('|---|---|---|');
+        let ptTotal=0;
+        pointAccs.forEach(p=>{
+            const v=pointVals[p.id]||0;
+            ptTotal+=v;
+            lines.push(`| ${p.name} | ${p.note||''} | ${v.toLocaleString('ja-JP')} |`);
+        });
+        lines.push(`| **合計** | | **${ptTotal.toLocaleString('ja-JP')}** |`);
+    }
+
+    // 保有銘柄
+    lines.push('\n---\n');
+    lines.push('## 保有銘柄（投資口座）\n');
+    lines.push('| 銘柄名 | 口座種別 | 銘柄種別 | 通貨 | 評価額 | 取得元本 | 含み損益 | 損益率 | 月次積立 | 配当利回り |');
+    lines.push('|---|---|---|---|---|---|---|---|---|---|');
+    let hTotalVal=0,hTotalPri=0,hTotalMon=0;
+    D.holdings.slice().sort((a,b)=>a.order-b.order).forEach(h=>{
+        const {value,principal}=holdingJpy(h);
+        hTotalVal+=value;hTotalPri+=principal;hTotalMon+=(h.monthlyAmount||0);
+        const gain=value-principal;
+        const gainPct=principal>0?((gain/principal)*100).toFixed(2)+'%':'--';
+        const gainStr=gain>=0?'+'+fmt(Math.round(gain)):fmt(Math.round(gain));
+        const accLabel=accs[h.account]?.label||h.account||'';
+        const atLabel=ats[h.assetType]?.label||h.assetType||'';
+        const cur=h.currency==='usd'?'USD':'JPY';
+        const dy=h.dividendYield>0?h.dividendYield.toFixed(2)+'%':'0.00%';
+        lines.push(`| ${h.name} | ${accLabel} | ${atLabel} | ${cur} | ${fmt(Math.round(value))} | ${fmt(Math.round(principal))} | ${gainStr} | ${gainPct} | ${fmt(h.monthlyAmount||0)} | ${dy} |`);
+    });
+    const hGain=hTotalVal-hTotalPri;
+    const hGainPct=hTotalPri>0?((hGain/hTotalPri)*100).toFixed(2)+'%':'--';
+    const hGainStr=hGain>=0?'+'+fmt(Math.round(hGain)):fmt(Math.round(hGain));
+    lines.push(`| **合計** | | | | **${fmt(Math.round(hTotalVal))}** | **${fmt(Math.round(hTotalPri))}** | **${hGainStr}** | **${hGainPct}** | **${fmt(hTotalMon)}/月** | |`);
+
+    // iDeCo保有銘柄
+    if(D.idecoHoldings.length>0){
+        lines.push('\n---\n');
+        lines.push('## iDeCo保有銘柄\n');
+        lines.push('| 銘柄名 | 銘柄種別 | 評価額 | 取得元本 | 含み損益 | 損益率 | 月次積立 | 配当利回り |');
+        lines.push('|---|---|---|---|---|---|---|---|');
+        let iTotalVal=0,iTotalPri=0,iTotalMon=0;
+        D.idecoHoldings.slice().sort((a,b)=>a.order-b.order).forEach(h=>{
+            const hv=D.current.idecoValues[h.id]||{value:0,principal:0};
+            const value=hv.value||0,principal=hv.principal||0;
+            iTotalVal+=value;iTotalPri+=principal;iTotalMon+=(h.monthlyAmount||0);
+            const gain=value-principal;
+            const gainPct=principal>0?((gain/principal)*100).toFixed(2)+'%':'--';
+            const gainStr=gain>=0?'+'+fmt(Math.round(gain)):fmt(Math.round(gain));
+            const atLabel=ats[h.assetType]?.label||h.assetType||'';
+            const dy=h.dividendYield>0?h.dividendYield.toFixed(2)+'%':'0.00%';
+            lines.push(`| ${h.name} | ${atLabel} | ${fmt(Math.round(value))} | ${fmt(Math.round(principal))} | ${gainStr} | ${gainPct} | ${fmt(h.monthlyAmount||0)} | ${dy} |`);
+        });
+        const iGain=iTotalVal-iTotalPri;
+        const iGainPct=iTotalPri>0?((iGain/iTotalPri)*100).toFixed(2)+'%':'--';
+        const iGainStr=iGain>=0?'+'+fmt(Math.round(iGain)):fmt(Math.round(iGain));
+        lines.push(`| **合計** | | **${fmt(Math.round(iTotalVal))}** | **${fmt(Math.round(iTotalPri))}** | **${iGainStr}** | **${iGainPct}** | **${fmt(iTotalMon)}/月** | |`);
+    }
+
+    // NISA枠
+    const nisa=D.current.nisa||{};
+    const nisaYear=nisa.year||new Date().getFullYear();
+    const SEICHOU_YEAR=2400000,TSUMITATE_YEAR=1200000,SEICHOU_LIFE=12000000,TOTAL_LIFE=18000000;
+    const seichouUsed=nisa.seichouUsed||0,tsumitateUsed=nisa.tsumitateUsed||0;
+    const seichouLifeUsed=nisa.seichouLifetimeUsed||0,totalLifeUsed=nisa.lifetimeUsed||0;
+    const _nisaRow=(label,used,max)=>{
+        const rem=max-used;
+        const remStr=rem>=0?fmt(rem):`超過 ${fmt(-rem)}`;
+        const pct=(used/max*100).toFixed(1)+'%';
+        return `| ${label} | ${fmt(used)} | ${fmt(max)} | ${remStr} | ${pct} |`;
+    };
+    lines.push('\n---\n');
+    lines.push(`## NISA枠使用状況（${nisaYear}年）\n`);
+    lines.push('| 枠 | 使用額 | 上限 | 残枠 | 使用率 |');
+    lines.push('|---|---|---|---|---|');
+    lines.push(_nisaRow('成長投資枠（年間）',seichouUsed,SEICHOU_YEAR));
+    lines.push(_nisaRow('積立投資枠（年間）',tsumitateUsed,TSUMITATE_YEAR));
+    lines.push(_nisaRow('成長投資枠（生涯）',seichouLifeUsed,SEICHOU_LIFE));
+    lines.push(_nisaRow('生涯投資枠（合計）',totalLifeUsed,TOTAL_LIFE));
+
+    // 月次積立サマリー
+    const idecoMon=D.settings.idecoMonthlyTotal||0;
+    const grandMon=hTotalMon+idecoMon;
+    lines.push('\n---\n');
+    lines.push('## 月次積立サマリー\n');
+    lines.push('| 項目 | 月次積立 |');
+    lines.push('|---|---|');
+    lines.push(`| 投資口座（全銘柄合計） | ${fmt(hTotalMon)} |`);
+    lines.push(`| iDeCo合計 | ${fmt(idecoMon)} |`);
+    lines.push(`| **月次積立合計** | **${fmt(grandMon)}** |`);
+
+    // 設定情報
+    lines.push('\n---\n');
+    lines.push('## 設定情報\n');
+    lines.push('| 項目 | 値 |');
+    lines.push('|---|---|');
+    lines.push(`| USD/JPY レート | ${D.settings.usdJpy||150} |`);
+    lines.push(`| SCHD目標元本 | ${fmt(D.settings.scdTarget||0)} |`);
+    lines.push(`| iDeCo開始月 | ${D.settings.idecoStartMonth||'未設定'} |`);
+
+    const md='﻿'+lines.join('\n');
+    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+    _triggerExport(blob,`asset-report-${d}.md`,'btn-export-ai');
+}
 function renderCsvYearSel(){
     const sel=el('csv-year-sel');if(!sel)return;
     const years=[...new Set(D.snapshots.map(s=>s.month.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
@@ -1454,6 +1616,7 @@ function initSettingsEvents(){
     el('btn-import-settings-trigger').addEventListener('click',()=>el('imp-settings').click());
     el('imp-settings').addEventListener('change',importSettings);
     el('btn-export-csv').addEventListener('click',exportCsvSelected);
+    el('btn-export-ai').addEventListener('click',exportAiReport);
     el('btn-import-rakuten-trigger').addEventListener('click',()=>el('imp-rakuten').click());
     el('imp-rakuten').addEventListener('change',importRakuten);
 }
