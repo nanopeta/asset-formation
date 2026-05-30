@@ -84,6 +84,7 @@ D = {
     usdJpy: 150,               // USD/JPY レート（USD銘柄の円換算に使用）
     targetAllocation: {},      // 目標配分 { [assetTypeId]: number（%） }
     hiddenSections: {},        // ダッシュボードセクションの非表示設定 { [sectionId]: boolean }
+    aiMemo: '',                // 資産形成方針メモ（AI分析用エクスポートの冒頭に出力される自由記述）
   },
   brokers:      [ {id, name, order} ],
   bankAccounts: [ {id, name, note, order} ],
@@ -212,7 +213,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `switchHelpTab(tab)` | ヘルプモーダル内タブ切り替え |
 | `exportCsvSelected()` | 列選択ダイアログ付きスナップショット CSV エクスポート |
 | `_exportCsv(rows, filename)` | rows 配列を CSV フォーマットしてダウンロード |
-| `exportAiReport()` | AI分析用 Markdown エクスポート（口座・銘柄・iDeCo・NISA枠・月次積立サマリーを含む `.md`）|
+| `exportAiReport()` | AI分析用 Markdown エクスポート（口座・銘柄・iDeCo・NISA枠・設定情報・方針メモを含む `.md`）|
 | `_csvRow(cells)` | CSV 行をクォート/エスケープして文字列化 |
 | `importRakuten(e)` | 楽天証券 CSV インポート（Shift-JIS/UTF-8 自動判定） |
 | `_parseRakutenRows(text)` | 楽天 CSV 解析（カテゴリ→銘柄種別マッピング・USD 検出） |
