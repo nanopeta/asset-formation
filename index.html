@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=87">
+    <link rel="stylesheet" href="style.css?v=88">
 </head>
 <body>
 <header>
@@ -983,6 +983,13 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v88 <span class="changelog-date">2026-05-30</span></div>
+                <ul class="changelog-items">
+                    <li>楽天証券CSVインポート: 預り金（楽天証券のJPY現金残高）も自動取込み。「預り金」を含む銀行口座が登録済みであれば残高を自動更新。</li>
+                    <li>楽天証券CSVインポート: 楽天銀行残高の検索ラベルを「楽天銀行普通預金残高」に修正（旧「マネーブリッジ残高」との両対応）。</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v87 <span class="changelog-date">2026-05-30</span></div>
                 <ul class="changelog-items">
                     <li>楽天証券CSVインポート: マネーブリッジ残高（楽天銀行）も自動取込み。「楽天」を含む銀行口座が登録済みであれば残高を自動更新。</li>
@@ -1110,6 +1117,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=87"></script>
+<script src="app.js?v=88"></script>
 </body>
 </html>
