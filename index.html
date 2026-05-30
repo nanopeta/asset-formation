@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=89">
+    <link rel="stylesheet" href="style.css?v=90">
 </head>
 <body>
 <header>
@@ -983,6 +983,12 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v90 <span class="changelog-date">2026-05-30</span></div>
+                <ul class="changelog-items">
+                    <li>楽天証券CSVインポート: 未登録の銘柄種別・口座種別をインポート時に自動新規作成。確認ダイアログに作成される種別名を表示。設定タブから名称・色を後から編集可能。</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v89 <span class="changelog-date">2026-05-30</span></div>
                 <ul class="changelog-items">
                     <li>楽天証券CSVインポート: 保有商品詳細の全行を取込み対象に。未知の種別（外貨預り金など）は「その他」にフォールバック、未知の口座は「特定」にフォールバックして新規作成。</li>
@@ -1123,6 +1129,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=89"></script>
+<script src="app.js?v=90"></script>
 </body>
 </html>
