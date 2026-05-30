@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=86">
+    <link rel="stylesheet" href="style.css?v=87">
 </head>
 <body>
 <header>
@@ -983,6 +983,12 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v87 <span class="changelog-date">2026-05-30</span></div>
+                <ul class="changelog-items">
+                    <li>楽天証券CSVインポート: マネーブリッジ残高（楽天銀行）も自動取込み。「楽天」を含む銀行口座が登録済みであれば残高を自動更新。</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v86 <span class="changelog-date">2026-05-27</span></div>
                 <ul class="changelog-items">
                     <li>楽天SCHD スポット買いおすすめ表示: SCHDストリップに決算日（2/5/8/11月25日）ベースの買い時アドバイスを追加。NISA・特定口座を自動判定して色分け表示。</li>
@@ -1104,6 +1110,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=86"></script>
+<script src="app.js?v=87"></script>
 </body>
 </html>
