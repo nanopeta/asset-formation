@@ -117,6 +117,7 @@ GitHub Pages: **https://nanopeta.github.io/asset-formation/**
   - 全体バックアップ JSON エクスポート / インポート
   - 設定のみ JSON エクスポート / インポート
   - 記録 CSV エクスポート
+  - **AI分析用エクスポート**（ChatGPT・Claude 向け Markdown `.md` — 口座残高・保有銘柄・NISA枠・月次積立サマリーを含む）
   - **楽天証券 CSV インポート**（証券会社スコープで削除対象を制御）
 
 ## 対応口座種別

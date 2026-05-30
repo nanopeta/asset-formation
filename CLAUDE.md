@@ -212,6 +212,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `switchHelpTab(tab)` | ヘルプモーダル内タブ切り替え |
 | `exportCsvSelected()` | 列選択ダイアログ付きスナップショット CSV エクスポート |
 | `_exportCsv(rows, filename)` | rows 配列を CSV フォーマットしてダウンロード |
+| `exportAiReport()` | AI分析用 Markdown エクスポート（口座・銘柄・iDeCo・NISA枠・月次積立サマリーを含む `.md`）|
 | `_csvRow(cells)` | CSV 行をクォート/エスケープして文字列化 |
 | `importRakuten(e)` | 楽天証券 CSV インポート（Shift-JIS/UTF-8 自動判定） |
 | `_parseRakutenRows(text)` | 楽天 CSV 解析（カテゴリ→銘柄種別マッピング・USD 検出） |
@@ -308,6 +309,7 @@ _panelClose(id)   // 設定パネルを閉じる（バックドロップ非表�
 _triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
 exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
 exportAll()       // 全体バックアップJSONエクスポート
+exportAiReport()  // AI分析用Markdownエクスポート（asset-report-YYYY-MM-DD.md）
 printReport()     // 印刷ヘッダー(#print-header)にKPIを書き込んでwindow.print()を呼び出す
 handleTitleClick() // h1クリック時のリロード処理。_unsaved=true の場合は customConfirm() を表示してリロードをブロック
 renderPointInputs() // 記録タブのポイント残高グリッドを再描画
