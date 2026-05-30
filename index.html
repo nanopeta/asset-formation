@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=95">
+    <link rel="stylesheet" href="style.css?v=96">
 </head>
 <body>
 <header>
@@ -738,6 +738,10 @@
                 <div class="fg"><label>USD/JPY レート</label><input type="number" id="s-usd-jpy" placeholder="150" step="0.1"></div>
             </div>
             <div class="fg" style="margin-top:12px;">
+                <label style="margin-bottom:6px;display:block;">資産形成方針メモ（AI分析用エクスポートに含まれます）</label>
+                <textarea id="s-ai-memo" rows="4" placeholder="例: インデックス投資中心、2050年FIRE目標、リスク許容度は中程度..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--bg);resize:vertical;"></textarea>
+            </div>
+            <div class="fg" style="margin-top:12px;">
                 <label style="margin-bottom:6px;display:block;">目標配分（種別ごと・未入力の種別は表示しません）</label>
                 <div id="s-target-alloc"></div>
             </div>
@@ -990,6 +994,15 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v96 <span class="changelog-date">2026-05-30</span></div>
+                <ul class="changelog-items">
+                    <li>AI分析用エクスポート — iDeCoの配分比率表示を修正（¥→%）</li>
+                    <li>AI分析用エクスポート — NISA枠使用状況をダッシュボードと同じ保有銘柄ベースの計算に修正（従来は常に0だった）</li>
+                    <li>AI分析用エクスポート — 月次積立サマリーセクションを削除（設定情報に統合）</li>
+                    <li>基本設定に「資産形成方針メモ」欄を追加。入力内容はAI分析用エクスポートに反映されます</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v95 <span class="changelog-date">2026-05-30</span></div>
                 <ul class="changelog-items">
                     <li>AI分析用エクスポート機能を追加。設定タブ → データ管理から現在の資産状況をMarkdownファイル（.md）としてエクスポートでき、ChatGPTやClaudeに貼り付けてAI分析に使用できます。口座残高・保有銘柄（含み損益・月次積立・利回り）・iDeCo・NISA枠・月次積立サマリーを含みます。</li>
@@ -1168,6 +1181,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=95"></script>
+<script src="app.js?v=96"></script>
 </body>
 </html>

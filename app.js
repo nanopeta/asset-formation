@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v95';
+const APP_VERSION='v96';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -59,7 +59,7 @@ function makeDefault(){
 function load(){
     try{
         const r=localStorage.getItem('asset-v3');
-        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};if(!d.settings.idecoStartMonth)d.settings.idecoStartMonth='';if(!d.settings.usdJpy)d.settings.usdJpy=150;if(!d.settings.targetAllocation)d.settings.targetAllocation={};if(!d.settings.hiddenSections)d.settings.hiddenSections=[];if(!d.brokers)d.brokers=[{id:'broker-rakuten',name:'楽天証券',order:0}];if(!d.accountTypeOrder)d.accountTypeOrder=[...Object.keys(BUILT_IN_ACCOUNTS),...(d.customAccounts||[]).map(a=>a.id)];if(!d.assetTypeOrder)d.assetTypeOrder=[...Object.keys(BUILT_IN_ASSET_TYPES),...(d.customAssetTypes||[]).map(t=>t.id)];if(!d.assetTypeOrder.includes('cash'))d.assetTypeOrder.push('cash');(d.holdings||[]).forEach((h,i)=>{if(!h.spotList){h.spotList=(h.spotAnnual||0)>0?[{id:'sp'+Date.now()+i,amount:h.spotAnnual,done:false}]:[];}if(!h.currency)h.currency='jpy';if(!h.dividendMonths)h.dividendMonths=[];if(h.brokerId===undefined)h.brokerId='';});if(!d.pointAccounts)d.pointAccounts=[];if(!d.current.pointValues)d.current.pointValues={};return d;}
+        if(r){const d=JSON.parse(r);if(!d.current.nisa.seichouLifetimeUsed)d.current.nisa.seichouLifetimeUsed=d.current.nisa.lifetimeUsed||0;if(!d.settings.scdHoldingId)d.settings.scdHoldingId='h-schd';if(!d.assetTypeOverrides)d.assetTypeOverrides={};if(!d.settings.idecoStartMonth)d.settings.idecoStartMonth='';if(!d.settings.usdJpy)d.settings.usdJpy=150;if(!d.settings.targetAllocation)d.settings.targetAllocation={};if(!d.settings.hiddenSections)d.settings.hiddenSections=[];if(!d.brokers)d.brokers=[{id:'broker-rakuten',name:'楽天証券',order:0}];if(!d.accountTypeOrder)d.accountTypeOrder=[...Object.keys(BUILT_IN_ACCOUNTS),...(d.customAccounts||[]).map(a=>a.id)];if(!d.assetTypeOrder)d.assetTypeOrder=[...Object.keys(BUILT_IN_ASSET_TYPES),...(d.customAssetTypes||[]).map(t=>t.id)];if(!d.assetTypeOrder.includes('cash'))d.assetTypeOrder.push('cash');(d.holdings||[]).forEach((h,i)=>{if(!h.spotList){h.spotList=(h.spotAnnual||0)>0?[{id:'sp'+Date.now()+i,amount:h.spotAnnual,done:false}]:[];}if(!h.currency)h.currency='jpy';if(!h.dividendMonths)h.dividendMonths=[];if(h.brokerId===undefined)h.brokerId='';});if(!d.pointAccounts)d.pointAccounts=[];if(!d.current.pointValues)d.current.pointValues={};if(d.settings.aiMemo===undefined)d.settings.aiMemo='';return d;}
         const v2=localStorage.getItem('asset-v2');
         if(v2)return migrateV2(JSON.parse(v2));
     }catch{}
@@ -908,6 +908,7 @@ function renderSettings(){
     el('s-ideco-monthly').value=D.settings.idecoMonthlyTotal||'';
     el('s-ideco-start').value=D.settings.idecoStartMonth||'';
     const usdEl=el('s-usd-jpy');if(usdEl)usdEl.value=D.settings.usdJpy||150;
+    const memoEl=el('s-ai-memo');if(memoEl)memoEl.value=D.settings.aiMemo||'';
     const scdSel=el('s-scd-holding');
     if(scdSel)scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${h.id===D.settings.scdHoldingId?' selected':''}>${h.name}</option>`).join('')||'<option value="">銘柄なし</option>';
     renderBanksTable();renderCardsTable();renderPointsTable();renderBrokersTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();renderTargetAllocInputs();renderHiddenSectionSettings();
@@ -917,6 +918,7 @@ function saveBasic(){
     D.settings.idecoMonthlyTotal=Number(el('s-ideco-monthly').value)||0;
     D.settings.idecoStartMonth=el('s-ideco-start').value||'';
     const usdEl=el('s-usd-jpy');if(usdEl)D.settings.usdJpy=Number(usdEl.value)||150;
+    const memoEl=el('s-ai-memo');if(memoEl)D.settings.aiMemo=memoEl.value;
     const scdSel=el('s-scd-holding');
     if(scdSel&&scdSel.value)D.settings.scdHoldingId=scdSel.value;
     D.settings.targetAllocation={};
@@ -1098,6 +1100,15 @@ function exportAiReport(){
     // ヘッダー
     lines.push(`# 資産状況レポート — ${d}`);
     lines.push(`\nアプリバージョン: ${APP_VERSION}`);
+
+    // 方針メモ（設定済みの場合のみ）
+    const memo=(D.settings.aiMemo||'').trim();
+    if(memo){
+        lines.push('\n---\n');
+        lines.push('## 資産形成方針メモ\n');
+        lines.push(memo);
+    }
+
     lines.push('\n---\n');
 
     // サマリー
@@ -1185,32 +1196,36 @@ function exportAiReport(){
     if(D.idecoHoldings.length>0){
         lines.push('\n---\n');
         lines.push('## iDeCo保有銘柄\n');
-        lines.push('| 銘柄名 | 銘柄種別 | 評価額 | 取得元本 | 含み損益 | 損益率 | 月次積立 | 配当利回り |');
+        lines.push('| 銘柄名 | 銘柄種別 | 評価額 | 取得元本 | 含み損益 | 損益率 | 配分比率 | 配当利回り |');
         lines.push('|---|---|---|---|---|---|---|---|');
-        let iTotalVal=0,iTotalPri=0,iTotalMon=0;
+        let iTotalVal=0,iTotalPri=0;
         D.idecoHoldings.slice().sort((a,b)=>a.order-b.order).forEach(h=>{
             const hv=D.current.idecoValues[h.id]||{value:0,principal:0};
             const value=hv.value||0,principal=hv.principal||0;
-            iTotalVal+=value;iTotalPri+=principal;iTotalMon+=(h.monthlyAmount||0);
+            iTotalVal+=value;iTotalPri+=principal;
             const gain=value-principal;
             const gainPct=principal>0?((gain/principal)*100).toFixed(2)+'%':'--';
             const gainStr=gain>=0?'+'+fmt(Math.round(gain)):fmt(Math.round(gain));
             const atLabel=ats[h.assetType]?.label||h.assetType||'';
+            const alloc=h.monthlyAmount>0?h.monthlyAmount+'%':'--';
             const dy=h.dividendYield>0?h.dividendYield.toFixed(2)+'%':'0.00%';
-            lines.push(`| ${h.name} | ${atLabel} | ${fmt(Math.round(value))} | ${fmt(Math.round(principal))} | ${gainStr} | ${gainPct} | ${fmt(h.monthlyAmount||0)} | ${dy} |`);
+            lines.push(`| ${h.name} | ${atLabel} | ${fmt(Math.round(value))} | ${fmt(Math.round(principal))} | ${gainStr} | ${gainPct} | ${alloc} | ${dy} |`);
         });
         const iGain=iTotalVal-iTotalPri;
         const iGainPct=iTotalPri>0?((iGain/iTotalPri)*100).toFixed(2)+'%':'--';
         const iGainStr=iGain>=0?'+'+fmt(Math.round(iGain)):fmt(Math.round(iGain));
-        lines.push(`| **合計** | | **${fmt(Math.round(iTotalVal))}** | **${fmt(Math.round(iTotalPri))}** | **${iGainStr}** | **${iGainPct}** | **${fmt(iTotalMon)}/月** | |`);
+        lines.push(`| **合計** | | **${fmt(Math.round(iTotalVal))}** | **${fmt(Math.round(iTotalPri))}** | **${iGainStr}** | **${iGainPct}** | | |`);
     }
 
-    // NISA枠
-    const nisa=D.current.nisa||{};
-    const nisaYear=nisa.year||new Date().getFullYear();
+    // NISA枠（ダッシュボードと同じ保有銘柄ベースの計算）
+    const _now=new Date();
+    const _mo=_now.getMonth()+1;
+    const nisaYear=_now.getFullYear();
     const SEICHOU_YEAR=2400000,TSUMITATE_YEAR=1200000,SEICHOU_LIFE=12000000,TOTAL_LIFE=18000000;
-    const seichouUsed=nisa.seichouUsed||0,tsumitateUsed=nisa.tsumitateUsed||0;
-    const seichouLifeUsed=nisa.seichouLifetimeUsed||0,totalLifeUsed=nisa.lifetimeUsed||0;
+    const seichouUsed=D.holdings.filter(h=>h.account==='nisa-growth').reduce((a,h)=>a+(h.monthlyAmount||0)*_mo+spotDone(h),0);
+    const tsumitateUsed=D.holdings.filter(h=>h.account==='nisa-tsumitate').reduce((a,h)=>a+(h.monthlyAmount||0)*_mo,0);
+    const seichouLifeUsed=D.holdings.filter(h=>h.account==='nisa-growth').reduce((a,h)=>a+holdingJpy(h).principal,0);
+    const totalLifeUsed=D.holdings.filter(h=>h.account==='nisa-growth'||h.account==='nisa-tsumitate').reduce((a,h)=>a+holdingJpy(h).principal,0);
     const _nisaRow=(label,used,max)=>{
         const rem=max-used;
         const remStr=rem>=0?fmt(rem):`超過 ${fmt(-rem)}`;
@@ -1226,17 +1241,6 @@ function exportAiReport(){
     lines.push(_nisaRow('成長投資枠（生涯）',seichouLifeUsed,SEICHOU_LIFE));
     lines.push(_nisaRow('生涯投資枠（合計）',totalLifeUsed,TOTAL_LIFE));
 
-    // 月次積立サマリー
-    const idecoMon=D.settings.idecoMonthlyTotal||0;
-    const grandMon=hTotalMon+idecoMon;
-    lines.push('\n---\n');
-    lines.push('## 月次積立サマリー\n');
-    lines.push('| 項目 | 月次積立 |');
-    lines.push('|---|---|');
-    lines.push(`| 投資口座（全銘柄合計） | ${fmt(hTotalMon)} |`);
-    lines.push(`| iDeCo合計 | ${fmt(idecoMon)} |`);
-    lines.push(`| **月次積立合計** | **${fmt(grandMon)}** |`);
-
     // 設定情報
     lines.push('\n---\n');
     lines.push('## 設定情報\n');
@@ -1244,6 +1248,8 @@ function exportAiReport(){
     lines.push('|---|---|');
     lines.push(`| USD/JPY レート | ${D.settings.usdJpy||150} |`);
     lines.push(`| SCHD目標元本 | ${fmt(D.settings.scdTarget||0)} |`);
+    lines.push(`| 投資口座 月次積立合計 | ${fmt(hTotalMon)} |`);
+    lines.push(`| iDeCo 月次拠出合計 | ${fmt(D.settings.idecoMonthlyTotal||0)} |`);
     lines.push(`| iDeCo開始月 | ${D.settings.idecoStartMonth||'未設定'} |`);
 
     const md='﻿'+lines.join('\n');
