@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v96';
+const APP_VERSION='v97';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -400,7 +400,7 @@ function renderSCHDReinvest(){
             {label:'評価額',    data:rows.map(r=>r.val),      borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.10)',fill:true, tension:.3,pointRadius:3},
             {label:'投資元本',  data:rows.map(r=>r.principal),borderColor:'#c9915a',borderDash:[6,3],              fill:false,tension:.3,pointRadius:3,borderWidth:1.5},
             {label:'累計分配金',data:rows.map(r=>r.cumDiv),   borderColor:'#5fad9b',borderDash:[4,3],              fill:false,tension:.3,pointRadius:3},
-        ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
+        ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'}}}}});
     }else if(chartReinvest){chartReinvest.destroy();chartReinvest=null;}
 }
 
@@ -578,7 +578,7 @@ function renderDrawdown(){
     if(ctx)chartDrawdown=_chartRender(chartDrawdown,ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
         {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.12)',fill:true,tension:.3,pointRadius:2},
         {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'万円'},beginAtZero:true}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'},beginAtZero:true}}}});
 }
 
 function renderTaxEstimate(){
@@ -705,7 +705,7 @@ function renderTrendChart(){
         {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
         {label:'含み損益', data:gainData,                       borderColor:'#5fad9b',borderDash:[3,2],fill:false,tension:.3,pointRadius:3,borderWidth:2},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label)}},scales:{y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'万円'}}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label)}},scales:{y:{stacked:true,ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'}}}}});
 }
 
 // ===== NISA 自動推計 =====
@@ -1547,7 +1547,7 @@ function initQnavHighlight(){
 
 // ===== タブ切り替え =====
 const TABS=['dashboard','record','settings'];
-function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.main-nav button').forEach((b,i)=>b.classList.toggle('active',TABS[i]===name));const qnav=el('dash-qnav');if(qnav)qnav.style.display=name==='dashboard'?'flex':'none';if(name==='dashboard')renderDashboard();if(name==='record')renderRecordTab();if(name==='settings')renderSettings();}
+function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.main-nav button').forEach((b,i)=>b.classList.toggle('active',TABS[i]===name));const qnav=el('dash-qnav');if(qnav)qnav.style.display=name==='dashboard'?'flex':'none';if(name==='dashboard')renderDashboard();if(name==='record')renderRecordTab();if(name==='settings')renderSettings();window.scrollTo(0,0);}
 function switchTab(name){
     if(name!=='record'&&_unsaved){
         customConfirm('保存されていない変更があります。このまま移動しますか？',()=>{clearUnsaved();_doSwitchTab(name);},{okLabel:'移動する',okClass:'btn-p'});

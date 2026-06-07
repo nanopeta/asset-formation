@@ -334,6 +334,11 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 配当カレンダー（`renderDivCalendar`）は `<canvas id="div-cal-chart">` を永続化しているため innerHTML を毎回上書きしないこと。
 **注意**: `chartDrawdown` のみ `_chartRender` 未使用（`new Chart()` で都度再生成）— 既知の TODO。
 
+### チャート Y軸の「万」表記（姉妹アプリと統一）
+折れ線・棒グラフの Y 軸ラベルは `'¥'+(v/10000).toFixed(1)+'万'` 形式で統一する（例: `¥1234.5万`）。
+対象: 資産推移（`renderTrendChart`）・分配金再投資シミュ（`renderSCHDReinvest`）・FIRE取崩しシミュ（`renderDrawdown`）。
+配当カレンダー（`renderDivCalendar`）は1万円未満の値を実額表示する特殊ロジック（`v>=10000?(v/10000).toFixed(1)+'万':fmt(v)`）のため対象外。
+
 ## HTML パターン
 
 ### 設定タブのセクション構造（白カード）
@@ -355,6 +360,10 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
   <div class="an-body">...</div>
 </div>
 ```
+- `.an-summary` は CSS の `::before` で丸型の左アクセントバー（`width:4px;height:16px;border-radius:99px;background:var(--accent)`）を自動付与する（HTML側でのバー要素追加は不要）。`.trend-summary` 併用時は最初の `<span>` 内に表示されるよう個別ルールあり
+
+### カードタイトルの標準スタイル（姉妹アプリ「給与明細ダッシュボード」と統一）
+左に丸型アクセントバー＋タイトルの構成で統一する。`.an-summary` は CSS のみでこのパターンを実現済み（上記参照）。新規セクションを追加する場合も `.an-summary` をそのまま使えばよい。
 
 ## CSS 主要クラス
 | クラス | 用途 |
@@ -425,3 +434,15 @@ init()  // アプリ起動時の初期化
 ## GitHub Pages
 - URL: https://nanopeta.github.io/asset-formation/
 - push すれば自動で反映（1〜2分）
+
+## 姉妹アプリ「給与明細ダッシュボード」とのUI規約共通化
+家計管理系アプリ間でUX統一するための取り組み。配色（`--primary`/`--success`/`--danger`/body背景色等）・`fmt()`の¥表記・StatCard相当のグラデーション（`.hero`）は元々一致している。
+追加で以下を統一済み（v97）：
+- 分析セクションのカードタイトル左アクセントバー（`.an-summary` の `::before`、丸型 `width:4px;height:16px;border-radius:99px`）
+- チャートY軸の「万」表記（`'¥'+(v/10000).toFixed(1)+'万'`）
+- タブ切替時のスクロールリセット（`_doSwitchTab()` 内 `window.scrollTo(0,0)`）
+
+### 今後の検討事項（大きな構造変更のため未着手）
+- レイアウトのSidebar/BottomNav化（現状はヘッダー＋上部タブナビ。変更には大規模なマークアップ・CSS再設計が必要）
+- プライバシーモード機能の新規実装（`usePrivacy()` 相当。本アプリには現状その機能自体が存在しない）
+- チャートライブラリのRecharts移行（現状はChart.jsで統一済み。移行は大規模な書き換えになる）
