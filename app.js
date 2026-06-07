@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v97';
+const APP_VERSION='v98';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -92,9 +92,9 @@ const el=id=>document.getElementById(id);
 const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
 const formatMonth=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
-function updateTodayDate(){const d=new Date();const days=['日','月','火','水','木','金','土'];const s=el('today-date');if(s)s.textContent=`${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;}
-function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');el('last-updated').textContent=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
-function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);const tb=el('theme-toggle');if(tb)tb.textContent=dark?'☀️':'🌙';}
+function updateTodayDate(){const d=new Date();const days=['日','月','火','水','木','金','土'];const txt=`${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;document.querySelectorAll('.today-date').forEach(s=>s.textContent=txt);}
+function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');const txt=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;document.querySelectorAll('.last-updated').forEach(s=>s.textContent=txt);}
+function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);document.querySelectorAll('.theme-toggle .tt-ico').forEach(ic=>ic.textContent=dark?'☀️':'🌙');}
 function toggleTheme(){const dark=!document.body.classList.contains('dark-mode');localStorage.setItem('asset-theme',dark?'dark':'light');applyTheme(dark);}
 function calcTotals(){const c=D.current;const bank=Object.values(c.bankValues).reduce((a,v)=>a+v,0)-Object.values(c.cardValues).reduce((a,v)=>a+v,0);const pointTotal=Object.values(c.pointValues||{}).reduce((a,v)=>a+v,0);const cash=bank+pointTotal;const inv=D.holdings.reduce((a,h)=>a+holdingJpy(h).value,0);const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);return{cash,inv,ideco,total:cash+inv+ideco};}
 function calcIdecoEstimatedPri(){const{idecoStartMonth,idecoMonthlyTotal}=D.settings;if(!idecoStartMonth||!idecoMonthlyTotal)return 0;const[sy,sm]=idecoStartMonth.split('-').map(Number);const now=new Date();const months=(now.getFullYear()-sy)*12+(now.getMonth()+1-sm)+1;return Math.max(0,months)*idecoMonthlyTotal;}
@@ -1547,7 +1547,7 @@ function initQnavHighlight(){
 
 // ===== タブ切り替え =====
 const TABS=['dashboard','record','settings'];
-function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.main-nav button').forEach((b,i)=>b.classList.toggle('active',TABS[i]===name));const qnav=el('dash-qnav');if(qnav)qnav.style.display=name==='dashboard'?'flex':'none';if(name==='dashboard')renderDashboard();if(name==='record')renderRecordTab();if(name==='settings')renderSettings();window.scrollTo(0,0);}
+function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.sidebar-nav button[data-tab],.bottom-nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));const qnav=el('dash-qnav');if(qnav)qnav.style.display=name==='dashboard'?'flex':'none';if(name==='dashboard')renderDashboard();if(name==='record')renderRecordTab();if(name==='settings')renderSettings();window.scrollTo(0,0);}
 function switchTab(name){
     if(name!=='record'&&_unsaved){
         customConfirm('保存されていない変更があります。このまま移動しますか？',()=>{clearUnsaved();_doSwitchTab(name);},{okLabel:'移動する',okClass:'btn-p'});
@@ -1567,7 +1567,7 @@ function switchSubTab(group,name){
 
 // ===== 初期化 (B-2) =====
 function initTabEvents(){
-    document.querySelectorAll('.main-nav button[data-tab]').forEach(btn=>{btn.addEventListener('click',()=>switchTab(btn.dataset.tab));});
+    document.querySelectorAll('.sidebar-nav button[data-tab],.bottom-nav button[data-tab]').forEach(btn=>{btn.addEventListener('click',()=>switchTab(btn.dataset.tab));});
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(btn=>{btn.addEventListener('click',()=>qScroll(btn.dataset.scroll));});
     document.querySelectorAll('#rec-sub-nav button[data-subtab]').forEach(btn=>{btn.addEventListener('click',()=>{const[g,n]=btn.dataset.subtab.split('-');switchSubTab(g,n);});});
     document.querySelectorAll('#set-sub-nav button[data-subtab]').forEach(btn=>{btn.addEventListener('click',()=>{const[g,n]=btn.dataset.subtab.split('-');switchSubTab(g,n);});});
@@ -1630,7 +1630,7 @@ function init(){
     const now=new Date();
     el('rec-month').value=formatMonth(now);
     updateTodayDate();
-    const vb=el('app-version-badge');if(vb)vb.textContent=APP_VERSION;
+    document.querySelectorAll('.app-version-badge').forEach(vb=>vb.textContent=APP_VERSION);
     applyTheme(localStorage.getItem('asset-theme')==='dark');
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';
     el('settings-backdrop').addEventListener('click',()=>{document.querySelectorAll('.add-panel.open').forEach(p=>p.classList.remove('open'));el('settings-backdrop').classList.remove('active');});

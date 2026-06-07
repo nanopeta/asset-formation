@@ -10,24 +10,45 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=97">
+    <link rel="stylesheet" href="style.css?v=98">
 </head>
 <body>
-<header>
-    <div style="display:flex;align-items:center;gap:8px;">
-        <h1 onclick="handleTitleClick()" style="cursor:pointer;">資産形成ダッシュボード</h1>
-        <span id="app-version-badge" onclick="openHelp()" title="使い方・更新履歴" style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;cursor:pointer;"></span>
+<!-- ======= PC: サイドバー ======= -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h1 onclick="handleTitleClick()">資産形成ダッシュボード</h1>
+        <span class="app-version-badge" onclick="openHelp()" title="使い方・更新履歴"></span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-        <button id="theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替">🌙</button>
-        <span id="today-date" style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;"></span>
-        <span id="last-updated"></span>
+    <nav class="sidebar-nav">
+        <button class="active" data-tab="dashboard">ダッシュボード</button>
+        <button data-tab="record">記録</button>
+        <button data-tab="settings">設定</button>
+    </nav>
+    <div class="sidebar-foot">
+        <div class="sidebar-meta">
+            <span class="today-date"></span>
+            <span class="last-updated"></span>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替"><span class="tt-ico">🌙</span> ダーク/ライト切替</button>
+        <a class="sidebar-sister-link" href="https://nanopeta.github.io/payslip-tracker/" target="_blank" rel="noopener noreferrer">給与明細ダッシュボード ↗</a>
+    </div>
+</aside>
+
+<!-- ======= スマホ: モバイルヘッダー ======= -->
+<header class="mobile-header">
+    <h1 onclick="handleTitleClick()">資産形成ダッシュボード</h1>
+    <div class="mobile-header-actions">
+        <span class="app-version-badge" onclick="openHelp()" title="使い方・更新履歴"></span>
+        <button class="icon-btn theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替"><span class="tt-ico">🌙</span></button>
+        <a class="icon-btn" href="https://nanopeta.github.io/payslip-tracker/" target="_blank" rel="noopener noreferrer" title="給与明細ダッシュボード">↗</a>
     </div>
 </header>
-<nav class="main-nav">
-    <button class="active" data-tab="dashboard">ダッシュボード</button>
-    <button data-tab="record">記録</button>
-    <button data-tab="settings">設定</button>
+
+<!-- ======= スマホ: ボトムナビ ======= -->
+<nav class="bottom-nav">
+    <button class="active" data-tab="dashboard"><span class="bn-ico">📊</span><span class="bn-label">ダッシュボード</span></button>
+    <button data-tab="record"><span class="bn-ico">📝</span><span class="bn-label">記録</span></button>
+    <button data-tab="settings"><span class="bn-ico">⚙️</span><span class="bn-label">設定</span></button>
 </nav>
 <main>
 
@@ -994,6 +1015,15 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v98 <span class="changelog-date">2026-06-07</span></div>
+                <ul class="changelog-items">
+                    <li>姉妹アプリ「給与明細ダッシュボード」とのUI統一 — レイアウトをヘッダー＋上部タブから、PCはサイドバー（左固定）、スマホはモバイルヘッダー＋ボトムナビ構成に刷新</li>
+                    <li>サイドバー（PC）にタイトル・バージョンバッジ・ナビ・本日の日付・最終更新時刻・ダーク/ライト切替を集約</li>
+                    <li>サイドバー／モバイルヘッダーに姉妹アプリ「給与明細ダッシュボード」への外部リンクを追加</li>
+                    <li>クイックナビはスマホではボトムナビの上に表示する形を維持</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v97 <span class="changelog-date">2026-06-07</span></div>
                 <ul class="changelog-items">
                     <li>姉妹アプリ「給与明細ダッシュボード」とのUI統一 — 分析セクションのカードタイトルに左アクセントバー（丸型）を追加</li>
@@ -1189,6 +1219,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=97"></script>
+<script src="app.js?v=98"></script>
 </body>
 </html>

@@ -8,14 +8,47 @@
         *{box-sizing:border-box;margin:0;padding:0;}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);}
 
-        header{background:#fff;border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(91,143,168,.10);}
-        header h1{font-size:16px;font-weight:800;color:var(--primary);letter-spacing:-.3px;}
-        #last-updated{font-size:11px;color:var(--muted);}
+        :root{--sidebar-w:224px;--topbar-h:0px;--bottom-nav-h:64px;}
+        @media(max-width:768px){:root{--topbar-h:50px;}}
+        .last-updated{font-size:11px;color:var(--muted);}
 
-        /* ===== メインタブ ===== */
-        .main-nav{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 24px;position:sticky;top:50px;z-index:199;box-shadow:0 1px 4px rgba(91,143,168,.06);}
-        .main-nav button{padding:11px 18px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;font-weight:500;transition:color .2s;}
-        .main-nav button.active{color:var(--primary);border-bottom-color:var(--accent);font-weight:700;}
+        /* ===== サイドバー（PC）/ モバイルヘッダー・ボトムナビ（スマホ） ===== */
+        .sidebar{display:none;}
+        .sidebar-brand{padding:18px 20px 14px;border-bottom:1px solid var(--border);}
+        .sidebar-brand h1{font-size:15px;font-weight:800;color:var(--primary);letter-spacing:-.3px;cursor:pointer;}
+        .sidebar-brand .app-version-badge{display:inline-block;margin-top:6px;}
+        .app-version-badge{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.3px;cursor:pointer;}
+        .sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:12px;flex:1;}
+        .sidebar-nav button{text-align:left;padding:10px 14px;border:none;background:none;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;}
+        .sidebar-nav button:hover{background:var(--bg);color:var(--text);}
+        .sidebar-nav button.active{background:var(--primary-light);color:var(--primary-dark);font-weight:700;}
+        .sidebar-foot{padding:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:9px;}
+        .sidebar-meta{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:2px;}
+        .sidebar-foot .theme-toggle{padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;text-align:left;color:var(--text);}
+        .sidebar-foot .theme-toggle:hover{background:var(--bg);}
+        .sidebar-sister-link{font-size:11px;color:var(--primary);text-decoration:none;font-weight:600;padding:6px 2px;}
+        .sidebar-sister-link:hover{text-decoration:underline;}
+
+        @media(min-width:769px){
+            .sidebar{display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);z-index:200;overflow-y:auto;}
+            .mobile-header,.bottom-nav{display:none!important;}
+        }
+
+        .mobile-header{display:none;}
+        .bottom-nav{display:none;}
+        @media(max-width:768px){
+            .mobile-header{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;background:var(--card);border-bottom:1px solid var(--border);padding:10px 14px;box-shadow:0 2px 8px rgba(91,143,168,.10);}
+            .mobile-header h1{font-size:15px;font-weight:800;color:var(--primary);letter-spacing:-.3px;cursor:pointer;}
+            .mobile-header-actions{display:flex;align-items:center;gap:6px;}
+            .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:99px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;text-decoration:none;cursor:pointer;}
+            .icon-btn:hover{background:var(--bg);}
+            .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -2px 10px rgba(91,143,168,.08);padding-bottom:env(safe-area-inset-bottom,0);}
+            .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px 8px;border:none;background:none;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;}
+            .bottom-nav button .bn-ico{font-size:18px;}
+            .bottom-nav button.active{color:var(--primary);}
+            .toast{bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0) + 12px)!important;}
+        }
+
         .tab-content{display:none;}
         .tab-content.active{display:block;}
 
@@ -27,6 +60,9 @@
         .sub-content.active{display:block;}
 
         main{max-width:1100px;margin:0 auto;padding:20px 24px;}
+        @media(min-width:769px){
+            main{margin-left:var(--sidebar-w);}
+        }
         .mb{margin-bottom:14px;}
         .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
         .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
@@ -38,7 +74,7 @@
         .csub{font-size:11px;color:var(--muted);margin-top:4px;}
 
         /* ===== ダッシュボード クイックナビ ===== */
-        .dash-qnav{display:none;gap:4px;flex-wrap:wrap;padding:7px 24px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:91px;z-index:198;}
+        .dash-qnav{display:none;gap:4px;flex-wrap:wrap;padding:7px 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:var(--topbar-h);z-index:198;}
         .tab-content.active ~ * .dash-qnav{display:flex;}
         #tab-dashboard.active + .dash-qnav-wrapper .dash-qnav,
         .dash-qnav-show{display:flex;}
@@ -127,13 +163,13 @@
         .tbl-filter:focus{outline:none;border-color:var(--primary);}
 
         /* ===== 設定サブタブ sticky ===== */
-        #tab-settings .sub-nav{position:sticky;top:91px;z-index:148;background:#fff;padding-top:8px;margin-bottom:12px;}
+        #tab-settings .sub-nav{position:sticky;top:var(--topbar-h);z-index:148;background:var(--card);padding-top:8px;margin-bottom:12px;}
 
         /* ===== 設定タブ sub-content カードスタイル ===== */
         #tab-settings .sub-content.active{padding-top:8px;}
 
         /* ===== 記録 sticky bar ===== */
-        .rec-sticky{background:#fff;border-bottom:2px solid var(--accent);padding:8px 24px;position:sticky;top:91px;z-index:150;margin:0 -24px 12px;box-shadow:0 2px 8px rgba(95,173,155,.12);}
+        .rec-sticky{background:var(--card);border-bottom:2px solid var(--accent);padding:8px 24px;position:sticky;top:var(--topbar-h);z-index:150;margin:0 -24px 12px;box-shadow:0 2px 8px rgba(95,173,155,.12);}
         .rec-sticky-inner{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;max-width:calc(1100px - 48px);margin:0 auto;}
         .rec-sticky-inner label{font-size:12px;font-weight:600;white-space:nowrap;}
         .rec-sticky-inner input[type=month]{padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;max-width:150px;}
@@ -142,7 +178,7 @@
         @keyframes unsaved-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 
         /* ===== 記録サブタブ sticky ===== */
-        #tab-record .sub-nav{position:sticky;top:136px;z-index:148;background:#fff;padding-top:8px;margin-bottom:12px;}
+        #tab-record .sub-nav{position:sticky;top:calc(var(--topbar-h) + 45px);z-index:148;background:var(--card);padding-top:8px;margin-bottom:12px;}
 
         /* ===== 記録セクション ===== */
         .rec-sec{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow-x:auto;box-shadow:0 2px 8px rgba(91,143,168,.07);}
@@ -312,7 +348,7 @@
             .g2,.g3,.g4{grid-template-columns:1fr;}
             .port-grid{grid-template-columns:1fr;}
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
-            main{padding:14px;}
+            main{padding:14px;padding-bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0));}
             .rec-sticky{margin:0 -14px 12px;padding:8px 14px;}
             .rec-sticky-inner{flex-wrap:wrap;}
             .hero-value{font-size:36px;}
@@ -321,13 +357,12 @@
         }
 
         @media(max-width:480px){
-            main{padding:10px;}
+            main{padding:10px;padding-bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0));}
             .rec-sticky{margin:0 -10px 12px;padding:8px 10px;}
             .rec-sticky-inner{flex-wrap:wrap;}
             .dash-qnav{padding:5px 10px;}
             .hero{padding:18px 20px;}
             .hero-value{font-size:26px;}
-            .main-nav button{padding:8px 10px;}
             .an-body{padding:12px;}
             .an-summary{padding:10px 14px;}
             #last-updated{display:none;}
@@ -374,7 +409,7 @@
         .toast-close:hover{color:#fff;}
         /* ===== ダークモード ===== */
         .dark-mode{--primary:#6fa9c4;--primary-dark:#5b9ab5;--primary-light:#1a2e3a;--accent:#6dbfad;--accent-light:#1a2e28;--bg:#111c24;--card:#1a2a36;--text:#dde8f0;--muted:#6a8898;--border:#243342;--success:#5fad9b;--danger:#d06868;--warning:#c9915a;}
-        .dark-mode header,.dark-mode .main-nav,.dark-mode .sub-nav{background:var(--card);}
+        .dark-mode .sidebar,.dark-mode .mobile-header,.dark-mode .bottom-nav,.dark-mode .sub-nav{background:var(--card);}
         .dark-mode .hero{background:linear-gradient(135deg,#1a3548 0%,#1e4060 50%,#224d72 100%);}
         .dark-mode .card,.dark-mode .sum-card,.dark-mode .schd-strip,.dark-mode .rec-sec,.dark-mode .add-panel.open,.dark-mode .snap-modal-card{background:var(--card);}
         .dark-mode table thead tr{background:var(--card);}
@@ -472,12 +507,12 @@
 /* ===== 印刷レイアウト ===== */
 @media print{
     body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}
-    header,nav.main-nav,.dash-qnav,#settings-backdrop,.snap-reminder,
+    .sidebar,.mobile-header,.bottom-nav,.dash-qnav,#settings-backdrop,.snap-reminder,
     #tab-record,#tab-settings,#snap-modal,#confirm-modal,#snap-compare-modal,#help-modal,#report-modal,
     .rec-sticky,.add-panel{display:none!important;}
     #print-header{display:block!important;}
     #tab-dashboard{display:block!important;}
     .card,.sum-card,.schd-strip,.rec-sec,.an-block{break-inside:avoid;page-break-inside:avoid;}
     .btn,.qnav-pill,.qnav-group,.snap-reminder-btn{display:none!important;}
-    main{padding:0;}
+    main{padding:0;margin-left:0!important;}
 }
