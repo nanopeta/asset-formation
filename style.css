@@ -48,8 +48,8 @@
             .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:99px;border:1px solid var(--border);background:var(--card);color:var(--text);text-decoration:none;cursor:pointer;}
             .icon-btn:hover{background:var(--bg);}
             .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -2px 10px rgba(91,143,168,.08);padding-bottom:env(safe-area-inset-bottom,0);}
-            .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px 8px;border:none;background:none;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;}
-            .bottom-nav button .nav-ico{width:22px;height:22px;}
+            .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 8px;border:none;background:none;font-size:9px;font-weight:600;color:var(--muted);cursor:pointer;}
+            .bottom-nav button .nav-ico{width:20px;height:20px;}
             .bottom-nav button.active{color:var(--primary);}
             .toast{bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0) + 12px)!important;}
         }
@@ -79,10 +79,7 @@
         .csub{font-size:11px;color:var(--muted);margin-top:4px;}
 
         /* ===== ダッシュボード クイックナビ ===== */
-        .dash-qnav{display:none;gap:4px;flex-wrap:wrap;padding:7px 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:var(--topbar-h);z-index:198;}
-        .tab-content.active ~ * .dash-qnav{display:flex;}
-        #tab-dashboard.active + .dash-qnav-wrapper .dash-qnav,
-        .dash-qnav-show{display:flex;}
+        .dash-qnav{display:flex;gap:4px;flex-wrap:wrap;padding:7px 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:var(--topbar-h);z-index:198;}
         .qnav-pill{padding:4px 11px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);white-space:nowrap;transition:all .18s;box-shadow:0 1px 3px rgba(0,0,0,.05);}
         .qnav-pill:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary);}
         .qnav-pill.qnav-active{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(91,143,168,.35);}

@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=100">
+    <link rel="stylesheet" href="style.css?v=101">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -20,7 +20,9 @@
         <span class="app-version-badge" onclick="openHelp()" title="使い方・更新履歴"></span>
     </div>
     <nav class="sidebar-nav">
-        <button class="active" data-tab="dashboard"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>ダッシュボード</span></button>
+        <button class="active" data-tab="overview"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>概要</span></button>
+        <button data-tab="analysis"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg><span>分析</span></button>
+        <button data-tab="simulations"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>シミュ</span></button>
         <button data-tab="record"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>記録</span></button>
         <button data-tab="settings"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>設定</span></button>
     </nav>
@@ -46,7 +48,9 @@
 
 <!-- ======= スマホ: ボトムナビ ======= -->
 <nav class="bottom-nav">
-    <button class="active" data-tab="dashboard"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="bn-label">ダッシュボード</span></button>
+    <button class="active" data-tab="overview"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="bn-label">概要</span></button>
+    <button data-tab="analysis"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg><span class="bn-label">分析</span></button>
+    <button data-tab="simulations"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">シミュ</span></button>
     <button data-tab="record"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="bn-label">記録</span></button>
     <button data-tab="settings"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="bn-label">設定</span></button>
 </nav>
@@ -55,31 +59,14 @@
 <!-- 印刷ヘッダー（通常時は非表示） -->
 <div id="print-header" style="display:none;"></div>
 
-<!-- クイックナビ（ダッシュボード専用） -->
-<div id="dash-qnav" class="dash-qnav">
-    <button class="qnav-pill" data-scroll="sec-summary">概要</button>
-    <button class="qnav-pill" data-scroll="sec-schd">SCHD</button>
-    <button class="qnav-pill" data-scroll="sec-nisa">NISA</button>
-    <button class="qnav-pill" data-scroll="sec-portfolio">ポートフォリオ</button>
-    <span class="qnav-sep">｜</span>
-    <button class="qnav-pill" data-scroll="sec-trend">資産推移</button>
-    <button class="qnav-pill" data-scroll="sec-detail">詳細分析</button>
-    <span class="qnav-sep">｜</span>
-    <div class="qnav-group" id="qnav-sim-group">
-        <button class="qnav-pill qnav-group-btn" id="qnav-sim-btn" onclick="toggleQnavSim(event)">シミュレーション ▾</button>
-        <div class="qnav-dropdown" id="qnav-sim-dropdown">
-            <button class="qnav-drop-item" data-scroll="sec-sim">資産シミュ</button>
-            <button class="qnav-drop-item" data-scroll="sec-div-cal">配当カレンダー</button>
-            <button class="qnav-drop-item" data-scroll="sec-ideco-sim">iDeCoシミュ</button>
-            <button class="qnav-drop-item" data-scroll="sec-fire">FIRE</button>
-            <button class="qnav-drop-item" data-scroll="sec-drawdown">取崩し</button>
-            <button class="qnav-drop-item" data-scroll="sec-tax">税金概算</button>
-        </div>
+<!-- ======= 概要 ======= -->
+<div id="tab-overview" class="tab-content active">
+    <div class="dash-qnav">
+        <button class="qnav-pill" data-scroll="sec-summary">概要</button>
+        <button class="qnav-pill" data-scroll="sec-schd">SCHD</button>
+        <button class="qnav-pill" data-scroll="sec-nisa">NISA</button>
+        <button class="qnav-pill" data-scroll="sec-portfolio">ポートフォリオ</button>
     </div>
-</div>
-
-<!-- ======= ダッシュボード ======= -->
-<div id="tab-dashboard" class="tab-content active">
     <!-- スナップショット未記録リマインダー -->
     <div id="snap-reminder" style="display:none"></div>
     <!-- HERO -->
@@ -197,8 +184,14 @@
         </div>
     </div>
 
-    <!-- 分析セクション -->
-    <hr class="an-divider">
+</div>
+
+<!-- ======= 分析 ======= -->
+<div id="tab-analysis" class="tab-content">
+    <div class="dash-qnav">
+        <button class="qnav-pill" data-scroll="sec-trend">資産推移</button>
+        <button class="qnav-pill" data-scroll="sec-detail">詳細分析</button>
+    </div>
 
     <div class="an-block" id="sec-trend">
         <div class="an-summary trend-summary">
@@ -257,7 +250,20 @@
             </div>
         </div>
     </div>
+</div>
 
+<!-- ======= シミュレーション ======= -->
+<div id="tab-simulations" class="tab-content">
+    <div class="dash-qnav">
+        <button class="qnav-pill" data-scroll="sec-sim">資産シミュ</button>
+        <button class="qnav-pill" data-scroll="sec-reinvest">再投資</button>
+        <button class="qnav-pill" data-scroll="sec-div-cal">配当カレンダー</button>
+        <button class="qnav-pill" data-scroll="sec-div-sim">配当シミュ</button>
+        <button class="qnav-pill" data-scroll="sec-ideco-sim">iDeCoシミュ</button>
+        <button class="qnav-pill" data-scroll="sec-fire">FIRE</button>
+        <button class="qnav-pill" data-scroll="sec-drawdown">取崩し</button>
+        <button class="qnav-pill" data-scroll="sec-tax">税金概算</button>
+    </div>
     <div class="an-block" id="sec-sim">
         <div class="an-summary">SCHD 到達シミュレーション</div>
         <div class="an-body">
@@ -1015,6 +1021,14 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v101 <span class="changelog-date">2026-06-09</span></div>
+                <ul class="changelog-items">
+                    <li>ダッシュボードを「概要」「分析」「シミュ」の3ページに分割</li>
+                    <li>ボトムナビ・サイドバーナビを5ボタンに拡張（分析: bar-chart / シミュ: activity アイコン追加）</li>
+                    <li>各ページにqnavを配置（概要4pill / 分析2pill / シミュ8pill）</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v100 <span class="changelog-date">2026-06-09</span></div>
                 <ul class="changelog-items">
                     <li>カード・セクション間隔を全体的に縮小 — main padding / グリッド gap / カード padding・border-radius・margin を均一コンパクト化</li>
@@ -1236,6 +1250,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=100"></script>
+<script src="app.js?v=101"></script>
 </body>
 </html>

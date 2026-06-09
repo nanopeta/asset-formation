@@ -37,10 +37,10 @@
 ## ファイル構成
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~1,240行 |
-| `app.js` | ロジック全般・レンダリング | ~1,462行 |
-| `style.css` | スタイル | ~524行 |
-| `sw.js` | Service Worker（キャッシュ・通知） | ~80行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~1,255行 |
+| `app.js` | ロジック全般・レンダリング | ~1,668行 |
+| `style.css` | スタイル | ~520行 |
+| `sw.js` | Service Worker（キャッシュ・通知） | ~45行 |
 | `manifest.json` | PWA マニフェスト | ~30行 |
 
 ## グローバル定数（app.js 先頭）
@@ -149,15 +149,18 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 
 ## タブ・サブタブ構成
 ```
-メインタブ: dashboard / record / settings
-  dashboard → （サブタブなし）
-    セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio,
-                  sec-trend, sec-detail,
-                  sec-sim, sec-reinvest, sec-div-cal, sec-div-sim,
-                  sec-ideco-sim, sec-fire, sec-drawdown, sec-tax
-  record    → rec-banks / rec-holdings
-  settings  → set-holdings / set-accounts / set-basic
+メインタブ: overview / analysis / simulations / record / settings
+  overview     → （サブタブなし）
+    セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio
+  analysis     → （サブタブなし）
+    セクションID: sec-trend, sec-detail
+  simulations  → （サブタブなし）
+    セクションID: sec-sim, sec-reinvest, sec-div-cal, sec-div-sim,
+                   sec-ideco-sim, sec-fire, sec-drawdown, sec-tax
+  record       → rec-banks / rec-holdings
+  settings     → set-holdings / set-accounts / set-basic
 ```
+- 各タブ内先頭に `.dash-qnav` が子要素として配置（親のdisplay:none/blockに追従）
 - セクションの表示/非表示は `D.settings.hiddenSections` で制御（`renderHiddenSectionSettings()` / `saveHiddenSections()`）
 
 ## 主要関数の場所（app.js）
@@ -165,7 +168,10 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 ### レンダリング
 | 関数 | 役割 |
 |---|---|
-| `renderDashboard()` | ダッシュボード全体再描画（毎回フル）＋スナップリマインダー表示判定 |
+| `renderOverview()` | 概要タブ再描画（sec-summary/schd/nisa/portfolio）＋スナップリマインダー表示判定 |
+| `renderAnalysis()` | 分析タブ再描画（sec-trend/detail） |
+| `renderSimulations()` | シミュタブ再描画（sec-sim〜sec-tax の8セクション） |
+| `renderDashboard()` | 互換性ラッパー（renderOverview+renderAnalysis+renderSimulationsを順呼び出し） |
 | `renderDashHero(...)` | ヒーローカード＋サマリーカード描画（renderDashboard内サブ関数） |
 | `renderDashScdStrip(...)` | 対象銘柄元本ストリップ描画 |
 | `renderDashNisaSection(mo)` | NISAカード＋今年の投資計画描画 |
