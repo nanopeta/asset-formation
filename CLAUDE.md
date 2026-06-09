@@ -371,8 +371,10 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.dark-mode` | ダークモード ルートクラス（CSS変数を一括オーバーライド） |
 | `.sidebar` / `.sidebar-brand` / `.sidebar-nav` / `.sidebar-foot` / `.sidebar-meta` / `.sidebar-sister-link` | PC用サイドバー（左固定 `--sidebar-w`=224px）。タイトル・バージョンバッジ・ナビ・日付/最終更新・テーマ切替・姉妹アプリリンクを集約 |
 | `.mobile-header` / `.mobile-header-actions` / `.icon-btn` | スマホ用ヘッダー（タイトル・バージョンバッジ・テーマ切替・姉妹アプリリンクを横並び表示） |
-| `.bottom-nav` / `.bn-ico` / `.bn-label` | スマホ用ボトムナビ（固定下部、ダッシュボード/記録/設定の3ボタン） |
-| `.tt-ico` | テーマ切替ボタン内のアイコン（🌙/☀️）span。ラベル文言を保持したままアイコンのみ書き換えるため `applyTheme()` はこのクラスを対象に更新 |
+| `.bottom-nav` / `.bn-label` | スマホ用ボトムナビ（固定下部、ダッシュボード/記録/設定の3ボタン） |
+| `.nav-ico` | 共通アウトラインSVGアイコン（`width:18px;height:18px;stroke="currentColor"`）。ボトムナビでは `width:22px;height:22px` に上書き |
+| `.tt-ico` | テーマ切替ボタン内アイコンwrapper span。`.ico-moon`（デフォルト表示）と `.ico-sun`（`.dark-mode` 時表示）の2つのSVGを内包。CSS-only切替のため `applyTheme()` では操作不要 |
+| `.ico-moon` / `.ico-sun` | テーマ切替用moon/sun SVGクラス。`.dark-mode .tt-ico .ico-moon{display:none}` / `.dark-mode .tt-ico .ico-sun{display:inline-flex}` でCSSのみで切り替え |
 | `.app-version-badge` / `.today-date` / `.last-updated` / `.theme-toggle` | サイドバーとモバイルヘッダーの両方に存在する共通クラス。`id` ではなく `querySelectorAll` で同期更新（`updateTodayDate()` / `updateTs()` / `applyTheme()` / `init()`） |
 | `.rec-sec` / `.rec-sec-head` / `.rec-sec-body` | 記録・設定タブの白カードセクション |
 | `.an-block` / `.an-summary` / `.an-body` / `.an-divider` | ダッシュボード分析セクション / 区切り線 |
