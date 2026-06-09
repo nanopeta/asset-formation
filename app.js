@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v98';
+const APP_VERSION='v99';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -94,7 +94,7 @@ const formatMonth=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0'
 function fmtMonths(months){const y=Math.floor(months/12),m=months%12;if(y===0)return`${m}ヶ月`;if(m===0)return`${y}年`;return`${y}年${m}ヶ月`;}
 function updateTodayDate(){const d=new Date();const days=['日','月','火','水','木','金','土'];const txt=`${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;document.querySelectorAll('.today-date').forEach(s=>s.textContent=txt);}
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');const txt=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;document.querySelectorAll('.last-updated').forEach(s=>s.textContent=txt);}
-function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);document.querySelectorAll('.theme-toggle .tt-ico').forEach(ic=>ic.textContent=dark?'☀️':'🌙');}
+function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);}
 function toggleTheme(){const dark=!document.body.classList.contains('dark-mode');localStorage.setItem('asset-theme',dark?'dark':'light');applyTheme(dark);}
 function calcTotals(){const c=D.current;const bank=Object.values(c.bankValues).reduce((a,v)=>a+v,0)-Object.values(c.cardValues).reduce((a,v)=>a+v,0);const pointTotal=Object.values(c.pointValues||{}).reduce((a,v)=>a+v,0);const cash=bank+pointTotal;const inv=D.holdings.reduce((a,h)=>a+holdingJpy(h).value,0);const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);return{cash,inv,ideco,total:cash+inv+ideco};}
 function calcIdecoEstimatedPri(){const{idecoStartMonth,idecoMonthlyTotal}=D.settings;if(!idecoStartMonth||!idecoMonthlyTotal)return 0;const[sy,sm]=idecoStartMonth.split('-').map(Number);const now=new Date();const months=(now.getFullYear()-sy)*12+(now.getMonth()+1-sm)+1;return Math.max(0,months)*idecoMonthlyTotal;}
