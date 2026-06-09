@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=99">
+    <link rel="stylesheet" href="style.css?v=100">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -1015,6 +1015,15 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v100 <span class="changelog-date">2026-06-09</span></div>
+                <ul class="changelog-items">
+                    <li>カード・セクション間隔を全体的に縮小 — main padding / グリッド gap / カード padding・border-radius・margin を均一コンパクト化</li>
+                    <li>an-summary / an-body / an-divider のパディング縮小</li>
+                    <li>rec-sec / rec-sec-body の余白縮小（記録・設定タブ）</li>
+                    <li>モバイルでの .hero / .an-summary / .an-body パディングも縮小</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v99 <span class="changelog-date">2026-06-09</span></div>
                 <ul class="changelog-items">
                     <li>姉妹アプリとのイラストテイスト統一 — ボトムナビ・サイドバーナビ・テーマ切替・姉妹アプリリンクの絵文字をアウトライン系SVGアイコン（Feather Icons 風）に置き換え</li>
@@ -1227,6 +1236,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=99"></script>
+<script src="app.js?v=100"></script>
 </body>
 </html>
