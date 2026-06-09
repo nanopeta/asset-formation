@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v100';
+const APP_VERSION='v101';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -213,10 +213,10 @@ function renderDashNisaSection(mo){
     planEl.innerHTML=allRows.join('');if(planSect)planSect.style.display=allRows.length?'':'none';
 }
 
-function renderDashboard(){
+function renderOverview(){
     const c=D.current;
     const{cash,inv,ideco,total}=calcTotals();
-    {const hidden=D.settings.hiddenSections||[];['sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-div-cal','sec-div-sim','sec-reinvest','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
+    {const hidden=D.settings.hiddenSections||[];['sec-schd','sec-nisa','sec-portfolio'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
     {const rem=el('snap-reminder');if(rem){const now=new Date();const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const lastMonth=formatMonth(lm);const hasSnap=D.snapshots.some(s=>s.month===lastMonth);if(!hasSnap&&D.snapshots.length>0){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">⚠️ ${lastMonth} の記録がまだありません</span><button class="snap-reminder-btn" onclick="document.querySelector('[data-tab=record]').click();el('rec-month').value='${lastMonth}'">記録する</button>`;}else{rem.style.display='none';}}}
     const invPri=D.holdings.reduce((a,h)=>a+holdingJpy(h).principal,0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
@@ -230,16 +230,25 @@ function renderDashboard(){
     renderDashScdStrip(scdH,scdH?holdingJpy(scdH):{value:0,principal:0},D.settings.scdTarget||10000000);
     renderDashNisaSection(new Date().getMonth()+1);
     renderPortfolio(inv+ideco);
+    updateTs();
+}
+function renderAnalysis(){
+    {const hidden=D.settings.hiddenSections||[];['sec-trend','sec-detail'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
+    renderTrendChart();
     renderAnalysisData();
+    updateTs();
+}
+function renderSimulations(){
+    {const hidden=D.settings.hiddenSections||[];['sec-sim','sec-div-cal','sec-div-sim','sec-reinvest','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
     buildReinvestHoldingOptions();
     renderSCHDReinvest();
     renderDividendSim();
     renderDivCalendar();
-    renderTrendChart();
     renderFire();
     renderTaxEstimate();
     updateTs();
 }
+function renderDashboard(){renderOverview();renderAnalysis();renderSimulations();}
 
 function renderPortfolio(totalInv){
     const c=D.current;
@@ -1528,26 +1537,22 @@ function printReport(){
 // ===== クイックナビ スクロール連動 =====
 function toggleQnavSim(e){e.stopPropagation();const dd=el('qnav-sim-dropdown');const isOpen=dd.classList.toggle('open');if(isOpen){setTimeout(()=>document.addEventListener('click',function h(ev){if(!el('qnav-sim-group')?.contains(ev.target)){dd.classList.remove('open');}document.removeEventListener('click',h);},{once:true}),0);}}
 function initQnavHighlight(){
-    const simIds=new Set(['sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax']);
     const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
     const pills={};
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
-    document.querySelectorAll('.qnav-drop-item[data-scroll]').forEach(b=>{pills[b.dataset.scroll]=b;b.addEventListener('click',()=>{el('qnav-sim-dropdown')?.classList.remove('open');qScroll(b.dataset.scroll);});});
     const update=()=>{
         let active=ids[0];
         ids.forEach(id=>{const e=document.getElementById(id);if(e&&e.getBoundingClientRect().top<=200)active=id;});
-        document.querySelectorAll('.qnav-pill,.qnav-drop-item').forEach(b=>b.classList.remove('qnav-active'));
-        el('qnav-sim-btn')?.classList.remove('qnav-group-active');
+        document.querySelectorAll('.qnav-pill').forEach(b=>b.classList.remove('qnav-active'));
         if(pills[active])pills[active].classList.add('qnav-active');
-        if(simIds.has(active))el('qnav-sim-btn')?.classList.add('qnav-group-active');
     };
     window.addEventListener('scroll',update,{passive:true});
     update();
 }
 
 // ===== タブ切り替え =====
-const TABS=['dashboard','record','settings'];
-function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.sidebar-nav button[data-tab],.bottom-nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));const qnav=el('dash-qnav');if(qnav)qnav.style.display=name==='dashboard'?'flex':'none';if(name==='dashboard')renderDashboard();if(name==='record')renderRecordTab();if(name==='settings')renderSettings();window.scrollTo(0,0);}
+const TABS=['overview','analysis','simulations','record','settings'];
+function _doSwitchTab(name){TABS.forEach(t=>el(`tab-${t}`).classList.toggle('active',t===name));document.querySelectorAll('.sidebar-nav button[data-tab],.bottom-nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));if(name==='overview')renderOverview();else if(name==='analysis')renderAnalysis();else if(name==='simulations')renderSimulations();else if(name==='record')renderRecordTab();else if(name==='settings')renderSettings();window.scrollTo(0,0);}
 function switchTab(name){
     if(name!=='record'&&_unsaved){
         customConfirm('保存されていない変更があります。このまま移動しますか？',()=>{clearUnsaved();_doSwitchTab(name);},{okLabel:'移動する',okClass:'btn-p'});
@@ -1654,7 +1659,7 @@ function init(){
     initRecordEvents();
     initSettingsEvents();
     initQnavHighlight();
-    renderDashboard();
+    renderOverview();
     renderRecordTab();
     // 通知初期化
     _renderNotifStatus();
