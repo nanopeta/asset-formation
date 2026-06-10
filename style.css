@@ -347,7 +347,8 @@
         }
 
         @media(max-width:768px){
-            .g2,.g3,.g4{grid-template-columns:1fr;}
+            .g2{grid-template-columns:1fr;}
+            .g3,.g4{grid-template-columns:1fr 1fr;}
             .port-grid{grid-template-columns:1fr;}
             .port-chart-pane{border-right:none;border-bottom:1px solid var(--border);}
             main{padding:14px;padding-bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0));}
