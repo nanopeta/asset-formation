@@ -10,14 +10,14 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=102">
+    <link rel="stylesheet" href="style.css?v=103">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
 <aside class="sidebar">
     <div class="sidebar-brand">
         <h1 onclick="handleTitleClick()">資産形成ダッシュボード</h1>
-        <span class="app-version-badge" onclick="openHelp()" title="使い方・更新履歴"></span>
+        <span class="app-version-badge" onclick="openHelp()" onkeydown="if(event.key==='Enter')openHelp()" role="button" tabindex="0" aria-label="使い方・更新履歴を開く" title="使い方・更新履歴"></span>
     </div>
     <nav class="sidebar-nav">
         <button class="active" data-tab="overview"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>概要</span></button>
@@ -32,6 +32,7 @@
             <span class="last-updated"></span>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替"><span class="tt-ico"><svg class="nav-ico ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="nav-ico ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span> ダーク/ライト切替</button>
+        <button class="theme-toggle privacy-toggle" onclick="togglePrivacy()" title="金額の表示/非表示" aria-label="金額の表示/非表示"><span class="pv-ico"><svg class="nav-ico ico-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="nav-ico ico-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span> 金額を隠す</button>
         <a class="sidebar-sister-link" href="https://nanopeta.github.io/payslip-tracker/" target="_blank" rel="noopener noreferrer">給与明細ダッシュボード <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
     </div>
 </aside>
@@ -40,9 +41,10 @@
 <header class="mobile-header">
     <h1 onclick="handleTitleClick()">資産形成ダッシュボード</h1>
     <div class="mobile-header-actions">
-        <span class="app-version-badge" onclick="openHelp()" title="使い方・更新履歴"></span>
-        <button class="icon-btn theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替"><span class="tt-ico"><svg class="nav-ico ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="nav-ico ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
-        <a class="icon-btn" href="https://nanopeta.github.io/payslip-tracker/" target="_blank" rel="noopener noreferrer" title="給与明細ダッシュボード"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <span class="app-version-badge" onclick="openHelp()" onkeydown="if(event.key==='Enter')openHelp()" role="button" tabindex="0" aria-label="使い方・更新履歴を開く" title="使い方・更新履歴"></span>
+        <button class="icon-btn theme-toggle" onclick="toggleTheme()" title="ダーク/ライト切替" aria-label="ダーク/ライト切替"><span class="tt-ico"><svg class="nav-ico ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="nav-ico ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
+        <button class="icon-btn privacy-toggle" onclick="togglePrivacy()" title="金額の表示/非表示" aria-label="金額の表示/非表示"><span class="pv-ico"><svg class="nav-ico ico-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="nav-ico ico-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span></button>
+        <a class="icon-btn" href="https://nanopeta.github.io/payslip-tracker/" target="_blank" rel="noopener noreferrer" title="給与明細ダッシュボード" aria-label="給与明細ダッシュボードを開く"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
     </div>
 </header>
 
@@ -68,7 +70,9 @@
         <button class="qnav-pill" data-scroll="sec-portfolio">ポートフォリオ</button>
     </div>
     <!-- スナップショット未記録リマインダー -->
-    <div id="snap-reminder" style="display:none"></div>
+    <div id="snap-reminder" class="snap-reminder" style="display:none"></div>
+    <!-- バックアップリマインダー（最終エクスポートから30日超） -->
+    <div id="backup-reminder" class="snap-reminder" style="display:none"></div>
     <!-- HERO -->
     <div class="hero mb" id="sec-summary">
         <div>
@@ -190,6 +194,7 @@
 <div id="tab-analysis" class="tab-content">
     <div class="dash-qnav">
         <button class="qnav-pill" data-scroll="sec-trend">資産推移</button>
+        <button class="qnav-pill" data-scroll="sec-gainloss">損益推移</button>
         <button class="qnav-pill" data-scroll="sec-detail">詳細分析</button>
     </div>
 
@@ -204,6 +209,11 @@
             </div>
         </div>
         <div class="an-body"><div class="chart-wrap chart-h300"><canvas id="trend-chart"></canvas></div></div>
+    </div>
+
+    <div class="an-block" id="sec-gainloss">
+        <div class="an-summary">損益推移</div>
+        <div class="an-body"><div class="chart-wrap chart-h300"><canvas id="gainloss-chart"></canvas></div></div>
     </div>
 
     <div class="an-block" id="sec-detail">
@@ -479,13 +489,13 @@
             <div class="rec-sec-body">
                 <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">「推計」ボタンで今年の積立設定から自動計算します。スポット投資は手動で加算してください。</div>
                 <div class="g3">
-                    <div class="fg"><label>成長投資枠 使用額（年間）</label><input type="number" id="rec-seichou" placeholder="0"></div>
-                    <div class="fg"><label>積立投資枠 使用額（年間）</label><input type="number" id="rec-tsumitate" placeholder="0"></div>
-                    <div class="fg"><label>生涯使用額（累計総計）</label><input type="number" id="rec-lifetime" placeholder="0"></div>
+                    <div class="fg"><label>成長投資枠 使用額（年間）</label><input type="number" id="rec-seichou" placeholder="0" min="0"></div>
+                    <div class="fg"><label>積立投資枠 使用額（年間）</label><input type="number" id="rec-tsumitate" placeholder="0" min="0"></div>
+                    <div class="fg"><label>生涯使用額（累計総計）</label><input type="number" id="rec-lifetime" placeholder="0" min="0"></div>
                 </div>
                 <div class="fg" style="max-width:280px;">
                     <label>成長投資枠 生涯使用額（累計）</label>
-                    <input type="number" id="rec-seichou-lifetime" placeholder="0">
+                    <input type="number" id="rec-seichou-lifetime" placeholder="0" min="0">
                     <div style="font-size:11px;color:var(--muted);margin-top:3px;">生涯上限: ¥12,000,000</div>
                 </div>
             </div>
@@ -701,7 +711,7 @@
                                     <option value="#9b8fc4|b-purple">紫（くすみパープル）</option>
                                     <option value="#b08ab0|b-rose">ピンク（ダスティローズ）</option>
                                 </select>
-                                <button type="button" class="btn btn-s btn-sm" onclick="randomAccColor()" title="ランダム">🎲</button>
+                                <button type="button" class="btn btn-s btn-sm" onclick="randomAccColor()" title="ランダム" aria-label="未使用色をランダム選択">🎲</button>
                                 </div>
                             </div>
                             <div class="fg" style="justify-content:flex-end;padding-top:20px;">
@@ -739,7 +749,7 @@
                                     <option value="#9b8fc4|b-purple">紫（くすみパープル）</option>
                                     <option value="#b08ab0|b-rose">ピンク（ダスティローズ）</option>
                                 </select>
-                                <button type="button" class="btn btn-s btn-sm" onclick="randomAssetColor()" title="ランダム">🎲</button>
+                                <button type="button" class="btn btn-s btn-sm" onclick="randomAssetColor()" title="ランダム" aria-label="未使用色をランダム選択">🎲</button>
                                 </div>
                             </div>
                         </div>
@@ -973,6 +983,10 @@
                         <span class="help-feature-desc">月次スナップの折れ線グラフ。全期間・1年・6ヶ月・3ヶ月で絞り込めます</span>
                     </div>
                     <div class="help-feature">
+                        <span class="help-feature-key">損益推移</span>
+                        <span class="help-feature-desc">含み損益と損益率の月次推移グラフ（分析タブ）。期間ボタンは資産推移チャートと共通です</span>
+                    </div>
+                    <div class="help-feature">
                         <span class="help-feature-key">シミュレーション</span>
                         <span class="help-feature-desc">上部ナビの「シミュレーション ▾」から FIRE・配当・iDeCo・取崩し・税金概算などを確認できます</span>
                     </div>
@@ -1007,6 +1021,18 @@
                         <span class="help-feature-desc">ヘッダー右の 🌙 ボタンでダーク／ライトを切り替えられます。設定はブラウザに記憶されます</span>
                     </div>
                     <div class="help-feature">
+                        <span class="help-feature-key">プライバシーモード</span>
+                        <span class="help-feature-desc">目のアイコン（サイドバー／モバイルヘッダー）で全金額を「¥•••••」表示に切り替え。人前やスクリーンショット時に便利です。入力欄と損益率（%）はマスクされません。AI分析用エクスポートは実値を出力します</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">削除の取り消し</span>
+                        <span class="help-feature-desc">銘柄・口座・記録などを削除した直後、10秒間表示される「元に戻す」ボタンで復元できます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">バックアップ通知</span>
+                        <span class="help-feature-desc">最後のJSONエクスポートから30日以上経過すると、概要タブにバックアップをうながすバナーが表示されます</span>
+                    </div>
+                    <div class="help-feature">
                         <span class="help-feature-key">分析レポート</span>
                         <span class="help-feature-desc">ダッシュボード右上の 🔍 ボタンで資産の自動診断レポートを表示。口座集中リスク・NISA 活用率・配当バランスなど 12 条件を自動チェック</span>
                     </div>
@@ -1020,6 +1046,18 @@
 
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v103 <span class="changelog-date">2026-06-12</span></div>
+                <ul class="changelog-items">
+                    <li>プライバシーモードを追加 — 目のアイコンで全金額を「¥•••••」表示に切り替え（チャートY軸・ツールチップ含む。AI分析用エクスポートは実値を出力）</li>
+                    <li>損益推移グラフを追加 — 分析タブに含み損益と損益率の月次推移を表示（期間ボタンは資産推移と共通）</li>
+                    <li>削除の取り消し機能を追加 — 銘柄・銀行・カード・ポイント・iDeCo・記録の削除後10秒間「元に戻す」で復元可能</li>
+                    <li>バックアップリマインダーを追加 — 最終JSONエクスポートから30日超で概要タブにバナー表示</li>
+                    <li>保存データの容量警告を追加 — localStorage 使用量が上限の80%を超えると警告</li>
+                    <li>NISA使用額に負数を入力すると「超過 ¥-xxx」と表示されるバグを修正（0にクランプ）</li>
+                    <li>アイコンのみのボタンに aria-label を追加（アクセシビリティ改善）</li>
+                </ul>
+            </div>
             <div class="changelog-entry">
                 <div class="changelog-ver">v102 <span class="changelog-date">2026-06-10</span></div>
                 <ul class="changelog-items">
@@ -1256,6 +1294,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=102"></script>
+<script src="app.js?v=103"></script>
 </body>
 </html>

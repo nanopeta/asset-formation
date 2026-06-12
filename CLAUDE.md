@@ -45,7 +45,7 @@
 
 ## グローバル定数（app.js 先頭）
 ```js
-APP_VERSION  // バージョン文字列（例: 'v83'）。キャッシュバスターと同じ番号
+APP_VERSION  // バージョン文字列（例: 'v103'）。キャッシュバスターと同じ番号
 TAX_RATE     // 0.20315 — 源泉分離課税率（所得税 15% + 住民税 5% + 復興税 0.315%）
              // 税率を直書きせず必ずこの定数を使うこと。6箇所以上で参照
 ```
@@ -73,6 +73,15 @@ const CACHE = 'asset-dashboard-vN';  // sw.js 冒頭（Service Workerキャッ�
 
 **対策**: `load()` 内では `uid()` を使わず、`'sp'+Date.now()+index` 等のインラインIDを使うこと。
 
+## localStorage キー
+| キー | 内容 |
+|---|---|
+| `asset-v3` | メインデータ `D`（下記データ構造） |
+| `asset-v3-ts` | 最終更新タイムスタンプ（ISO 8601） |
+| `asset-theme` | ダークモード設定（`'dark'` / `'light'`） |
+| `asset-privacy` | プライバシーモード設定（`'1'` = ON）。D の外に保存しエクスポート JSON を汚さない |
+| `asset-last-export` | 最終 `exportAll()` 日時（ISO 8601、バックアップリマインダー判定用）。`importAll()` 成功時も更新 |
+
 ## データ構造（localStorage: `asset-v3`）
 ```js
 D = {
@@ -83,7 +92,7 @@ D = {
     idecoMonthlyTotal: 0,      // iDeCo月次拠出合計（円）
     usdJpy: 150,               // USD/JPY レート（USD銘柄の円換算に使用）
     targetAllocation: {},      // 目標配分 { [assetTypeId]: number（%） }
-    hiddenSections: {},        // ダッシュボードセクションの非表示設定 { [sectionId]: boolean }
+    hiddenSections: [],        // ダッシュボードセクションの非表示設定（非表示にするセクションIDの配列、includes()で判定）
     aiMemo: '',                // 資産形成方針メモ（AI分析用エクスポートの冒頭に出力される自由記述）
   },
   brokers:      [ {id, name, order} ],
@@ -153,7 +162,7 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
   overview     → （サブタブなし）
     セクションID: sec-summary, sec-schd, sec-nisa, sec-portfolio
   analysis     → （サブタブなし）
-    セクションID: sec-trend, sec-detail
+    セクションID: sec-trend, sec-gainloss, sec-detail
   simulations  → （サブタブなし）
     セクションID: sec-sim, sec-reinvest, sec-div-cal, sec-div-sim,
                    sec-ideco-sim, sec-fire, sec-drawdown, sec-tax
@@ -168,8 +177,8 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 ### レンダリング
 | 関数 | 役割 |
 |---|---|
-| `renderOverview()` | 概要タブ再描画（sec-summary/schd/nisa/portfolio）＋スナップリマインダー表示判定 |
-| `renderAnalysis()` | 分析タブ再描画（sec-trend/detail） |
+| `renderOverview()` | 概要タブ再描画（sec-summary/schd/nisa/portfolio）＋スナップ／バックアップリマインダー表示判定 |
+| `renderAnalysis()` | 分析タブ再描画（sec-trend/gainloss/detail） |
 | `renderSimulations()` | シミュタブ再描画（sec-sim〜sec-tax の8セクション） |
 | `renderDashboard()` | 互換性ラッパー（renderOverview+renderAnalysis+renderSimulationsを順呼び出し） |
 | `renderDashHero(...)` | ヒーローカード＋サマリーカード描画（renderDashboard内サブ関数） |
@@ -191,7 +200,10 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `renderDrawdown()` | FIRE取崩しシミュレーション（資産枯渇年計算・折れ線チャート） |
 | `renderTaxEstimate()` | 税金概算（配当税・潜在税・NISA非課税メリット、特定口座銘柄別内訳テーブル付き） |
 | `renderTrendChart()` | 資産推移折れ線チャート（`trendPeriod` で期間フィルター） |
-| `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋チャート再描画 |
+| `renderGainLossChart()` | 損益推移チャート（含み損益＋損益率%右軸、`trendPeriod` を資産推移と共有） |
+| `_snapPrincipal(s)` / `_snapGain(s)` | スナップショットの投資元本／含み損益を計算（資産推移・損益推移で共用） |
+| `_emptyChartNote(ctx)` | スナップ0件時のチャートプレースホルダーテキスト描画 |
+| `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋資産推移・損益推移の両チャート再描画 |
 | `renderRecordTab()` | 記録タブ全体 |
 | `renderSettings()` | 設定タブ全体 |
 | `autoFillNisa()` | NISA使用額を積立月数×月次額で自動計算して入力欄へ反映 |
@@ -199,11 +211,14 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `calcIncomeTax(income)` | 所得金額から所得税額を計算（累進課税テーブル） |
 | `showSnapSummary(month, snap, prev)` | スナップショット保存後の月次サマリーモーダル表示 |
 | `customConfirm(msg, onOk, opts)` | ブランデッド確認ダイアログ（`#confirm-modal`）。`opts.okLabel` / `opts.okClass` / `opts.html` を指定可。ブラウザ標準 `confirm()` の代替 |
-| `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示 |
+| `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示。負数は先頭で0にクランプ |
+| `toast(msg, type, opts)` | トースト通知。`opts={actionLabel, onAction, duration}` でアクションボタン付きトースト（削除Undoに使用、デフォルト5秒） |
 | `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`、異なる場合は `destroy`＋`new Chart()` |
-| `APP_VERSION` | バージョン文字列定数（例: `'v83'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
+| `APP_VERSION` | バージョン文字列定数（例: `'v103'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
 | `applyTheme(dark)` | ダークモードクラス（`.dark-mode`）を付け替え＋🌙/☀ボタンテキスト更新 |
 | `toggleTheme()` | ダークモード設定を localStorage に保存して `applyTheme()` を呼び出し |
+| `applyPrivacy(on)` | `_privacy` フラグ＋body の `.privacy-mode` クラスを切り替え |
+| `togglePrivacy()` | プライバシーモード設定を `localStorage 'asset-privacy'` に保存して全タブ再描画（fmt/fmtMan がマスク表示に切替） |
 | `updateTodayDate()` | `#today-date` に当日の日付（曜日付き）をセット |
 | `updateTs()` | `#last-updated` に最終保存タイムスタンプをセット |
 | `prevSnap()` | `D.snapshots` の最終エントリを返す（前月比計算・スナップ差分表示に使用） |
@@ -288,12 +303,13 @@ xfApply(tableId)                         // フィルター＆ソート適用
 
 ### ユーティリティ
 ```js
-fmt(n)            // ¥1,234,567 形式
+fmt(n)            // ¥1,234,567 形式（プライバシーモード中は '¥•••••'）
+fmtMan(v)         // ¥123.4万 形式（チャートY軸用。プライバシーモード中は '¥•••'）
 fmtMonths(months) // 月数を「N年Mヶ月」形式に変換
 formatMonth(d)    // Date → 'YYYY-MM' 文字列（月セレクト・スナップキー生成に使用）
 el(id)            // document.getElementById 省略形
 uid()             // ユニークID生成（※load()内では使用不可→インラインIDを使うこと）
-persist()         // D を localStorage に保存
+persist()         // D を localStorage に保存（約5MBの80%超過時に warn トースト、_storageWarned でセッション1回）
 calcTotals()      // {cash, inv, ideco, total} を返す（cash = 銀行合計 - カード合計）
 getScdHolding()   // 設定で選択された対象銘柄を返す
 holdingJpy(h)     // holding の {value, principal} を円換算で返す（USD銘柄はusdJpy換算）
@@ -305,7 +321,9 @@ atBadge(type)     // 銘柄種別バッジHTML
 buildAccountOptions(selId, val)    // select要素に口座種別を動的生成
 buildAssetTypeOptions(selId, val)  // select要素に銘柄種別を動的生成
 buildBrokerOptions(selId, val)     // select要素に証券会社を動的生成
-deleteSnap(month) // 指定月のスナップショット削除
+deleteSnap(month) // 指定月のスナップショット削除（「元に戻す」トースト付き）
+// delete系（Bank/Point/Card/Holding/Ideco/Snap）は削除後10秒間トーストの「元に戻す」で復元可能
+//   （削除前に findIndex で位置を捕獲し splice で復元。broker/口座種別/銘柄種別は対象外）
 filterTable(tbodyId, query) // tbodyをテキスト検索でフィルター（簡易版）
 randomAccColor()  // 口座種別カラーピッカーで未使用色をランダム選択
 randomAssetColor() // 銘柄種別カラーピッカーで未使用色をランダム選択
@@ -313,10 +331,11 @@ _buildCardBankOptions(val) // カード設定パネルの引き落とし口座�
 _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
 _panelOpen(id)    // 設定パネルを開く（モーダル表示＋バックドロップ有効化）
 _panelClose(id)   // 設定パネルを閉じる（バックドロップ非表示）
-_triggerExport(blob, filename, btnId) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード）
+_triggerExport(blob, filename, btnId, onDone) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード。onDone は成功時のみ呼ばれる）
+_markExported()   // 'asset-last-export' を現在時刻に更新＋renderOverview()（バックアップバナー消去）
 exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
 exportAll()       // 全体バックアップJSONエクスポート
-exportAiReport()  // AI分析用Markdownエクスポート（asset-report-YYYY-MM-DD.md）
+exportAiReport()  // AI分析用Markdownエクスポート（asset-report-YYYY-MM-DD.md）。プライバシーモード中も try/finally で一時解除して実値を出力
 printReport()     // 印刷ヘッダー(#print-header)にKPIを書き込んでwindow.print()を呼び出す
 handleTitleClick() // h1クリック時のリロード処理。_unsaved=true の場合は customConfirm() を表示してリロードをブロック
 renderPointInputs() // 記録タブのポイント残高グリッドを再描画
@@ -333,17 +352,18 @@ let chartTrend = null;       // 資産推移折れ線
 let chartReinvest = null;    // 再投資シミュ折れ線
 let chartDivCal = null;      // 配当カレンダー棒グラフ
 let chartDrawdown = null;    // 取崩しシミュ折れ線
-let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件）
+let chartGainLoss = null;    // 損益推移折れ線
+let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件。資産推移・損益推移で共有）
 ```
 チャートの再描画は `_chartRender(chart, ctx, config)` ヘルパーを使うこと（直接 `new Chart()` しない）。
 データ数が同じ場合はインプレース更新（`chart.update('active')`）、異なる場合のみ destroy＋再生成。
 配当カレンダー（`renderDivCalendar`）は `<canvas id="div-cal-chart">` を永続化しているため innerHTML を毎回上書きしないこと。
-**注意**: `chartDrawdown` のみ `_chartRender` 未使用（`new Chart()` で都度再生成）— 既知の TODO。
 
 ### チャート Y軸の「万」表記（姉妹アプリと統一）
-折れ線・棒グラフの Y 軸ラベルは `'¥'+(v/10000).toFixed(1)+'万'` 形式で統一する（例: `¥1234.5万`）。
-対象: 資産推移（`renderTrendChart`）・分配金再投資シミュ（`renderSCHDReinvest`）・FIRE取崩しシミュ（`renderDrawdown`）。
-配当カレンダー（`renderDivCalendar`）は1万円未満の値を実額表示する特殊ロジック（`v>=10000?(v/10000).toFixed(1)+'万':fmt(v)`）のため対象外。
+折れ線・棒グラフの Y 軸ラベルは `fmtMan`（`'¥'+(v/10000).toFixed(1)+'万'`、プライバシーモード対応）で統一する（例: `¥1234.5万`）。
+対象: 資産推移（`renderTrendChart`）・損益推移（`renderGainLossChart`）・分配金再投資シミュ（`renderSCHDReinvest`）・FIRE取崩しシミュ（`renderDrawdown`）。
+配当カレンダー（`renderDivCalendar`）は1万円未満の値を実額表示する特殊ロジック（`_privacy` チェック内包）のため対象外。
+ツールチップの金額は `fmt()` 経由でフォーマットすること（プライバシーモードのマスク漏れ防止）。
 
 ## HTML パターン
 
@@ -418,8 +438,12 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.alloc-title` / `.alloc-table` | 目標配分セクション |
 | `.chart-wrap` / `.chart-h300` | チャートコンテナ（標準220px / 高さ300px） |
 | `.fill-blue` `.fill-orange` `.fill-green` `.fill-purple` `.fill-red` | プログレスバー色 |
-| `.toast` / `.toast-show` / `.toast-error` / `.toast-success` | トースト通知（5秒・× 閉じるボタン付き） |
+| `.toast` / `.toast-show` / `.toast-error` / `.toast-success` / `.toast-warn` | トースト通知（5秒・× 閉じるボタン付き） |
 | `.toast-close` | トースト内 × 閉じるボタン |
+| `.toast-action` | トースト内アクションボタン（削除Undoの「元に戻す」等） |
+| `.privacy-mode` | プライバシーモード ルートクラス（body に付与。fmt/fmtMan のマスクは JS 側 `_privacy` フラグで制御） |
+| `.privacy-toggle` / `.pv-ico` / `.ico-eye` / `.ico-eye-off` | プライバシー切替ボタンとアイコン。`.tt-ico` と同じ CSS-only 切替パターン（`.privacy-mode .pv-ico .ico-eye{display:none}` 等） |
+| `#backup-reminder` | バックアップリマインダーバナー（`.snap-reminder` クラスを共用、概要タブ） |
 | `.help-modal-card` / `.help-modal-header` / `.help-tabs` / `.help-tab-btn` / `.help-pane` | ヘルプモーダル構造 |
 | `.help-section` / `.help-step` / `.help-feature-list` / `.changelog-entry` | ヘルプモーダル内コンテンツ |
 | `.report-trigger-btn` / `.report-modal-card` / `.report-modal-head` | 資産分析レポートモーダル |
@@ -435,6 +459,7 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 init()  // アプリ起動時の初期化
   // - 記録月を当月に設定
   // - ダークモード適用（localStorage 読み込み → applyTheme()）
+  // - プライバシーモード適用（localStorage 読み込み → applyPrivacy()）
   // - 今日の日付表示（updateTodayDate()）
   // - 通知ステータス表示（_renderNotifStatus()）
   // - クイックナビを表示

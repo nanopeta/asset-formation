@@ -24,6 +24,10 @@
         .tt-ico .ico-sun{display:none;}
         .dark-mode .tt-ico .ico-moon{display:none;}
         .dark-mode .tt-ico .ico-sun{display:inline-flex;}
+        .pv-ico{display:inline-flex;align-items:center;}
+        .pv-ico .ico-eye-off{display:none;}
+        .privacy-mode .pv-ico .ico-eye{display:none;}
+        .privacy-mode .pv-ico .ico-eye-off{display:inline-flex;}
         .sidebar-nav button{display:flex;align-items:center;gap:9px;padding:10px 14px;border:none;background:none;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;}
         .sidebar-nav button:hover{background:var(--bg);color:var(--text);}
         .sidebar-nav button.active{background:var(--primary-light);color:var(--primary-dark);font-weight:700;}
@@ -410,6 +414,8 @@
         .toast.toast-warn{background:var(--warning);}
         .toast-close{background:none;border:none;color:rgba(255,255,255,.65);cursor:pointer;padding:0;font-size:16px;line-height:1;flex-shrink:0;margin-left:auto;}
         .toast-close:hover{color:#fff;}
+        .toast-action{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:auto;white-space:nowrap;}
+        .toast-action:hover{background:rgba(255,255,255,.3);}
         /* ===== ダークモード ===== */
         .dark-mode{--primary:#6fa9c4;--primary-dark:#5b9ab5;--primary-light:#1a2e3a;--accent:#6dbfad;--accent-light:#1a2e28;--bg:#111c24;--card:#1a2a36;--text:#dde8f0;--muted:#6a8898;--border:#243342;--success:#5fad9b;--danger:#d06868;--warning:#c9915a;}
         .dark-mode .sidebar,.dark-mode .mobile-header,.dark-mode .bottom-nav,.dark-mode .sub-nav{background:var(--card);}
