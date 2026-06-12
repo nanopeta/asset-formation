@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v102';
+const APP_VERSION='v103';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -82,11 +82,14 @@ function migrateV2(old){
     return d;
 }
 
-function persist(){try{localStorage.setItem('asset-v3',JSON.stringify(D));localStorage.setItem('asset-v3-ts',new Date().toISOString());updateTs();}catch(e){toast('保存に失敗しました（ストレージ容量不足の可能性があります）','error');}}
+let _storageWarned=false;
+function persist(){try{const json=JSON.stringify(D);localStorage.setItem('asset-v3',json);localStorage.setItem('asset-v3-ts',new Date().toISOString());updateTs();if(json.length>4194304&&!_storageWarned){_storageWarned=true;toast('保存データが容量上限（約5MB）の80%を超えています。古い記録の削除やバックアップをおすすめします','warn');}}catch(e){toast('保存に失敗しました（ストレージ容量不足の可能性があります）','error');}}
 let D=load();
 
 // ===== ユーティリティ =====
-const fmt=n=>'¥'+Math.round(n||0).toLocaleString('ja-JP');
+let _privacy=false;
+const fmt=n=>_privacy?'¥•••••':'¥'+Math.round(n||0).toLocaleString('ja-JP');
+const fmtMan=v=>_privacy?'¥•••':'¥'+(v/10000).toFixed(1)+'万';
 const pct=(v,m)=>m>0?Math.min(100,(v/m)*100):0;
 const el=id=>document.getElementById(id);
 const uid=()=>'x'+Date.now()+Math.random().toString(36).slice(2,5);
@@ -96,6 +99,8 @@ function updateTodayDate(){const d=new Date();const days=['日','月','火','水
 function updateTs(){const ts=localStorage.getItem('asset-v3-ts');if(!ts)return;const d=new Date(ts);const p=n=>String(n).padStart(2,'0');const txt=`最終更新: ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;document.querySelectorAll('.last-updated').forEach(s=>s.textContent=txt);}
 function applyTheme(dark){document.body.classList.toggle('dark-mode',dark);}
 function toggleTheme(){const dark=!document.body.classList.contains('dark-mode');localStorage.setItem('asset-theme',dark?'dark':'light');applyTheme(dark);}
+function applyPrivacy(on){_privacy=on;document.body.classList.toggle('privacy-mode',on);}
+function togglePrivacy(){const on=!_privacy;localStorage.setItem('asset-privacy',on?'1':'0');applyPrivacy(on);renderDashboard();renderRecordTab();renderSettings();renderIdecoSim();renderDrawdown();}
 function calcTotals(){const c=D.current;const bank=Object.values(c.bankValues).reduce((a,v)=>a+v,0)-Object.values(c.cardValues).reduce((a,v)=>a+v,0);const pointTotal=Object.values(c.pointValues||{}).reduce((a,v)=>a+v,0);const cash=bank+pointTotal;const inv=D.holdings.reduce((a,h)=>a+holdingJpy(h).value,0);const ideco=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.value||0),0);return{cash,inv,ideco,total:cash+inv+ideco};}
 function calcIdecoEstimatedPri(){const{idecoStartMonth,idecoMonthlyTotal}=D.settings;if(!idecoStartMonth||!idecoMonthlyTotal)return 0;const[sy,sm]=idecoStartMonth.split('-').map(Number);const now=new Date();const months=(now.getFullYear()-sy)*12+(now.getMonth()+1-sm)+1;return Math.max(0,months)*idecoMonthlyTotal;}
 function acBadge(acc){const a=getAccounts()[acc];return a?`<span class="badge ${a.badge}">${a.label}`:'';}
@@ -108,7 +113,7 @@ function spotDone(h){return(h.spotList||[]).filter(s=>s.done).reduce((a,s)=>a+(s
 function gainHtml(val,pri,size='11px'){if(!pri)return'';const g=val-pri,r=(g/pri*100),cls=g>=0?'positive':'negative',sign=g>=0?'+':'';return`<span class="${cls}" style="font-size:${size}">${sign}${fmt(g)}</span><span style="color:var(--muted);font-size:${size};margin-left:4px;">(${sign}${r.toFixed(2)}%)</span>`;}
 function holdingJpy(h){const hv=D.current.holdingValues[h.id]||{};const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;return{value:(hv.value||0)*mul,principal:(hv.principal||0)*mul};}
 
-function toast(msg,type='info'){const t=document.createElement('div');t.className='toast toast-'+type;t.setAttribute('role','alert');const dismiss=()=>{t.classList.remove('toast-show');t.addEventListener('transitionend',()=>t.remove(),{once:true});};const msgSpan=document.createElement('span');msgSpan.textContent=msg;const closeBtn=document.createElement('button');closeBtn.className='toast-close';closeBtn.textContent='×';closeBtn.setAttribute('aria-label','閉じる');t.appendChild(msgSpan);t.appendChild(closeBtn);document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('toast-show'));const tid=setTimeout(dismiss,5000);closeBtn.onclick=()=>{clearTimeout(tid);dismiss();};}
+function toast(msg,type='info',opts={}){const t=document.createElement('div');t.className='toast toast-'+type;t.setAttribute('role','alert');const dismiss=()=>{t.classList.remove('toast-show');t.addEventListener('transitionend',()=>t.remove(),{once:true});};const msgSpan=document.createElement('span');msgSpan.textContent=msg;t.appendChild(msgSpan);const tid=setTimeout(dismiss,opts.duration||5000);if(opts.actionLabel&&opts.onAction){const actBtn=document.createElement('button');actBtn.className='toast-action';actBtn.textContent=opts.actionLabel;actBtn.onclick=()=>{clearTimeout(tid);opts.onAction();dismiss();};t.appendChild(actBtn);}const closeBtn=document.createElement('button');closeBtn.className='toast-close';closeBtn.textContent='×';closeBtn.setAttribute('aria-label','閉じる');t.appendChild(closeBtn);document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('toast-show'));closeBtn.onclick=()=>{clearTimeout(tid);dismiss();};}
 
 function customConfirm(msg,onOk,opts){opts=opts||{};const modal=el('confirm-modal');const bodyEl=el('confirm-modal-body');if(opts.html)bodyEl.innerHTML=msg;else bodyEl.textContent=msg;const okBtn=el('confirm-modal-ok');okBtn.textContent=opts.okLabel||'削除';okBtn.className='btn '+(opts.okClass||'btn-d')+' btn-sm';modal.style.display='flex';const close=()=>{modal.style.display='none';};okBtn.onclick=()=>{close();onOk();};el('confirm-modal-cancel').onclick=close;modal.onclick=(e)=>{if(e.target===modal)close();};}
 
@@ -125,7 +130,7 @@ function closeHelp(){el('help-modal').style.display='none';}
 function switchHelpTab(tab){['usage','changelog'].forEach(t=>{el('help-tab-'+t).classList.toggle('active',t===tab);el('help-pane-'+t).style.display=t===tab?'':'none';});}
 
 // ===== NISA バー =====
-function renderNisaBar(prefix,used,max){const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);barEl.style.width=Math.min(100,p)+'%';const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
+function renderNisaBar(prefix,used,max){used=Math.max(0,used||0);const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);barEl.style.width=Math.min(100,p)+'%';const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
 
 // ===== ダッシュボード =====
 let chartPortfolio=null;
@@ -133,7 +138,7 @@ let byAccChart=null,byTypeChart=null;
 let trendPeriod=0;
 // データ件数が同じなら update()、変わったら destroy→recreate
 function _chartRender(chart,ctx,config){const nd=config.data;if(chart&&chart.data.labels.length===nd.labels.length&&chart.data.datasets.length===nd.datasets.length){chart.data.labels=nd.labels;nd.datasets.forEach((ds,i)=>{chart.data.datasets[i].data=ds.data;if(ds.backgroundColor!==undefined)chart.data.datasets[i].backgroundColor=ds.backgroundColor;if(ds.borderColor!==undefined)chart.data.datasets[i].borderColor=ds.borderColor;});chart.update('active');return chart;}if(chart)chart.destroy();return new Chart(ctx,config);}
-function setTrendPeriod(months,btn){trendPeriod=months;document.querySelectorAll('.tpb').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTrendChart();}
+function setTrendPeriod(months,btn){trendPeriod=months;document.querySelectorAll('.tpb').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTrendChart();renderGainLossChart();}
 
 // ===== ダッシュボード サブレンダラー (B-1) =====
 function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps){
@@ -144,7 +149,7 @@ function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoA
     el('db-inv-gain').innerHTML=gainHtml(inv,invPri);el('db-ideco-gain').innerHTML=gainHtml(ideco,effectiveIdecoPri);
     const apEl=el('db-ideco-actual-pri');if(apEl)apEl.textContent=idecoActualPri>0?`本来の元本: ${fmt(idecoActualPri)}`:idecoEstPri>0?`推計元本: ${fmt(idecoEstPri)}`:'';
     const cards=D.creditCards;
-    el('db-bank-mini').innerHTML=D.bankAccounts.map(b=>{const linked=cards.filter(cd=>cd.bankId===b.id&&(c.cardValues[cd.id]||0)>0);const cardRows=linked.map(cd=>`<div class="bank-mini-row" style="padding-left:10px;"><span style="color:var(--danger)">└ ${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('');return`<div class="bank-mini-row"><span>${b.name}${b.note?` (${b.note})`:''}</span><span>${fmt(c.bankValues[b.id]||0)}</span></div>${cardRows}`;}).join('')+cards.filter(cd=>!cd.bankId&&(c.cardValues[cd.id]||0)>0).map(cd=>`<div class="bank-mini-row"><span style="color:var(--danger)">${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('')+(D.pointAccounts||[]).filter(p=>(c.pointValues?.[p.id]||0)>0).map(p=>`<div class="bank-mini-row"><span style="color:var(--muted)">🎁 ${p.name}</span><span style="color:var(--muted)">${Math.round(c.pointValues[p.id]).toLocaleString('ja-JP')} pt</span></div>`).join('');
+    el('db-bank-mini').innerHTML=D.bankAccounts.map(b=>{const linked=cards.filter(cd=>cd.bankId===b.id&&(c.cardValues[cd.id]||0)>0);const cardRows=linked.map(cd=>`<div class="bank-mini-row" style="padding-left:10px;"><span style="color:var(--danger)">└ ${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('');return`<div class="bank-mini-row"><span>${b.name}${b.note?` (${b.note})`:''}</span><span>${fmt(c.bankValues[b.id]||0)}</span></div>${cardRows}`;}).join('')+cards.filter(cd=>!cd.bankId&&(c.cardValues[cd.id]||0)>0).map(cd=>`<div class="bank-mini-row"><span style="color:var(--danger)">${cd.name}</span><span style="color:var(--danger)">-${fmt(c.cardValues[cd.id]||0)}</span></div>`).join('')+(D.pointAccounts||[]).filter(p=>(c.pointValues?.[p.id]||0)>0).map(p=>`<div class="bank-mini-row"><span style="color:var(--muted)">🎁 ${p.name}</span><span style="color:var(--muted)">${_privacy?'•••':Math.round(c.pointValues[p.id]).toLocaleString('ja-JP')} pt</span></div>`).join('');
 }
 function scdExDate(year,month){
     const d=new Date(year,month-1,25);
@@ -218,6 +223,7 @@ function renderOverview(){
     const{cash,inv,ideco,total}=calcTotals();
     {const hidden=D.settings.hiddenSections||[];['sec-schd','sec-nisa','sec-portfolio'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
     {const rem=el('snap-reminder');if(rem){const now=new Date();const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const lastMonth=formatMonth(lm);const hasSnap=D.snapshots.some(s=>s.month===lastMonth);if(!hasSnap&&D.snapshots.length>0){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">⚠️ ${lastMonth} の記録がまだありません</span><button class="snap-reminder-btn" onclick="document.querySelector('[data-tab=record]').click();el('rec-month').value='${lastMonth}'">記録する</button>`;}else{rem.style.display='none';}}}
+    {const rem=el('backup-reminder');if(rem){const last=localStorage.getItem('asset-last-export');const days=last?Math.floor((Date.now()-new Date(last).getTime())/86400000):null;const due=D.snapshots.length>0&&(days===null||days>=30);if(due&&!sessionStorage.getItem('backup-dismissed')){rem.style.display='';rem.innerHTML=`<span style="color:#92400e">💾 ${days===null?'バックアップが未実施です':'最後のバックアップから'+days+'日経過しています'}。データはこのブラウザにのみ保存されています</span><span style="display:flex;gap:6px;"><button class="snap-reminder-btn" onclick="exportAll()">今すぐエクスポート</button><button class="snap-reminder-btn" onclick="sessionStorage.setItem('backup-dismissed','1');el('backup-reminder').style.display='none'">閉じる</button></span>`;}else{rem.style.display='none';}}}
     const invPri=D.holdings.reduce((a,h)=>a+holdingJpy(h).principal,0);
     const idecoPri=D.idecoHoldings.reduce((a,h)=>a+(c.idecoValues[h.id]?.principal||0),0);
     const idecoActualPri=c.idecoActualPrincipal||0;
@@ -233,8 +239,9 @@ function renderOverview(){
     updateTs();
 }
 function renderAnalysis(){
-    {const hidden=D.settings.hiddenSections||[];['sec-trend','sec-detail'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
+    {const hidden=D.settings.hiddenSections||[];['sec-trend','sec-gainloss','sec-detail'].forEach(id=>{const s=el(id);if(s)s.style.display=hidden.includes(id)?'none':'';});}
     renderTrendChart();
+    renderGainLossChart();
     renderAnalysisData();
     updateTs();
 }
@@ -409,7 +416,7 @@ function renderSCHDReinvest(){
             {label:'評価額',    data:rows.map(r=>r.val),      borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.10)',fill:true, tension:.3,pointRadius:3},
             {label:'投資元本',  data:rows.map(r=>r.principal),borderColor:'#c9915a',borderDash:[6,3],              fill:false,tension:.3,pointRadius:3,borderWidth:1.5},
             {label:'累計分配金',data:rows.map(r=>r.cumDiv),   borderColor:'#5fad9b',borderDash:[4,3],              fill:false,tension:.3,pointRadius:3},
-        ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'}}}}});
+        ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{y:{ticks:{callback:fmtMan}}}}});
     }else if(chartReinvest){chartReinvest.destroy();chartReinvest=null;}
 }
 
@@ -488,7 +495,7 @@ function renderDivCalendar(){
     if(totalEl)totalEl.innerHTML=annualTotal>0?`年間合計 <strong style="color:var(--success);font-size:14px;">${fmt(annualTotal)}</strong>　月平均 <strong style="color:var(--text)">${fmt(annualTotal/12)}</strong>`:'';
     const ctx=el('div-cal-chart')?.getContext('2d');
     if(ctx){
-        chartDivCal=_chartRender(chartDivCal,ctx,{type:'bar',data:{labels:mNames,datasets:[{label:'月間配当',data:monthly,backgroundColor:monthly.map(v=>v>0?'rgba(95,173,155,.8)':'rgba(216,231,239,.6)'),borderColor:monthly.map(v=>v>0?'#5fad9b':'#d8e7ef'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>v>=10000?(v/10000).toFixed(1)+'万':fmt(v)},beginAtZero:true}}}});
+        chartDivCal=_chartRender(chartDivCal,ctx,{type:'bar',data:{labels:mNames,datasets:[{label:'月間配当',data:monthly,backgroundColor:monthly.map(v=>v>0?'rgba(95,173,155,.8)':'rgba(216,231,239,.6)'),borderColor:monthly.map(v=>v>0?'#5fad9b':'#d8e7ef'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>_privacy?'•••':(v>=10000?(v/10000).toFixed(1)+'万':fmt(v))},beginAtZero:true}}}});
     }
 }
 
@@ -587,7 +594,7 @@ function renderDrawdown(){
     if(ctx)chartDrawdown=_chartRender(chartDrawdown,ctx,{type:'line',data:{labels:rows.map(r=>r.yr+'年'),datasets:[
         {label:'資産残高',data:rows.map(r=>r.val),borderColor:'#5b8fa8',backgroundColor:'rgba(91,143,168,.12)',fill:true,tension:.3,pointRadius:2},
         {label:'初期資産',data:rows.map(()=>initAsset),borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:0,pointRadius:0,borderWidth:1.5},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}}},scales:{y:{ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'},beginAtZero:true}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{y:{ticks:{callback:fmtMan},beginAtZero:true}}}});
 }
 
 function renderTaxEstimate(){
@@ -631,12 +638,12 @@ function renderTaxEstimate(){
     <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">※ 配当税は今年の推定年間額。含み益潜在税は売却した場合の概算（20.315%）。実際の税額は確定申告等で確認してください。</div>
     ${taxableRows.length?`<div class="tbl-wrap tbl-scroll" id="tax-table"><div class="tbl-head">特定口座 銘柄別内訳</div>
     <table><thead><tr>
-    <th>銘柄名 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="0" onclick="xfOpen('tax-table',0,this)">▾</button></th>
-    <th style="text-align:right">評価額 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="1" onclick="xfOpen('tax-table',1,this)">▾</button></th>
-    <th style="text-align:right">年間配当(税前) <button class="xf-btn" data-xf-table="tax-table" data-xf-col="2" onclick="xfOpen('tax-table',2,this)">▾</button></th>
-    <th style="text-align:right">配当税 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="3" onclick="xfOpen('tax-table',3,this)">▾</button></th>
-    <th style="text-align:right">含み益 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="4" onclick="xfOpen('tax-table',4,this)">▾</button></th>
-    <th style="text-align:right">潜在税 <button class="xf-btn" data-xf-table="tax-table" data-xf-col="5" onclick="xfOpen('tax-table',5,this)">▾</button></th>
+    <th>銘柄名 <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="0" onclick="xfOpen('tax-table',0,this)">▾</button></th>
+    <th style="text-align:right">評価額 <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="1" onclick="xfOpen('tax-table',1,this)">▾</button></th>
+    <th style="text-align:right">年間配当(税前) <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="2" onclick="xfOpen('tax-table',2,this)">▾</button></th>
+    <th style="text-align:right">配当税 <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="3" onclick="xfOpen('tax-table',3,this)">▾</button></th>
+    <th style="text-align:right">含み益 <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="4" onclick="xfOpen('tax-table',4,this)">▾</button></th>
+    <th style="text-align:right">潜在税 <button class="xf-btn" aria-label="フィルター・並び替え" data-xf-table="tax-table" data-xf-col="5" onclick="xfOpen('tax-table',5,this)">▾</button></th>
     </tr></thead>
     <tbody id="tax-holdings-body">${taxableRows.map(h=>{
         const{value,principal}=holdingJpy(h);
@@ -691,22 +698,25 @@ function renderFire(){
 
 let chartReinvest=null;
 let chartTrend=null;
+let chartGainLoss=null;
+// スナップショットの投資元本・含み損益（資産推移と損益推移で共用）
+function _snapPrincipal(s){
+    const invPri=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+    const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
+    return invPri+idecoPri;
+}
+function _snapGain(s){
+    const invVal=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.value||0),0);
+    return(invVal+(s.idecoTotal||0))-_snapPrincipal(s);
+}
+function _emptyChartNote(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('記録を追加すると表示されます',ctx.canvas.width/2,140);}
 function renderTrendChart(){
     let snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
     if(trendPeriod>0)snaps=snaps.slice(-trendPeriod);
     const ctx=el('trend-chart').getContext('2d');
-    if(!snaps.length){if(chartTrend){chartTrend.destroy();chartTrend=null;}ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('記録を追加すると表示されます',ctx.canvas.width/2,140);return;}
-    const principalData=snaps.map(s=>{
-        const invPri=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.principal||0),0);
-        const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
-        return invPri+idecoPri;
-    });
-    const gainData=snaps.map(s=>{
-        const invVal=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.value||0),0);
-        const invPri=Object.values(s.holdingValues||{}).reduce((a,v)=>a+(v.principal||0),0);
-        const idecoPri=s.idecoActualPrincipal||Object.values(s.idecoValues||{}).reduce((a,v)=>a+(v.principal||0),0);
-        return (invVal+(s.idecoTotal||0))-(invPri+idecoPri);
-    });
+    if(!snaps.length){if(chartTrend){chartTrend.destroy();chartTrend=null;}_emptyChartNote(ctx);return;}
+    const principalData=snaps.map(_snapPrincipal);
+    const gainData=snaps.map(_snapGain);
     const _tooltipOrder=['現金','投資','iDeCo','投資元本','含み損益'];
     chartTrend=_chartRender(chartTrend,ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
         {label:'iDeCo',    data:snaps.map(s=>s.idecoTotal||0), borderColor:'#c9915a',backgroundColor:'rgba(201,145,90,.22)', fill:true, tension:.3,pointRadius:3,stack:'assets'},
@@ -714,7 +724,21 @@ function renderTrendChart(){
         {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:3,stack:'assets'},
         {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2},
         {label:'含み損益', data:gainData,                       borderColor:'#5fad9b',borderDash:[3,2],fill:false,tension:.3,pointRadius:3,borderWidth:2},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label)}},scales:{y:{stacked:true,ticks:{callback:v=>'¥'+(v/10000).toFixed(1)+'万'}}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label),callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{y:{stacked:true,ticks:{callback:fmtMan}}}}});
+}
+
+function renderGainLossChart(){
+    const cv=el('gainloss-chart');if(!cv)return;
+    let snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
+    if(trendPeriod>0)snaps=snaps.slice(-trendPeriod);
+    const ctx=cv.getContext('2d');
+    if(!snaps.length){if(chartGainLoss){chartGainLoss.destroy();chartGainLoss=null;}_emptyChartNote(ctx);return;}
+    const gains=snaps.map(_snapGain);
+    const rates=snaps.map(s=>{const pri=_snapPrincipal(s);return pri>0?_snapGain(s)/pri*100:0;});
+    chartGainLoss=_chartRender(chartGainLoss,ctx,{type:'line',data:{labels:snaps.map(s=>s.month),datasets:[
+        {label:'含み損益',data:gains,borderColor:'#5fad9b',backgroundColor:'rgba(95,173,155,.15)',fill:true,tension:.3,pointRadius:3,yAxisID:'y'},
+        {label:'損益率',  data:rates,borderColor:'#9b8fc4',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:1.5,yAxisID:'y1'},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.dataset.yAxisID==='y1'?c.parsed.y.toFixed(2)+'%':fmt(c.parsed.y))}}},scales:{y:{ticks:{callback:fmtMan}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>v.toFixed(1)+'%'}}}}});
 }
 
 // ===== NISA 自動推計 =====
@@ -748,19 +772,19 @@ function renderRecordTab(){renderBankInputs();renderCardInputs();renderPointInpu
 function renderBankInputs(){
     const c=D.current,prev=prevSnap();
     const grid=el('rec-banks-grid');grid.className=`g${Math.min(4,D.bankAccounts.length)}`;
-    grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
+    grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="number" class="hi" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderCardInputs(){
     const c=D.current,prev=prevSnap();el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
     const grid=el('rec-cards-grid');grid.className=`g${Math.min(4,D.creditCards.length)}`;
-    grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
+    grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="number" class="hi" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderPointInputs(){
     const c=D.current,prev=prevSnap();
     const sec=el('rec-points-section');if(sec)sec.style.display=(D.pointAccounts||[]).length>0?'':'none';
     const grid=el('rec-points-grid');if(!grid)return;
     grid.className=`g${Math.min(4,(D.pointAccounts||[]).length||1)}`;
-    grid.innerHTML=(D.pointAccounts||[]).map(p=>{const pv=prev?.pointValues?.[p.id];const ph=pv!==undefined?`前月: ${Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${p.name}${p.note?`（${p.note}）`:''} (pt)</label><input type="number" class="hi" id="rp-${p.id}" value="${c.pointValues?.[p.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
+    grid.innerHTML=(D.pointAccounts||[]).map(p=>{const pv=prev?.pointValues?.[p.id];const ph=pv!==undefined?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${p.name}${p.note?`（${p.note}）`:''} (pt)</label><input type="number" class="hi" id="rp-${p.id}" value="${c.pointValues?.[p.id]||''}" placeholder="${ph}" min="0" oninput="markUnsaved()"></div>`;}).join('');
 }
 
 function prevSnap(){return D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month)).pop();}
@@ -809,7 +833,7 @@ function saveSnapshot(){
     D.holdings.forEach(h=>{const v=Number(el(`hv-${h.id}`)?.value)||0,p=Number(el(`hp-${h.id}`)?.value)||0;c.holdingValues[h.id]={value:v,principal:p||c.holdingValues[h.id]?.principal||0};});
     D.idecoHoldings.forEach(h=>{const v=Number(el(`hv-${h.id}`)?.value)||0,p=Number(el(`hp-${h.id}`)?.value)||0;c.idecoValues[h.id]={value:v,principal:p||c.idecoValues[h.id]?.principal||0};});
     c.idecoActualPrincipal=Number(el('rec-ideco-actual-pri')?.value)||0;
-    c.nisa.seichouUsed=Number(el('rec-seichou').value)||0;c.nisa.tsumitateUsed=Number(el('rec-tsumitate').value)||0;c.nisa.lifetimeUsed=Number(el('rec-lifetime').value)||0;c.nisa.seichouLifetimeUsed=Number(el('rec-seichou-lifetime').value)||0;
+    c.nisa.seichouUsed=Math.max(0,Number(el('rec-seichou').value)||0);c.nisa.tsumitateUsed=Math.max(0,Number(el('rec-tsumitate').value)||0);c.nisa.lifetimeUsed=Math.max(0,Number(el('rec-lifetime').value)||0);c.nisa.seichouLifetimeUsed=Math.max(0,Number(el('rec-seichou-lifetime').value)||0);
     if(c.nisa.seichouUsed>2400000)toast('成長投資枠（年間）が上限 240万円を超えています','error');
     if(c.nisa.tsumitateUsed>1200000)toast('積立投資枠（年間）が上限 120万円を超えています','error');
     if(c.nisa.lifetimeUsed>18000000)toast('生涯投資枠が上限 1,800万円を超えています','error');
@@ -870,7 +894,7 @@ function renderHistoryTable(){
     renderHistorySelect();
 }
 
-function deleteSnap(month){customConfirm(month+' の記録を削除しますか？',()=>{D.snapshots=D.snapshots.filter(s=>s.month!==month);persist();renderDashboard();renderHistoryTable();});}
+function deleteSnap(month){customConfirm(month+' の記録を削除しますか？',()=>{const snap=D.snapshots.find(s=>s.month===month);D.snapshots=D.snapshots.filter(s=>s.month!==month);persist();renderDashboard();renderHistoryTable();if(snap)toast(month+' の記録を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.snapshots.push(snap);persist();renderDashboard();renderHistoryTable();}});});}
 
 function loadSnap(month){
     const s=D.snapshots.find(s=>s.month===month);if(!s)return;
@@ -892,6 +916,7 @@ const _DASH_SECTIONS=[
     {id:'sec-nisa',label:'NISA 枠'},
     {id:'sec-portfolio',label:'ポートフォリオ'},
     {id:'sec-trend',label:'資産推移チャート'},
+    {id:'sec-gainloss',label:'損益推移グラフ'},
     {id:'sec-detail',label:'詳細分析'},
     {id:'sec-sim',label:'資産シミュレーション'},
     {id:'sec-reinvest',label:'再投資シミュレーション'},
@@ -948,7 +973,7 @@ function openBankPanel(r=true){if(r){el('s-bank-id').value='';el('s-bank-name').
 function closeBankPanel(){_panelClose('s-bank-panel');el('s-bank-id').value='';}
 function editBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;el('s-bank-id').value=b.id;el('s-bank-name').value=b.name;el('s-bank-note').value=b.note||'';el('s-bank-panel-title').textContent='銀行口座を編集';openBankPanel(false);}
 function saveBank(){const name=el('s-bank-name').value.trim();if(!name){toast('口座名を入力してください','error');return;}const id=el('s-bank-id').value;if(id){const b=D.bankAccounts.find(b=>b.id===id);if(b){b.name=name;b.note=el('s-bank-note').value.trim();}}else{const nb={id:uid(),name,note:el('s-bank-note').value.trim(),order:D.bankAccounts.length};D.bankAccounts.push(nb);if(!D.current.bankValues[nb.id])D.current.bankValues[nb.id]=0;}persist();closeBankPanel();renderBanksTable();renderDashboard();renderBankInputs();}
-function deleteBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;customConfirm('「'+b.name+'」を削除しますか？',()=>{D.bankAccounts=D.bankAccounts.filter(b=>b.id!==id);persist();renderBanksTable();renderDashboard();renderBankInputs();});}
+function deleteBank(id){const b=D.bankAccounts.find(b=>b.id===id);if(!b)return;customConfirm('「'+b.name+'」を削除しますか？',()=>{const idx=D.bankAccounts.findIndex(x=>x.id===id);D.bankAccounts=D.bankAccounts.filter(b=>b.id!==id);persist();renderBanksTable();renderDashboard();renderBankInputs();toast('「'+b.name+'」を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.bankAccounts.splice(Math.min(idx,D.bankAccounts.length),0,b);persist();renderBanksTable();renderDashboard();renderBankInputs();}});});}
 
 // ポイント口座
 function renderPointsTable(){if(!D.pointAccounts)D.pointAccounts=[];el('s-points-table').innerHTML=D.pointAccounts.length===0?'<tr><td colspan="4" class="empty">ポイント口座なし</td></tr>':D.pointAccounts.map(p=>`<tr draggable="true" data-id="${p.id}" data-group="point" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td><div class="td-name">${p.name}</div></td><td style="color:var(--muted)">${p.note||''}</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editPoint('${p.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deletePoint('${p.id}')">削除</button></div></td></tr>`).join('');}
@@ -956,7 +981,7 @@ function openPointPanel(r=true){if(r){el('s-point-id').value='';el('s-point-name
 function closePointPanel(){_panelClose('s-point-panel');el('s-point-id').value='';}
 function editPoint(id){if(!D.pointAccounts)D.pointAccounts=[];const p=D.pointAccounts.find(p=>p.id===id);if(!p)return;el('s-point-id').value=p.id;el('s-point-name').value=p.name;el('s-point-note').value=p.note||'';el('s-point-panel-title').textContent='ポイント口座を編集';openPointPanel(false);}
 function savePoint(){const name=el('s-point-name').value.trim();if(!name){toast('ポイント名を入力してください','error');return;}if(!D.pointAccounts)D.pointAccounts=[];const id=el('s-point-id').value;if(id){const p=D.pointAccounts.find(p=>p.id===id);if(p){p.name=name;p.note=el('s-point-note').value.trim();}}else{const np={id:uid(),name,note:el('s-point-note').value.trim(),order:D.pointAccounts.length};D.pointAccounts.push(np);if(!D.current.pointValues)D.current.pointValues={};D.current.pointValues[np.id]=0;}persist();closePointPanel();renderPointsTable();renderDashboard();renderPointInputs();}
-function deletePoint(id){if(!D.pointAccounts)return;const p=D.pointAccounts.find(p=>p.id===id);if(!p)return;customConfirm('「'+p.name+'」を削除しますか？',()=>{D.pointAccounts=D.pointAccounts.filter(p=>p.id!==id);persist();renderPointsTable();renderDashboard();renderPointInputs();});}
+function deletePoint(id){if(!D.pointAccounts)return;const p=D.pointAccounts.find(p=>p.id===id);if(!p)return;customConfirm('「'+p.name+'」を削除しますか？',()=>{const idx=D.pointAccounts.findIndex(x=>x.id===id);D.pointAccounts=D.pointAccounts.filter(p=>p.id!==id);persist();renderPointsTable();renderDashboard();renderPointInputs();toast('「'+p.name+'」を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.pointAccounts.splice(Math.min(idx,D.pointAccounts.length),0,p);persist();renderPointsTable();renderDashboard();renderPointInputs();}});});}
 
 // 証券会社
 function renderBrokersTable(){el('s-brokers-table').innerHTML=(D.brokers||[]).length===0?'<tr><td colspan="2" class="empty">証券会社なし</td></tr>':(D.brokers||[]).map(b=>`<tr draggable="true" data-id="${b.id}" data-group="broker" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td><div class="td-name">${b.name}</div></td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editBroker('${b.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteBroker('${b.id}')">削除</button></div></td></tr>`).join('');}
@@ -973,7 +998,7 @@ function openCardPanel(r=true){if(r){el('s-card-id').value='';el('s-card-name').
 function closeCardPanel(){_panelClose('s-card-panel');el('s-card-id').value='';}
 function editCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;el('s-card-id').value=cd.id;el('s-card-name').value=cd.name;el('s-card-note').value=cd.note||'';_buildCardBankOptions(cd.bankId||'');el('s-card-panel-title').textContent='カードを編集';openCardPanel(false);}
 function saveCard(){const name=el('s-card-name').value.trim();if(!name){toast('カード名を入力してください','error');return;}const id=el('s-card-id').value;const bankId=el('s-card-bank')?.value||'';if(id){const cd=D.creditCards.find(cd=>cd.id===id);if(cd){cd.name=name;cd.note=el('s-card-note').value.trim();cd.bankId=bankId;}}else{const nc={id:uid(),name,note:el('s-card-note').value.trim(),bankId,order:D.creditCards.length};D.creditCards.push(nc);if(!D.current.cardValues[nc.id])D.current.cardValues[nc.id]=0;}persist();closeCardPanel();renderCardsTable();renderCardInputs();}
-function deleteCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;customConfirm('「'+cd.name+'」を削除しますか？',()=>{D.creditCards=D.creditCards.filter(cd=>cd.id!==id);persist();renderCardsTable();renderCardInputs();});}
+function deleteCard(id){const cd=D.creditCards.find(cd=>cd.id===id);if(!cd)return;customConfirm('「'+cd.name+'」を削除しますか？',()=>{const idx=D.creditCards.findIndex(x=>x.id===id);D.creditCards=D.creditCards.filter(cd=>cd.id!==id);persist();renderCardsTable();renderCardInputs();toast('「'+cd.name+'」を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.creditCards.splice(Math.min(idx,D.creditCards.length),0,cd);persist();renderCardsTable();renderCardInputs();}});});}
 
 // 保有銘柄
 function renderHoldingsTable(){const brokerMap=Object.fromEntries((D.brokers||[]).map(b=>[b.id,b.name]));el('s-holdings-table').innerHTML=D.holdings.length===0?'<tr><td colspan="8" class="empty">銘柄なし</td></tr>':D.holdings.map(h=>{const sps=h.spotList||[],spTot=spotTotal(h),spDone=sps.filter(s=>s.done).length;const spCell=spTot>0?`${fmt(spTot)}<span style="color:var(--muted);font-size:11px;margin-left:3px;">✅${spDone}/${sps.length}</span>`:'--';const bname=h.brokerId&&brokerMap[h.brokerId]?`<span style="font-size:12px;color:var(--muted);">${brokerMap[h.brokerId]}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';return`<tr draggable="true" data-id="${h.id}" data-group="regular" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td><div class="td-name">${h.name}</div></td><td>${acBadge(h.account)}</span></td><td>${atBadge(h.assetType)}</td><td>${bname}</td><td style="text-align:right">${h.monthlyAmount>0?fmt(h.monthlyAmount)+'/月':'--'}</td><td style="text-align:right">${spCell}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editHolding('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteHolding('${h.id}')">削除</button></div></td></tr>`;}).join('');}
@@ -986,7 +1011,7 @@ function openHoldingPanel(r=true){if(r){el('s-holding-id').value='';el('s-h-name
 function closeHoldingPanel(){_panelClose('s-holding-panel');el('s-holding-id').value='';}
 function editHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;el('s-holding-id').value=h.id;el('s-h-name').value=h.name;buildAccountOptions('s-h-account',h.account);buildAssetTypeOptions('s-h-type',h.assetType);buildBrokerOptions('s-h-broker',h.brokerId||'');el('s-h-monthly').value=h.monthlyAmount||'';el('s-h-yield').value=h.dividendYield||'';renderSpotListPanel(h.spotList||[]);const cur=el('s-h-currency');if(cur)cur.value=h.currency||'jpy';setDivMonthsOnPanel(h.dividendMonths||[]);el('s-holding-panel-title').textContent='銘柄を編集';openHoldingPanel(false);}
 function saveHolding(){const name=el('s-h-name').value.trim();if(!name){toast('銘柄名を入力してください','error');return;}const id=el('s-holding-id').value;const currency=el('s-h-currency')?.value||'jpy';const data={name,account:el('s-h-account').value,assetType:el('s-h-type').value,brokerId:el('s-h-broker')?.value||'',monthlyAmount:Number(el('s-h-monthly').value)||0,spotList:getSpotListFromPanel(),dividendYield:parseFloat(el('s-h-yield').value)||0,currency,dividendMonths:getDivMonthsFromPanel()};if(id){const h=D.holdings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.holdings.length};D.holdings.push(nh);if(!D.current.holdingValues[nh.id])D.current.holdingValues[nh.id]={value:0,principal:0};}persist();closeHoldingPanel();renderHoldingsTable();renderHoldingInputs();renderDashboard();}
-function deleteHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;customConfirm('「'+h.name+'」を削除しますか？',()=>{D.holdings=D.holdings.filter(h=>h.id!==id);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();});}
+function deleteHolding(id){const h=D.holdings.find(h=>h.id===id);if(!h)return;customConfirm('「'+h.name+'」を削除しますか？',()=>{const idx=D.holdings.findIndex(x=>x.id===id);D.holdings=D.holdings.filter(h=>h.id!==id);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();toast('「'+h.name+'」を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.holdings.splice(Math.min(idx,D.holdings.length),0,h);persist();renderHoldingsTable();renderHoldingInputs();renderDashboard();}});});}
 
 // iDeCo
 function renderIdecoTable(){el('s-ideco-table').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">銘柄なし</td></tr>':D.idecoHoldings.map(h=>`<tr draggable="true" data-id="${h.id}" data-group="ideco" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" ondragend="dragEnd(event)"><td class="drag-handle">⠿</td><td><div class="td-name">${h.name}</div></td><td>${atBadge(h.assetType)}</td><td style="text-align:right">${h.monthlyAmount>0?h.monthlyAmount+'%':'--'}</td><td style="text-align:right">${h.dividendYield||0}%</td><td style="text-align:right"><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="editIdeco('${h.id}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteIdeco('${h.id}')">削除</button></div></td></tr>`).join('');}
@@ -994,7 +1019,7 @@ function openIdecoPanel(r=true){if(r){el('s-ideco-id').value='';el('s-i-name').v
 function closeIdecoPanel(){_panelClose('s-ideco-panel');el('s-ideco-id').value='';}
 function editIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;el('s-ideco-id').value=h.id;el('s-i-name').value=h.name;buildAssetTypeOptions('s-i-type',h.assetType);el('s-i-monthly').value=h.monthlyAmount||'';el('s-i-yield').value=h.dividendYield||'';el('s-ideco-panel-title').textContent='iDeCo銘柄を編集';openIdecoPanel(false);}
 function saveIdeco(){const name=el('s-i-name').value.trim();if(!name){toast('銘柄名を入力してください','error');return;}const id=el('s-ideco-id').value;const data={name,assetType:el('s-i-type').value,monthlyAmount:Number(el('s-i-monthly').value)||0,dividendYield:parseFloat(el('s-i-yield').value)||0};if(id){const h=D.idecoHoldings.find(h=>h.id===id);if(h)Object.assign(h,data);}else{const nh={id:uid(),...data,order:D.idecoHoldings.length};D.idecoHoldings.push(nh);if(!D.current.idecoValues[nh.id])D.current.idecoValues[nh.id]={value:0,principal:0};}persist();closeIdecoPanel();renderIdecoTable();renderIdecoInputs();renderDashboard();}
-function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;customConfirm('「'+h.name+'」を削除しますか？',()=>{D.idecoHoldings=D.idecoHoldings.filter(h=>h.id!==id);persist();renderIdecoTable();renderIdecoInputs();renderDashboard();});}
+function deleteIdeco(id){const h=D.idecoHoldings.find(h=>h.id===id);if(!h)return;customConfirm('「'+h.name+'」を削除しますか？',()=>{const idx=D.idecoHoldings.findIndex(x=>x.id===id);D.idecoHoldings=D.idecoHoldings.filter(h=>h.id!==id);persist();renderIdecoTable();renderIdecoInputs();renderDashboard();toast('「'+h.name+'」を削除しました','info',{actionLabel:'元に戻す',duration:10000,onAction:()=>{D.idecoHoldings.splice(Math.min(idx,D.idecoHoldings.length),0,h);persist();renderIdecoTable();renderIdecoInputs();renderDashboard();}});});}
 
 // 口座種別
 function renderAccTypesTable(){
@@ -1052,11 +1077,11 @@ const today=()=>new Date().toISOString().slice(0,10);
 
 // 全体バックアップ
 function _flashBtn(id){const b=el(id);if(!b)return;const t=b.textContent;b.textContent='✓ 完了';b.classList.add('btn-saved');setTimeout(()=>{b.textContent=t;b.classList.remove('btn-saved');},2000);}
-async function _triggerExport(blob,filename,btnId){
+async function _triggerExport(blob,filename,btnId,onDone){
     // iOS Safari はa.download非対応 → Web Share API（ファイル共有）を優先使用
     const file=new File([blob],filename,{type:blob.type});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-        try{await navigator.share({files:[file]});if(btnId)_flashBtn(btnId);return;}catch(e){if(e.name==='AbortError')return;}
+        try{await navigator.share({files:[file]});if(btnId)_flashBtn(btnId);if(onDone)onDone();return;}catch(e){if(e.name==='AbortError')return;}
     }
     // デスクトップ / フォールバック
     const url=URL.createObjectURL(blob);
@@ -1064,9 +1089,11 @@ async function _triggerExport(blob,filename,btnId){
     document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
     if(btnId)_flashBtn(btnId);
+    if(onDone)onDone();
 }
-function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`,'btn-export-all');}
-function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);if(!parsed||!parsed.settings||!Array.isArray(parsed.holdings)){toast('ファイルの形式が正しくありません（必須フィールドが見つかりません）','error');return;}D=parsed;persist();renderSettings();renderDashboard();renderRecordTab();toast('インポート完了しました','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');r.readAsText(f);}
+function _markExported(){localStorage.setItem('asset-last-export',new Date().toISOString());renderOverview();}
+function exportAll(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});_triggerExport(b,`asset-backup-${today()}.json`,'btn-export-all',_markExported);}
+function importAll(e){const f=(e.target||e.currentTarget).files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);if(!parsed||!parsed.settings||!Array.isArray(parsed.holdings)){toast('ファイルの形式が正しくありません（必須フィールドが見つかりません）','error');return;}D=parsed;persist();localStorage.setItem('asset-last-export',new Date().toISOString());renderSettings();renderDashboard();renderRecordTab();toast('インポート完了しました','success');}catch{toast('ファイルの形式が正しくありません','error');}};r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');r.readAsText(f);}
 
 // 設定のみ（記録は保持）
 function exportSettings(){
@@ -1100,6 +1127,11 @@ function exportCsvSelected(){
     _exportCsv(snaps,val==='all'?'asset-records-all.csv':`asset-records-${val}.csv`);
 }
 function exportAiReport(){
+    // プライバシーモード中でも実値を出力する（AI分析用のため）
+    const pv=_privacy;_privacy=false;
+    try{_exportAiReportBody();}finally{_privacy=pv;}
+}
+function _exportAiReportBody(){
     const accs=getAccounts();
     const ats=getAssetTypes();
     const {cash,inv,ideco,total}=calcTotals();
@@ -1537,7 +1569,7 @@ function printReport(){
 // ===== クイックナビ スクロール連動 =====
 function toggleQnavSim(e){e.stopPropagation();const dd=el('qnav-sim-dropdown');const isOpen=dd.classList.toggle('open');if(isOpen){setTimeout(()=>document.addEventListener('click',function h(ev){if(!el('qnav-sim-group')?.contains(ev.target)){dd.classList.remove('open');}document.removeEventListener('click',h);},{once:true}),0);}}
 function initQnavHighlight(){
-    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-detail','sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
+    const ids=['sec-summary','sec-schd','sec-nisa','sec-portfolio','sec-trend','sec-gainloss','sec-detail','sec-sim','sec-reinvest','sec-div-cal','sec-div-sim','sec-ideco-sim','sec-fire','sec-drawdown','sec-tax'];
     const pills={};
     document.querySelectorAll('.qnav-pill[data-scroll]').forEach(b=>pills[b.dataset.scroll]=b);
     const update=()=>{
@@ -1586,7 +1618,7 @@ function initRecordEvents(){
     el('btn-auto-nisa').addEventListener('click',autoFillNisa);
     el('btn-auto-ideco').addEventListener('click',()=>{const est=calcIdecoEstimatedPri();if(!est){toast('基本設定でiDeCo開始月と月次拠出合計を設定してください','error');return;}el('rec-ideco-actual-pri').value=est;markUnsaved();});
     ['rec-seichou','rec-tsumitate','rec-lifetime','rec-seichou-lifetime'].forEach(id=>el(id).addEventListener('input',markUnsaved));
-    document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
+    document.querySelectorAll('.xf-btn[data-xf-table]').forEach(btn=>{btn.setAttribute('aria-label','フィルター・並び替え');btn.addEventListener('click',()=>xfOpen(btn.dataset.xfTable,parseInt(btn.dataset.xfCol),btn));});
     el('btn-run-sim').addEventListener('click',renderSCHDReinvest);
     el('sim-holding-sel').addEventListener('change',function(){_populateReinvestFromHolding(this.value);});
     ['fire-monthly','fire-rate','fire-return','fire-contrib','fire-inflation'].forEach(id=>el(id)?.addEventListener('input',renderFire));
@@ -1637,6 +1669,7 @@ function init(){
     updateTodayDate();
     document.querySelectorAll('.app-version-badge').forEach(vb=>vb.textContent=APP_VERSION);
     applyTheme(localStorage.getItem('asset-theme')==='dark');
+    applyPrivacy(localStorage.getItem('asset-privacy')==='1');
     const qnav=el('dash-qnav');if(qnav)qnav.style.display='flex';
     el('settings-backdrop').addEventListener('click',()=>{document.querySelectorAll('.add-panel.open').forEach(p=>p.classList.remove('open'));el('settings-backdrop').classList.remove('active');});
     document.addEventListener('keydown',e=>{
