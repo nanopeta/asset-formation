@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=103">
+    <link rel="stylesheet" href="style.css?v=104">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -83,6 +83,7 @@
         <div class="hero-right">
             <div class="hero-month">先月比</div>
             <div class="hero-month-val" id="db-month-diff">--</div>
+            <canvas id="hero-spark" class="hero-spark" title="直近12ヶ月の総資産推移" style="display:none"></canvas>
             <button class="btn report-trigger-btn" onclick="showAssetReport()">📊 分析レポート</button>
         </div>
     </div>
@@ -107,6 +108,9 @@
         </div>
     </div>
 
+    <!-- 2カラムレイアウト（1100px以上で左右分割・以下では縦積み） -->
+    <div class="ov-cols">
+    <div class="ov-col">
     <!-- SCHD ストリップ -->
     <div class="schd-strip" id="sec-schd">
         <div>
@@ -171,7 +175,9 @@
                 <div id="nisa-plan-rows"></div>
             </div>
         </div>
+    </div><!-- /.ov-col -->
 
+    <div class="ov-col">
     <!-- ポートフォリオ -->
     <div class="card card-flush mb" id="sec-portfolio">
         <div class="port-grid">
@@ -187,6 +193,8 @@
             </div>
         </div>
     </div>
+    </div><!-- /.ov-col -->
+    </div><!-- /.ov-cols -->
 
 </div>
 
@@ -203,6 +211,7 @@
             <span>資産推移チャート</span>
             <div class="trend-period-btns">
                 <button class="tpb active" onclick="setTrendPeriod(0,this)">全期間</button>
+                <button class="tpb" onclick="setTrendPeriod('ytd',this)">YTD</button>
                 <button class="tpb" onclick="setTrendPeriod(12,this)">1年</button>
                 <button class="tpb" onclick="setTrendPeriod(6,this)">6ヶ月</button>
                 <button class="tpb" onclick="setTrendPeriod(3,this)">3ヶ月</button>
@@ -242,7 +251,7 @@
             <div class="tbl-wrap">
                 <div class="tbl-head">銘柄別一覧</div>
                 <div class="tbl-scroll">
-                <table>
+                <table class="mtbl mtbl-an">
                     <thead><tr>
                         <th>銘柄名 <button class="xf-btn" data-xf-table="an-holdings" data-xf-col="0">▾</button></th>
                         <th>口座 <button class="xf-btn" data-xf-table="an-holdings" data-xf-col="1">▾</button></th>
@@ -265,14 +274,14 @@
 <!-- ======= シミュレーション ======= -->
 <div id="tab-simulations" class="tab-content">
     <div class="dash-qnav">
-        <button class="qnav-pill" data-scroll="sec-sim">資産シミュ</button>
-        <button class="qnav-pill" data-scroll="sec-reinvest">再投資</button>
-        <button class="qnav-pill" data-scroll="sec-div-cal">配当カレンダー</button>
-        <button class="qnav-pill" data-scroll="sec-div-sim">配当シミュ</button>
-        <button class="qnav-pill" data-scroll="sec-ideco-sim">iDeCoシミュ</button>
-        <button class="qnav-pill" data-scroll="sec-fire">FIRE</button>
-        <button class="qnav-pill" data-scroll="sec-drawdown">取崩し</button>
-        <button class="qnav-pill" data-scroll="sec-tax">税金概算</button>
+        <button class="qnav-pill qnav-active" data-show="sec-sim">資産シミュ</button>
+        <button class="qnav-pill" data-show="sec-reinvest">再投資</button>
+        <button class="qnav-pill" data-show="sec-div-cal">配当カレンダー</button>
+        <button class="qnav-pill" data-show="sec-div-sim">配当シミュ</button>
+        <button class="qnav-pill" data-show="sec-ideco-sim">iDeCoシミュ</button>
+        <button class="qnav-pill" data-show="sec-fire">FIRE</button>
+        <button class="qnav-pill" data-show="sec-drawdown">取崩し</button>
+        <button class="qnav-pill" data-show="sec-tax">税金概算</button>
     </div>
     <div class="an-block" id="sec-sim">
         <div class="an-summary">SCHD 到達シミュレーション</div>
@@ -420,9 +429,10 @@
             <button class="btn btn-p btn-sm" id="btn-save-snapshot" style="white-space:nowrap;">この月を保存</button>
             <span class="rec-unsaved" id="rec-unsaved" style="display:none">● 未保存</span>
         </div>
-        <div style="padding:6px 0 2px;display:flex;align-items:center;gap:8px;">
+        <div style="padding:6px 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <label style="font-size:12px;color:var(--muted);white-space:nowrap;">メモ</label>
-            <input type="text" id="rec-note" placeholder="この月のメモ（任意）" style="flex:1;font-size:13px;" oninput="markUnsaved()">
+            <input type="text" id="rec-note" placeholder="この月のメモ（任意）" style="flex:1;min-width:140px;font-size:13px;" oninput="markUnsaved()">
+            <span id="rec-progress" class="rec-progress" role="button" tabindex="0" onclick="jumpToNextEmpty()" onkeydown="if(event.key==='Enter')jumpToNextEmpty()" title="クリックで未入力の項目へ移動" aria-label="入力進捗（クリックで未入力項目へ移動）"></span>
         </div>
     </div>
 
@@ -453,7 +463,7 @@
                 <span>保有銘柄（NISA・特定口座）</span>
                 <button class="btn btn-s btn-sm" id="btn-to-holdings">銘柄管理</button>
             </div>
-            <table>
+            <table class="mtbl mtbl-rec">
                 <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>口座</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
                 <tbody id="rec-holdings-body"></tbody>
             </table>
@@ -466,14 +476,14 @@
                     <button class="btn btn-s btn-sm" id="btn-to-ideco">銘柄管理</button>
                 </div>
             </div>
-            <table>
+            <table class="mtbl mtbl-rec">
                 <thead><tr><th style="width:36px;"></th><th>銘柄名</th><th>種別</th><th class="itd" style="text-align:right">評価額（円）</th><th class="itd" style="text-align:right">スイッチング後元本（円）</th><th style="text-align:right">前回比</th></tr></thead>
                 <tbody id="rec-ideco-body"></tbody>
             </table>
             <div class="rec-sec-body" style="padding-top:8px;">
                 <div class="fg" style="max-width:320px;">
                     <label>累計拠出元本（スイッチング前からの実拠出総額）</label>
-                    <input type="number" id="rec-ideco-actual-pri" placeholder="0" oninput="markUnsaved()">
+                    <input type="text" inputmode="decimal" class="money" id="rec-ideco-actual-pri" placeholder="0" oninput="markUnsaved()">
                     <div style="font-size:11px;color:var(--muted);margin-top:3px;">「累計拠出を推計」ボタンで開始月×月次拠出合計から自動計算できます。スイッチングしている場合はこの値で損益・率を計算します。</div>
                 </div>
             </div>
@@ -511,6 +521,9 @@
             </table>
         </div>
     </div>
+
+    <!-- スマホ用 保存FAB -->
+    <button id="rec-fab" class="rec-fab" onclick="saveSnapshot()" aria-label="この月を保存"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span>保存</span></button>
 </div>
 
 <!-- ======= 設定タブ ======= -->
@@ -988,7 +1001,7 @@
                     </div>
                     <div class="help-feature">
                         <span class="help-feature-key">シミュレーション</span>
-                        <span class="help-feature-desc">上部ナビの「シミュレーション ▾」から FIRE・配当・iDeCo・取崩し・税金概算などを確認できます</span>
+                        <span class="help-feature-desc">シミュタブ上部のピル（資産シミュ／再投資／配当カレンダー…）で表示を切り替えます。FIRE・配当・iDeCo・取崩し・税金概算などを確認できます</span>
                     </div>
                 </div>
             </div>
@@ -997,8 +1010,28 @@
                 <div class="help-section-title">④ 便利な機能</div>
                 <div class="help-feature-list">
                     <div class="help-feature">
+                        <span class="help-feature-key">Ctrl+K</span>
+                        <span class="help-feature-desc">コマンドパレットを開きます。セクション・銘柄・操作（バックアップ・前月コピーなど）を検索してワンタッチでジャンプ／実行できます</span>
+                    </div>
+                    <div class="help-feature">
                         <span class="help-feature-key">Ctrl+S</span>
                         <span class="help-feature-desc">記録タブでスナップショットを素早く保存できます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">1〜5 / ?</span>
+                        <span class="help-feature-desc">数字キー 1〜5 でタブ切替（概要/分析/シミュ/記録/設定）、? キーでこのヘルプを表示します（入力中は無効）</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">金額入力</span>
+                        <span class="help-feature-desc">記録タブの金額欄は「1,234,567」のカンマ付き・「150万」・「+50000」（元の値に加算）・「-3000」（減算）が使えます。入力中は円換算ヒントが表示されます</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">入力進捗</span>
+                        <span class="help-feature-desc">記録タブ上部に「銘柄 5/7・銀行 2/3」のような入力進捗が表示されます。クリックすると未入力の項目へジャンプします</span>
+                    </div>
+                    <div class="help-feature">
+                        <span class="help-feature-key">戻るボタン</span>
+                        <span class="help-feature-desc">タブ・サブタブはURLに記録されるため、リロードしても表示が維持され、スマホの戻るボタンで前のタブに戻れます。モーダルも戻るボタンで閉じられます</span>
                     </div>
                     <div class="help-feature">
                         <span class="help-feature-key">楽天CSV</span>
@@ -1046,6 +1079,24 @@
 
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v104 <span class="changelog-date">2026-06-13</span></div>
+                <ul class="changelog-items">
+                    <li>コマンドパレットを追加（Ctrl+K / Cmd+K）— セクション・銘柄・操作を横断検索してワンタッチでジャンプ</li>
+                    <li>URLハッシュ同期 — リロードしてもタブ・サブタブを維持。スマホ／PWAの戻るボタンで前のタブに戻れる＆モーダルを閉じられるように</li>
+                    <li>シミュレーションタブをセグメント切替に変更 — 上部ピルで選んだ1セクションのみ表示（縦長スクロール解消・表示も高速化）</li>
+                    <li>PCワイド画面（1100px以上）で概要タブを2カラムレイアウトに（左: SCHD・NISA / 右: ポートフォリオ）</li>
+                    <li>総資産ヒーローカードに直近12ヶ月のミニ推移グラフ（スパークライン）を追加</li>
+                    <li>記録タブに入力進捗インジケーターを追加（「銘柄 5/7」等。クリックで未入力項目へジャンプ）</li>
+                    <li>スマホの記録タブに保存FAB（右下の浮動保存ボタン）を追加。未保存時はオレンジ色で点滅</li>
+                    <li>金額入力のスマート化 — 「1,234,567」のカンマ・「150万」・「+50000」（元の値に加算）・「-3000」（減算）に対応。入力中に円換算ヒントを表示</li>
+                    <li>スマホで記録タブの銘柄テーブルと分析タブの銘柄別一覧をカード型表示に（横スクロール不要に）</li>
+                    <li>設定タブの並び替えにスマホ用 ▲▼ ボタンを追加（ドラッグ&ドロップの代替）</li>
+                    <li>資産推移チャート強化 — YTD期間ボタン追加・メモ付き月をマーカー表示（ツールチップにメモ表示）・SCHD元本/目標ラインを凡例クリックで表示可能に</li>
+                    <li>キーボードショートカット追加 — 1〜5キーでタブ切替・? キーでヘルプ表示</li>
+                    <li>数値入力欄のマウスホイールによる誤入力を防止。設定パネルを開くと最初の入力欄に自動フォーカス＆Tabキーのフォーカスをパネル内に固定</li>
+                </ul>
+            </div>
             <div class="changelog-entry">
                 <div class="changelog-ver">v103 <span class="changelog-date">2026-06-12</span></div>
                 <ul class="changelog-items">
@@ -1280,6 +1331,18 @@
     </div>
 </div>
 
+<!-- コマンドパレット（Ctrl+K / Cmd+K） -->
+<div id="cmd-modal" class="snap-modal cmd-modal" style="display:none" onclick="if(event.target===this)closeCmdPalette()">
+    <div class="snap-modal-card cmd-card" onclick="event.stopPropagation()">
+        <input id="cmd-input" type="text" placeholder="検索（セクション・銘柄・操作）…" autocomplete="off" aria-label="コマンド検索">
+        <div id="cmd-list" class="cmd-list"></div>
+        <div class="cmd-hint">↑↓ 移動　Enter 実行　Esc 閉じる</div>
+    </div>
+</div>
+
+<!-- 金額入力ヒント（フォーカス中の money 入力欄の下に表示） -->
+<div id="money-hint" class="money-hint" style="display:none" aria-hidden="true"></div>
+
 <!-- 分析レポートモーダル -->
 <div id="report-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 0 40px;" onclick="if(event.target===this)closeAssetReport()">
     <div class="report-modal-card">
@@ -1294,6 +1357,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=103"></script>
+<script src="app.js?v=104"></script>
 </body>
 </html>

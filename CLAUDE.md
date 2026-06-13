@@ -37,15 +37,15 @@
 ## ファイル構成
 | ファイル | 役割 | 行数目安 |
 |---|---|---|
-| `index.html` | UI構造・タブ・テーブル定義 | ~1,255行 |
-| `app.js` | ロジック全般・レンダリング | ~1,668行 |
-| `style.css` | スタイル | ~520行 |
+| `index.html` | UI構造・タブ・テーブル定義 | ~1,360行 |
+| `app.js` | ロジック全般・レンダリング | ~1,990行 |
+| `style.css` | スタイル | ~590行 |
 | `sw.js` | Service Worker（キャッシュ・通知） | ~45行 |
 | `manifest.json` | PWA マニフェスト | ~30行 |
 
 ## グローバル定数（app.js 先頭）
 ```js
-APP_VERSION  // バージョン文字列（例: 'v103'）。キャッシュバスターと同じ番号
+APP_VERSION  // バージョン文字列（例: 'v104'）。キャッシュバスターと同じ番号
 TAX_RATE     // 0.20315 — 源泉分離課税率（所得税 15% + 住民税 5% + 復興税 0.315%）
              // 税率を直書きせず必ずこの定数を使うこと。6箇所以上で参照
 ```
@@ -170,7 +170,16 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
   settings     → set-holdings / set-accounts / set-basic
 ```
 - 各タブ内先頭に `.dash-qnav` が子要素として配置（親のdisplay:none/blockに追従）
+- **シミュタブはセグメント切替**: pill は `data-show` 属性を持ち、`showSimSection(id)` で選んだ1セクションのみ表示（遅延レンダリング）。概要・分析タブの pill は従来通り `data-scroll`（スクロールジャンプ＋スクロール連動ハイライト）
 - セクションの表示/非表示は `D.settings.hiddenSections` で制御（`renderHiddenSectionSettings()` / `saveHiddenSections()`）
+
+### URLハッシュ同期（v104）
+- タブ・サブタブは URL ハッシュに同期される（例: `#overview` / `#record/holdings` / `#settings/basic`）
+- `_syncHash()` — `_doSwitchTab()` / `switchSubTab()` の末尾で `history.pushState`。`_navByHash` フラグ中はスキップ
+- `_applyHashNav()` — ハッシュを解析してタブ・サブタブを復元（`popstate` と初期ロードで呼ばれる）
+- `_modalHist()` — モーダル/パネルを開くとき履歴を1段積む → 戻るボタンで閉じられる（openHelp / showAssetReport / openSnapCompare / showSnapSummary / customConfirm / openCmdPalette / `_panelOpen` が呼ぶ）
+- `closeTopModal()` — 最前面のモーダル/パネルを1つ閉じて true を返す（ESC キーと `popstate` で共用）。`_anyModalOpen()` はショートカットのガード用
+- 現在のサブタブは `_curSub={rec,set}` で追跡
 
 ## 主要関数の場所（app.js）
 
@@ -179,14 +188,18 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 |---|---|
 | `renderOverview()` | 概要タブ再描画（sec-summary/schd/nisa/portfolio）＋スナップ／バックアップリマインダー表示判定 |
 | `renderAnalysis()` | 分析タブ再描画（sec-trend/gainloss/detail） |
-| `renderSimulations()` | シミュタブ再描画（sec-sim〜sec-tax の8セクション） |
+| `renderSimulations()` | シミュタブ再描画（`showSimSection(_simActive)` を呼ぶだけ） |
+| `showSimSection(id, scroll)` | シミュタブのセグメント切替。選んだ1セクションのみ表示＋`_renderSimSection(id)` で遅延レンダリング。hiddenSections を考慮 |
+| `_renderSimSection(id)` | セクションID→レンダラーのディスパッチ（sec-sim→renderScdSimTable 等） |
+| `renderScdSimTable()` | SCHD到達シミュテーブル（sim-cur/sim-eta 等。旧 renderAnalysisData から分離） |
 | `renderDashboard()` | 互換性ラッパー（renderOverview+renderAnalysis+renderSimulationsを順呼び出し） |
 | `renderDashHero(...)` | ヒーローカード＋サマリーカード描画（renderDashboard内サブ関数） |
 | `renderDashScdStrip(...)` | 対象銘柄元本ストリップ描画 |
 | `renderDashNisaSection(mo)` | NISAカード＋今年の投資計画描画 |
 | `renderPortfolio(totalInv)` | ドーナツチャート＋銘柄比率テーブル＋目標配分バー |
 | `renderAllocationBars(items)` | 目標配分テーブル（実績・目標・差分・買い増し目安額） |
-| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧、到達シミュ）。種別合計に現金を含み、凡例クリックでテーブル行連動 |
+| `renderAnalysisData()` | 詳細分析（口座別・種別ドーナツ＋テーブル、銘柄別一覧）。種別合計に現金を含み、凡例クリックでテーブル行連動。銘柄別一覧セルに `data-label`（モバイルカード表示用） |
+| `_renderHeroSpark(snaps, total)` | ヒーロー内ミニスパークライン（`#hero-spark`、直近12ヶ月＋現在値。素のcanvas描画・Chart.js不使用） |
 | `renderAssetReport()` | 資産分析レポート（口座別・種別バー比較＋インサイト12条件の自動診断）|
 | `openAssetReport()` | レポートモーダル表示（`#report-modal`）＋`renderAssetReport()` 呼び出し |
 | `closeAssetReport()` | レポートモーダル非表示 |
@@ -199,12 +212,16 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `renderIdecoSim()` | iDeCo受取シミュレーション（一時金・年金方式、退職所得控除・税額計算） |
 | `renderDrawdown()` | FIRE取崩しシミュレーション（資産枯渇年計算・折れ線チャート） |
 | `renderTaxEstimate()` | 税金概算（配当税・潜在税・NISA非課税メリット、特定口座銘柄別内訳テーブル付き） |
-| `renderTrendChart()` | 資産推移折れ線チャート（`trendPeriod` で期間フィルター） |
+| `renderTrendChart()` | 資産推移折れ線チャート（`_filteredSnaps()` で期間フィルター。メモ付き月はポイント強調＋ツールチップ `afterBody` でメモ表示。SCHD元本/目標ラインは `hidden:true` で凡例トグル） |
 | `renderGainLossChart()` | 損益推移チャート（含み損益＋損益率%右軸、`trendPeriod` を資産推移と共有） |
 | `_snapPrincipal(s)` / `_snapGain(s)` | スナップショットの投資元本／含み損益を計算（資産推移・損益推移で共用） |
+| `_filteredSnaps()` | `trendPeriod` 適用済みスナップ配列（0=全期間 / `'ytd'`=今年 / N=直近N件） |
 | `_emptyChartNote(ctx)` | スナップ0件時のチャートプレースホルダーテキスト描画 |
-| `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋資産推移・損益推移の両チャート再描画 |
-| `renderRecordTab()` | 記録タブ全体 |
+| `setTrendPeriod(months, btn)` | 期間フィルターボタン切り替え＋資産推移・損益推移の両チャート再描画（`'ytd'` も受け付ける） |
+| `renderRecordTab()` | 記録タブ全体（末尾で `_updateRecProgress()`） |
+| `_recFields()` | 進捗カウント対象の入力ID一覧（銘柄/iDeCo/銀行/カード/ポイント、サブタブ情報付き） |
+| `_updateRecProgress()` | sticky バーの入力進捗インジケーター更新（markUnsaved/clearUnsaved から呼ばれる） |
+| `jumpToNextEmpty()` | 最初の未入力欄へサブタブ切替＋スクロール＋フォーカス |
 | `renderSettings()` | 設定タブ全体 |
 | `autoFillNisa()` | NISA使用額を積立月数×月次額で自動計算して入力欄へ反映 |
 | `calcIdecoEstimatedPri()` | iDeCo累計拠出元本を自動推計（開始月×月次拠出合計） |
@@ -213,8 +230,8 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `customConfirm(msg, onOk, opts)` | ブランデッド確認ダイアログ（`#confirm-modal`）。`opts.okLabel` / `opts.okClass` / `opts.html` を指定可。ブラウザ標準 `confirm()` の代替 |
 | `renderNisaBar(prefix, used, max)` | NISA枠バー描画。`used>max` 時は `fill-red` クラス付与＋「超過 ¥xxx」表示。負数は先頭で0にクランプ |
 | `toast(msg, type, opts)` | トースト通知。`opts={actionLabel, onAction, duration}` でアクションボタン付きトースト（削除Undoに使用、デフォルト5秒） |
-| `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`、異なる場合は `destroy`＋`new Chart()` |
-| `APP_VERSION` | バージョン文字列定数（例: `'v103'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
+| `_chartRender(chart, ctx, config)` | Chart.js インプレース更新ヘルパー。ラベル数・データセット数が同じ場合は `chart.update('active')`（data/色/pointRadius/pointBackgroundColor を反映）、異なる場合は `destroy`＋`new Chart()` |
+| `APP_VERSION` | バージョン文字列定数（例: `'v104'`）。キャッシュバスターと同じ番号に保つこと。`init()` で `#app-version-badge` にセット |
 | `applyTheme(dark)` | ダークモードクラス（`.dark-mode`）を付け替え＋🌙/☀ボタンテキスト更新 |
 | `toggleTheme()` | ダークモード設定を localStorage に保存して `applyTheme()` を呼び出し |
 | `applyPrivacy(on)` | `_privacy` フラグ＋body の `.privacy-mode` クラスを切り替え |
@@ -224,8 +241,12 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `prevSnap()` | `D.snapshots` の最終エントリを返す（前月比計算・スナップ差分表示に使用） |
 | `copyPrevSnap()` | 前月スナップを当月の入力フィールドに一括コピー（確認トースト付き） |
 | `openSnapCompare()` | スナップ比較モーダル（`#snap-compare-modal`）を表示 |
-| `markUnsaved()` | `_unsaved = true` ＋未保存インジケーター表示（`.rec-unsaved` アニメーション） |
-| `clearUnsaved()` | `_unsaved = false` ＋未保存インジケーター非表示 |
+| `markUnsaved()` | `_unsaved = true` ＋未保存インジケーター表示（`.rec-unsaved` アニメーション）＋FABを未保存色に＋進捗更新 |
+| `clearUnsaved()` | `_unsaved = false` ＋未保存インジケーター非表示＋FAB色リセット＋進捗更新 |
+| `openCmdPalette()` / `closeCmdPalette()` | コマンドパレット（`#cmd-modal`、Ctrl+K / Cmd+K）の開閉 |
+| `_cmdItems()` | パレットの検索対象（ページ・セクション・操作・銘柄）を動的生成 |
+| `_cmdFilter(q)` / `_cmdRenderList()` / `_cmdRun(i)` | 絞り込み（最大10件）・リスト描画・実行 |
+| `_flashHoldingRow(name)` | 分析タブ銘柄別一覧の該当行へスクロール＋ハイライト（`.row-flash`、パレットの銘柄ジャンプ用） |
 | `requestNotifPermission()` | ブラウザ通知権限リクエスト＋Periodic Background Sync 登録 |
 | `_registerPeriodicSync()` | Service Worker Periodic Sync 登録（月末リマインダー用） |
 | `_renderNotifStatus()` | ヘッダーの通知ステータス（🔔/🔕）を更新 |
@@ -251,6 +272,8 @@ getScdHolding()  // D.holdings.find(id===scdHoldingId) || D.holdings[0]
 | `dragLeave(e)` | ドロップ視覚フィードバック除去 |
 | `drop(e)` | 配列を再並び替えして `persist()` |
 | `dragEnd(e)` | ドラッグ状態クリア |
+| `_dragCell(group, id)` | ドラッグ列セルHTML生成（⠿＋モバイル用 ▲▼ ボタン `.row-move`）。設定タブの全テーブルで使用 |
+| `moveRow(group, id, dir)` | 行を上下に移動（dir=±1）。グループは drop() と同じ（regular/ideco/bank/card/broker/point/acctype/assettype） |
 
 ### NISAカード「今年の投資計画」
 `renderDashboard()` 内で計算・描画。
@@ -280,15 +303,14 @@ delete〇〇(id)         → 削除＆persist()
 
 ### クイックナビ
 ```js
-toggleQnavSim(event)   // シミュレーションドロップダウンの開閉（外側クリックで自動閉じ）
-initQnavHighlight()    // スクロール連動ハイライト（.qnav-pill/.qnav-drop-item に qnav-active 付与）
-                       // シミュレーション系セクション表示中は #qnav-sim-btn に qnav-group-active 付与
+initQnavHighlight()    // スクロール連動ハイライト（概要・分析タブの data-scroll pill のみ対象）
 qScroll(id)            // 指定セクションIDへスムーズスクロール（offset=160px）
+showSimSection(id)     // シミュタブのセグメント切替（data-show pill。1セクションのみ表示＋遅延レンダリング）
 ```
-- ナビ構成: 概要・SCHD・NISA・ポートフォリオ ｜ 資産推移・詳細分析 ｜ シミュレーション▾（ドロップダウン6項目）
-- ドロップダウン6項目: 資産シミュ / 配当カレンダー / iDeCoシミュ / FIRE / 取崩し / 税金概算
-- ドロップダウン: `.qnav-group > .qnav-dropdown.open` パターン
-- シミュ系セクションID（`simIds`）: `sec-sim`, `sec-reinvest`, `sec-div-cal`, `sec-div-sim`, `sec-ideco-sim`, `sec-fire`, `sec-drawdown`, `sec-tax`
+- 概要タブ pill（data-scroll）: 概要 / SCHD / NISA / ポートフォリオ
+- 分析タブ pill（data-scroll）: 資産推移 / 損益推移 / 詳細分析
+- シミュタブ pill（data-show）: 資産シミュ / 再投資 / 配当カレンダー / 配当シミュ / iDeCoシミュ / FIRE / 取崩し / 税金概算（`_SIM_SECS` 配列・`_simActive` で現在地を保持）
+- 旧シミュレーションドロップダウン（`toggleQnavSim` / `.qnav-dropdown`）は v101 のページ分割以降未使用（CSS・関数は残存）
 
 ### フィルター（Excel風）
 ```js
@@ -329,8 +351,16 @@ randomAccColor()  // 口座種別カラーピッカーで未使用色をラン�
 randomAssetColor() // 銘柄種別カラーピッカーで未使用色をランダム選択
 _buildCardBankOptions(val) // カード設定パネルの引き落とし口座セレクトを生成
 _flashBtn(id)     // ボタンを一時的に緑「✓ 完了」に変える（2秒後に戻る）
-_panelOpen(id)    // 設定パネルを開く（モーダル表示＋バックドロップ有効化）
+_panelOpen(id)    // 設定パネルを開く（モーダル表示＋バックドロップ有効化＋_modalHist()＋最初の入力欄へ自動フォーカス）
 _panelClose(id)   // 設定パネルを閉じる（バックドロップ非表示）
+// --- 金額スマート入力（v104） ---
+_moneyEval(raw, base)   // 入力文字列を解析（カンマ除去・「万」×10000・先頭+/-でbaseに増減）。{v, op} か null（解析不能）
+_moneyNormalize(input)  // input.money の値をプレーン数値に正規化して dataset.base を更新（focusout で発火）
+_normalizeAllMoney()    // 全 input.money を正規化（saveSnapshot() 冒頭で呼ぶ — blur 前の値も確実に確定）
+_showMoneyHint(input) / _hideMoneyHint() // #money-hint に円換算プレビュー表示（position:fixed）
+initMoneyInputs()       // focusin/input/focusout の委譲リスナー登録（init() から）
+// 対象: 記録タブの rb-/rc-/rp-/hv-/hp-/rec-ideco-actual-pri（type="text" inputmode="decimal" class="hi money"）
+// 読み手は Number(el.value) のままでOK（正規化済みプレーン数値が入る）
 _triggerExport(blob, filename, btnId, onDone) // iOS対応エクスポート（Web Share API優先、fallbackでダウンロード。onDone は成功時のみ呼ばれる）
 _markExported()   // 'asset-last-export' を現在時刻に更新＋renderOverview()（バックアップバナー消去）
 exportSettings()  // 設定のみJSONエクスポート（accountTypeOverrides/assetTypeOverrides含む）
@@ -353,7 +383,7 @@ let chartReinvest = null;    // 再投資シミュ折れ線
 let chartDivCal = null;      // 配当カレンダー棒グラフ
 let chartDrawdown = null;    // 取崩しシミュ折れ線
 let chartGainLoss = null;    // 損益推移折れ線
-let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直近N件。資産推移・損益推移で共有）
+let trendPeriod = 0;         // 期間フィルター（0=全期間、'ytd'=今年、3/6/12=直近N件。資産推移・損益推移で共有、_filteredSnaps()で適用）
 ```
 チャートの再描画は `_chartRender(chart, ctx, config)` ヘルパーを使うこと（直接 `new Chart()` しない）。
 データ数が同じ場合はインプレース更新（`chart.update('active')`）、異なる場合のみ destroy＋再生成。
@@ -453,6 +483,15 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、3/6/12=直
 | `.fire-hint` | FIRE シミュレーションのプレースホルダーテキスト |
 | `.strip-eta-pre` | SCHD ストリップの到達予想プレラベル |
 | `.clabel` / `.cval` / `.cval-lg` / `.csub` | 詳細分析カードのラベル/値/サブテキスト |
+| `.ov-cols` / `.ov-col` | 概要タブ2カラムレイアウト（1100px以上で grid 2列、未満は `display:contents` で縦積みに透過） |
+| `.hero-spark` | ヒーロー内スパークライン canvas（150×40px、白系線） |
+| `.rec-progress` / `.rec-prog-item` / `.rec-prog-done` | 記録タブ入力進捗インジケーター（完了グループは緑） |
+| `.rec-fab` / `.rec-fab-unsaved` | スマホ用保存FAB（768px以下で表示。未保存時はオレンジ＋パルス） |
+| `.money-hint` / `#money-hint` | 金額入力の円換算ヒント（position:fixed、単一要素を使い回し） |
+| `.row-move` | 並び替え ▲▼ ボタン（drag-handle セル内、768px以下でのみ表示） |
+| `.cmd-modal` / `.cmd-card` / `#cmd-input` / `.cmd-list` / `.cmd-item` / `.cmd-sel` / `.cmd-kind` / `.cmd-hint` | コマンドパレット（Ctrl+K） |
+| `.row-flash` | 銘柄ジャンプ時の行ハイライト（2.4秒で解除） |
+| `.mtbl` / `.mtbl-rec` / `.mtbl-an` | モバイルカード型テーブル（768px以下で thead 非表示・tr を2列グリッド化・`data-label` 属性をセルラベルとして表示。`-rec`=記録タブ銘柄/iDeCo、`-an`=銘柄別一覧） |
 
 ## init() の主な初期化処理
 ```js
@@ -464,9 +503,13 @@ init()  // アプリ起動時の初期化
   // - 通知ステータス表示（_renderNotifStatus()）
   // - クイックナビを表示
   // - settings-backdrop クリックでパネルを一括閉じ
-  // - ESCキーでモーダル（snap-modal / help-modal / report-modal）またはパネル（.add-panel.open）を閉じる
-  // - initTabEvents / initRecordEvents / initSettingsEvents / initQnavHighlight 呼び出し
-  // - renderDashboard / renderRecordTab 呼び出し
+  // - keydown ハンドラ: Ctrl+K=コマンドパレット / Ctrl+S=保存 / ESC=closeTopModal() /
+  //   Tab=設定パネル内フォーカストラップ / 1〜5=タブ切替 / ?=ヘルプ（入力中・モーダル中は無効）
+  // - wheel ハンドラ: type=number フォーカス中のホイールで blur（誤入力防止）
+  // - initTabEvents / initRecordEvents / initSettingsEvents / initQnavHighlight /
+  //   initMoneyInputs / initCmdPalette 呼び出し
+  // - renderOverview / renderRecordTab 呼び出し
+  // - popstate リスナー登録＋URLハッシュからタブ復元（_applyHashNav()）
 ```
 
 ## GitHub Pages
