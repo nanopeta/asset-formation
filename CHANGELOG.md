@@ -4,6 +4,20 @@
 
 ---
 
+## v105（2026-06-13）
+
+タイポグラフィ（文字高）最適化 — フォントサイズと行間を見直し、PC・スマホ両方で読みやすさを向上。
+
+### 行間（line-height）の基盤化
+- `:root` にタイポグラフィ変数を追加（`--lh-tight:1.3` / `--lh-base:1.5` / `--lh-relaxed:1.6`）。
+- `body` に基本行間 `line-height:var(--lh-base)` を設定（従来は未指定）。折り返すテキストのみに効き、単一行の KPI・テーブルセル・バッジには影響しない。
+- `.csub` など折り返し得る密ラベルに `line-height:var(--lh-tight)` を付与。
+
+### 小さすぎる文字の拡大（独立要素のみ +1px）
+- `.bottom-nav button` 9→10px、`.div-cal-val` 9→10px（min-height 11→13px）、`.row-move button` 8→9px。
+- `.app-version-badge` / `.rec-prog-item` / `.div-cal-label` / `.nisa-lifetime-note` / `.cmd-kind` を 10→11px。
+- **据え置き（密度維持）**: `th`(11px) / `td`(13px) / `.badge` / `.spot-badge` / `.xf-btn` / `.alloc-table` / `.hero-value` / `.cval` / `.sum-val` / `.cval-lg`、およびモバイル入力欄の 16px（iOS ズーム防止）。
+
 ## v104（2026-06-13）
 
 UI/UX 大規模改善（ナビゲーション基盤・記録フロー・モバイル最適化・上級機能）。
