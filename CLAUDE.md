@@ -429,7 +429,7 @@ let trendPeriod = 0;         // 期間フィルター（0=全期間、'ytd'=今�
 --lh-relaxed:1.6;  /* 多行プローズ用（必要に応じて） */
 ```
 - フォントサイズの下限目安は 9px（`.div-cal-val` / `.row-move button`）。ラベル類は 10〜11px。テーブル `th`(11)/`td`(13)・`.badge`・KPI（`.cval`/`.sum-val`/`.hero-value`）の寸法は密度維持のため変更しないこと。
-- モバイル入力欄（`.fg input,.fg select,.hi`）の `@768px` 16px は iOS ズーム防止のため据え置く。
+- モバイル入力欄（`.fg input,.fg select,.hi`）は `@768px` で **14px**（Android/PC 最適）。iOS Safari のみ `@supports (-webkit-touch-callout: none)`（iOS 専用フック）で **16px** に上書きし、フォーカス時の自動ズームを防止する（iOS は font-size<16px でズームする）。`.rec-sticky-inner` のセレクト/月入力も同 iOS フックに含む。**この14px/16pxの出し分けは崩さないこと**（数値を下げると Android で過大、上げると iOS でズーム）。
 
 ## CSS 主要クラス
 | クラス | 用途 |

@@ -361,7 +361,17 @@
             .rec-sticky-inner{flex-wrap:wrap;}
             .hero-value{font-size:36px;}
             .an-body{overflow-x:auto;}
-            .fg input,.fg select,.hi{font-size:16px;}
+            .fg input,.fg select,.hi{font-size:14px;}
+        }
+
+        /* iOS Safari は font-size が 16px 未満の入力にフォーカスすると画面を自動ズームする。
+           その回避のため iOS のみ 16px を維持（Android/PC は上記 14px のまま）。
+           -webkit-touch-callout は iOS Safari だけが対応 → iOS 専用フックとして利用。 */
+        @supports (-webkit-touch-callout: none){
+            @media(max-width:768px){
+                .fg input,.fg select,.hi,
+                .rec-sticky-inner select,.rec-sticky-inner input[type=month]{font-size:16px;}
+            }
         }
 
         @media(max-width:480px){
