@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v104';
+const APP_VERSION='v105';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
