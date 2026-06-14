@@ -11,18 +11,31 @@
   - 最新バージョンが先頭になるよう追加すること
   - 新機能は「使い方」タブ（`id="help-pane-usage"`）の該当セクションにも追記を検討
 
-### 自動チェック（二重防止策）
-ドキュメント更新漏れを防ぐ2つのフックが設定されている。
+### 自動チェック（多重防止策）
+ドキュメント更新漏れ・キャッシュバスター漏れを防ぐ仕組みが設定されている。
 
 **① git pre-commit フック**（`scripts/pre-commit`）
 - `app.js` / `style.css` / `index.html` が変更されたのに MD ファイルが1つも変更されていない場合、コミットをブロック
 - キャッシュバスターの4箇所（APP_VERSION / CACHE / ?v=N × 2）が不一致の場合もブロック
-- `git config core.hooksPath scripts` で有効化済み（新規クローン時は再実行が必要）
+- 有効化は `git config core.hooksPath scripts`。**Claude Code セッション開始時に SessionStart フック（`.claude/settings.json`）が自動実行する**ため、新規クローン（web/cloud セッション）でも自動で有効になる。手動 CLI で使う場合のみ一度実行が必要。
 - スキップする場合: `git commit --no-verify`（意図的な場合のみ）
 
 **② Claude Code PostToolUse フック**（`.claude/hooks/doc-reminder.sh`）
 - Claude が `Edit` / `Write` ツールで `app.js` / `style.css` / `index.html` を変更した直後に、ドキュメント更新チェックリストをターミナルに表示
 - `.claude/settings.json` で設定済み（`PostToolUse` → `Edit` / `Write`）
+
+**③ Claude Code SessionStart フック**（`.claude/settings.json`）
+- セッション開始時に `git config core.hooksPath scripts` を実行し、上記 pre-commit ガードを自動有効化
+
+### リリース支援ツール
+バージョンバンプと二重 changelog 追記の手作業を減らすためのツール。
+
+**`scripts/bump-version.sh <N>`** — キャッシュバスター4箇所（app.js / sw.js / index.html ×2）を一括でバンプ。手で個別に書き換えず必ずこれを使う。
+**`scripts/check-docs.sh`** — いつでも実行できる整合チェッカー。4箇所のバージョン一致＋現行 `vN` が CHANGELOG.md と index.html(#help-pane-changelog) の両方にあるかを検証（pre-commit のコミット時チェックを先回りで確認する用途）。
+**`/release` スキル**（`.claude/skills/release/SKILL.md`）— 上記2スクリプトを使い、バンプ → CHANGELOG 追記 → ヘルプモーダル追記 → README/TODO/CLAUDE 更新 → 整合チェック → コミットまでを順に実行するリリース工程スキル。「リリースして」「vN を出して」で起動。
+
+### 開発効率化のための permissions（`.claude/settings.json`）
+読み取り専用コマンド（`git status` / `git diff` / `git log` / `git show` / `git branch`）と上記2スクリプトを allowlist に登録し、承認プロンプトを削減。破壊的操作（push/reset/commit）は意図的に含めていない。
 
 ## PR マージルール（必須）
 - PR 作成後は確認なしで即マージすること（「マージしますか？」と聞かない）

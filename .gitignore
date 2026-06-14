@@ -10,6 +10,7 @@ Thumbs.db
 .claude/*
 !.claude/settings.json
 !.claude/hooks
+!.claude/skills
 
 # バックアップ
 *.bak
