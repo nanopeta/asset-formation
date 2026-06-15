@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=112">
+    <link rel="stylesheet" href="style.css?v=113">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -250,16 +250,9 @@
                         <button class="tpb an-vbtn" onclick="switchAnView('type',this)">種別</button>
                     </div>
                 </div>
-                <div id="an-view-account">
-                    <div class="breakdown-chart"><canvas id="by-account-chart"></canvas></div>
-                    <table id="tbl-by-account"><thead><tr><th>口座</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
-                    <tbody id="an-by-account"></tbody></table>
-                </div>
-                <div id="an-view-type" style="display:none">
-                    <div class="breakdown-chart"><canvas id="by-type-chart"></canvas></div>
-                    <table id="tbl-by-type"><thead><tr><th>種別</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
-                    <tbody id="an-by-type"></tbody></table>
-                </div>
+                <div class="breakdown-chart"><canvas id="an-breakdown-chart"></canvas></div>
+                <table><thead id="an-breakdown-head"><tr><th>口座</th><th style="text-align:right">評価額</th><th style="text-align:right">含み損益</th><th style="text-align:right">損益率</th><th style="text-align:right">比率</th></tr></thead>
+                <tbody id="an-breakdown-body"></tbody></table>
             </div>
             <div class="tbl-wrap">
                 <div class="tbl-head">銘柄別一覧</div>
@@ -1093,6 +1086,12 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v113 <span class="changelog-date">2026-06-15</span></div>
+                <ul class="changelog-items">
+                    <li>分析タブ・ポートフォリオのタブ切り替え時にドーナツグラフの位置・凡例・列幅が変わらないよう修正 — 単一キャンバス＋テーブルをインプレース更新する方式に変更</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v112 <span class="changelog-date">2026-06-15</span></div>
                 <ul class="changelog-items">
                     <li>分析タブの口座別合計・種別合計を「口座別 / 種別」タブ切り替えに統合 — 2列並列表示から1カードのタブ切替に変更</li>
@@ -1419,6 +1418,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=112"></script>
+<script src="app.js?v=113"></script>
 </body>
 </html>
