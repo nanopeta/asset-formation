@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v109';
+const APP_VERSION='v110';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -307,7 +307,7 @@ function renderDashboard(){renderOverview();renderAnalysis();renderSimulations()
 
 function renderPortfolio(totalInv){
     const c=D.current;
-    const prev=prevSnap();
+    const prev=prevSnap(formatMonth(new Date()));
     const items=[
         ...D.holdings.map(h=>{const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;const val=holdingJpy(h).value;const prevVal=(prev?.holdingValues?.[h.id]?.value||0)*mul;return{id:h.id,name:h.name,account:h.account,assetType:h.assetType,value:val,prevVal,color:getAccounts()[h.account]?.color||'#9ca3af'};}),
         ...D.idecoHoldings.map(h=>({id:h.id,name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,prevVal:prev?.idecoValues?.[h.id]?.value||0,color:IDECO_COLOR})),
