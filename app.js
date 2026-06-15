@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v108';
+const APP_VERSION='v109';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -151,7 +151,7 @@ function _filteredSnaps(){
 function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps){
     el('db-total').textContent=fmt(total);
     el('db-total-gain').innerHTML=gainHtml(inv+ideco,totalPri,'14px');
-    if(snaps.length>=1){const diff=total-snaps[snaps.length-1].total;const mEl=el('db-month-diff');mEl.textContent=(diff>=0?'+':'')+fmt(diff);mEl.style.color=diff>=0?'rgba(255,255,255,.95)':'#fca5a5';}
+    {const curM=formatMonth(new Date());const ps=snaps.filter(s=>s.month<curM).pop();const mEl=el('db-month-diff');if(ps){const diff=total-ps.total;mEl.textContent=(diff>=0?'+':'')+fmt(diff);mEl.style.color=diff>=0?'rgba(255,255,255,.95)':'#fca5a5';}else{mEl.textContent='--';}}
     el('db-inv').textContent=fmt(inv);el('db-ideco').textContent=fmt(ideco);el('db-cash').textContent=fmt(cash);
     el('db-inv-gain').innerHTML=gainHtml(inv,invPri);el('db-ideco-gain').innerHTML=gainHtml(ideco,effectiveIdecoPri);
     const apEl=el('db-ideco-actual-pri');if(apEl)apEl.textContent=idecoActualPri>0?`本来の元本: ${fmt(idecoActualPri)}`:idecoEstPri>0?`推計元本: ${fmt(idecoEstPri)}`:'';
