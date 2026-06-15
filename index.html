@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=106">
+    <link rel="stylesheet" href="style.css?v=107">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -1080,6 +1080,12 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v107 <span class="changelog-date">2026-06-15</span></div>
+                <ul class="changelog-items">
+                    <li>楽天証券CSVインポート修正 — $1000以上のUSD銘柄（MU等）をインポートすると価格のカンマで誤解析され評価額が大幅に過小表示されていた問題を修正</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v106 <span class="changelog-date">2026-06-13</span></div>
                 <ul class="changelog-items">
                     <li>スマホの入力欄・プルダウンの文字が周囲より大きすぎた問題を修正 — Android では 14px に縮小して周囲のテキストと揃え、iPhone では従来どおり 16px を維持（フォーカス時の自動ズーム防止）</li>
@@ -1370,6 +1376,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=106"></script>
+<script src="app.js?v=107"></script>
 </body>
 </html>
