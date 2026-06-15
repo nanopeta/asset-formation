@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v107';
+const APP_VERSION='v108';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -805,7 +805,7 @@ function autoFillNisa(){
     });
     el('rec-seichou').value=seichou;
     el('rec-tsumitate').value=tsumitate;
-    const prev=prevSnap();
+    const prev=prevSnap(el('rec-month').value);
     const prevLifetime=prev?prev.nisa?.lifetimeUsed||0:0;
     el('rec-lifetime').value=prevLifetime+(seichou+tsumitate);
     const prevSL=prev?prev.nisa?.seichouLifetimeUsed||0:0;
@@ -896,26 +896,26 @@ function initMoneyInputs(){
 }
 
 function renderBankInputs(){
-    const c=D.current,prev=prevSnap();
+    const c=D.current,prev=prevSnap(el('rec-month').value);
     const grid=el('rec-banks-grid');grid.className=`g${Math.min(4,D.bankAccounts.length)}`;
     grid.innerHTML=D.bankAccounts.map(b=>{const pv=prev?.bankValues?.[b.id];const ph=pv?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${b.name}${b.note?`（${b.note}）`:''} (円)</label><input type="text" inputmode="decimal" class="hi money" id="rb-${b.id}" value="${c.bankValues[b.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderCardInputs(){
-    const c=D.current,prev=prevSnap();el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
+    const c=D.current,prev=prevSnap(el('rec-month').value);el('rec-cards-section').style.display=D.creditCards.length>0?'':'none';
     const grid=el('rec-cards-grid');grid.className=`g${Math.min(4,D.creditCards.length)}`;
     grid.innerHTML=D.creditCards.map(cd=>{const pv=prev?.cardValues?.[cd.id];const ph=pv?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${cd.name}${cd.note?`（${cd.note}）`:''} (円)</label><input type="text" inputmode="decimal" class="hi money" id="rc-${cd.id}" value="${c.cardValues[cd.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
 }
 function renderPointInputs(){
-    const c=D.current,prev=prevSnap();
+    const c=D.current,prev=prevSnap(el('rec-month').value);
     const sec=el('rec-points-section');if(sec)sec.style.display=(D.pointAccounts||[]).length>0?'':'none';
     const grid=el('rec-points-grid');if(!grid)return;
     grid.className=`g${Math.min(4,(D.pointAccounts||[]).length||1)}`;
     grid.innerHTML=(D.pointAccounts||[]).map(p=>{const pv=prev?.pointValues?.[p.id];const ph=pv!==undefined?`前月: ${_privacy?'•••':Math.round(pv).toLocaleString('ja-JP')}`:'0';return`<div class="fg"><label>${p.name}${p.note?`（${p.note}）`:''} (pt)</label><input type="text" inputmode="decimal" class="hi money" id="rp-${p.id}" value="${c.pointValues?.[p.id]||''}" placeholder="${ph}" oninput="markUnsaved()"></div>`;}).join('');
 }
 
-function prevSnap(){return D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month)).pop();}
+function prevSnap(before){const sorted=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));return(before?sorted.filter(s=>s.month<before):sorted).pop()||null;}
 function copyPrevSnap(){
-    const prev=prevSnap();
+    const prev=prevSnap(el('rec-month').value);
     if(!prev){toast('コピー元となる前月データがありません','error');return;}
     D.bankAccounts.forEach(b=>{const e=el(`rb-${b.id}`);if(e)e.value=prev.bankValues?.[b.id]||'';});
     D.creditCards.forEach(cd=>{const e=el(`rc-${cd.id}`);if(e)e.value=prev.cardValues?.[cd.id]||'';});
@@ -946,8 +946,8 @@ function holdingRow(h,hv,prevHv,showAccount){
         <td class="itd" data-label="元本（${unit}）"><input class="hi money" type="text" inputmode="decimal" id="hp-${h.id}" value="${hv?.principal||''}" placeholder="0" oninput="markUnsaved()"><span style="font-size:10px;color:var(--muted);margin-left:2px;">${unit}</span></td>
         <td data-label="前回比" style="text-align:right">${diffHtml}</td></tr>`;
 }
-function renderHoldingInputs(){const c=D.current,prev=prevSnap();el('rec-holdings-body').innerHTML=D.holdings.length===0?'<tr><td colspan="7" class="empty">銘柄が登録されていません</td></tr>':D.holdings.map(h=>holdingRow(h,c.holdingValues[h.id],prev?.holdingValues?.[h.id],true)).join('');}
-function renderIdecoInputs(){const c=D.current,prev=prevSnap();el('rec-ideco-body').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">iDeCo銘柄が登録されていません</td></tr>':D.idecoHoldings.map(h=>holdingRow(h,c.idecoValues[h.id],prev?.idecoValues?.[h.id],false)).join('');const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=c.idecoActualPrincipal||'';}
+function renderHoldingInputs(){const c=D.current,prev=prevSnap(el('rec-month').value);el('rec-holdings-body').innerHTML=D.holdings.length===0?'<tr><td colspan="7" class="empty">銘柄が登録されていません</td></tr>':D.holdings.map(h=>holdingRow(h,c.holdingValues[h.id],prev?.holdingValues?.[h.id],true)).join('');}
+function renderIdecoInputs(){const c=D.current,prev=prevSnap(el('rec-month').value);el('rec-ideco-body').innerHTML=D.idecoHoldings.length===0?'<tr><td colspan="6" class="empty">iDeCo銘柄が登録されていません</td></tr>':D.idecoHoldings.map(h=>holdingRow(h,c.idecoValues[h.id],prev?.idecoValues?.[h.id],false)).join('');const apEl=el('rec-ideco-actual-pri');if(apEl)apEl.value=c.idecoActualPrincipal||'';}
 
 function saveSnapshot(){
     const month=el('rec-month').value;if(!month){toast('記録月を選択してください','error');return;}
