@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v111';
+const APP_VERSION='v112';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -136,6 +136,7 @@ function renderNisaBar(prefix,used,max){used=Math.max(0,used||0);const p=pct(use
 let chartPortfolio=null;
 let byAccChart=null,byTypeChart=null;
 let _portView='holding';
+let _anView='account';
 let trendPeriod=0;
 // データ件数が同じなら update()、変わったら destroy→recreate
 function _chartRender(chart,ctx,config){const nd=config.data;if(chart&&chart.data.labels.length===nd.labels.length&&chart.data.datasets.length===nd.datasets.length){chart.data.labels=nd.labels;nd.datasets.forEach((ds,i)=>{chart.data.datasets[i].data=ds.data;if(ds.backgroundColor!==undefined)chart.data.datasets[i].backgroundColor=ds.backgroundColor;if(ds.borderColor!==undefined)chart.data.datasets[i].borderColor=ds.borderColor;if(ds.pointRadius!==undefined)chart.data.datasets[i].pointRadius=ds.pointRadius;if(ds.pointBackgroundColor!==undefined)chart.data.datasets[i].pointBackgroundColor=ds.pointBackgroundColor;});chart.update('active');return chart;}if(chart)chart.destroy();return new Chart(ctx,config);}
@@ -306,6 +307,7 @@ function renderSimulations(){
 }
 function renderDashboard(){renderOverview();renderAnalysis();renderSimulations();}
 
+function switchAnView(v,btn){_anView=v;document.querySelectorAll('.an-vbtn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');el('an-view-account').style.display=v==='account'?'':'none';el('an-view-type').style.display=v==='type'?'':'none';requestAnimationFrame(()=>{if(v==='account'&&byAccChart)byAccChart.resize();else if(v==='type'&&byTypeChart)byTypeChart.resize();});}
 function switchPortView(v,btn){_portView=v;document.querySelectorAll('.port-hdr .tpb').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');const{inv,ideco}=calcTotals();renderPortfolio(inv+ideco);}
 function renderPortfolio(totalInv){
     const c=D.current;
