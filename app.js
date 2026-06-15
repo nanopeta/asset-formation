@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v110';
+const APP_VERSION='v111';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -135,6 +135,7 @@ function renderNisaBar(prefix,used,max){used=Math.max(0,used||0);const p=pct(use
 // ===== ダッシュボード =====
 let chartPortfolio=null;
 let byAccChart=null,byTypeChart=null;
+let _portView='holding';
 let trendPeriod=0;
 // データ件数が同じなら update()、変わったら destroy→recreate
 function _chartRender(chart,ctx,config){const nd=config.data;if(chart&&chart.data.labels.length===nd.labels.length&&chart.data.datasets.length===nd.datasets.length){chart.data.labels=nd.labels;nd.datasets.forEach((ds,i)=>{chart.data.datasets[i].data=ds.data;if(ds.backgroundColor!==undefined)chart.data.datasets[i].backgroundColor=ds.backgroundColor;if(ds.borderColor!==undefined)chart.data.datasets[i].borderColor=ds.borderColor;if(ds.pointRadius!==undefined)chart.data.datasets[i].pointRadius=ds.pointRadius;if(ds.pointBackgroundColor!==undefined)chart.data.datasets[i].pointBackgroundColor=ds.pointBackgroundColor;});chart.update('active');return chart;}if(chart)chart.destroy();return new Chart(ctx,config);}
@@ -305,24 +306,36 @@ function renderSimulations(){
 }
 function renderDashboard(){renderOverview();renderAnalysis();renderSimulations();}
 
+function switchPortView(v,btn){_portView=v;document.querySelectorAll('.port-hdr .tpb').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');const{inv,ideco}=calcTotals();renderPortfolio(inv+ideco);}
 function renderPortfolio(totalInv){
     const c=D.current;
+    const accs=getAccounts();const ats=getAssetTypes();
     const prev=prevSnap(formatMonth(new Date()));
     const items=[
-        ...D.holdings.map(h=>{const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;const val=holdingJpy(h).value;const prevVal=(prev?.holdingValues?.[h.id]?.value||0)*mul;return{id:h.id,name:h.name,account:h.account,assetType:h.assetType,value:val,prevVal,color:getAccounts()[h.account]?.color||'#9ca3af'};}),
-        ...D.idecoHoldings.map(h=>({id:h.id,name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,prevVal:prev?.idecoValues?.[h.id]?.value||0,color:IDECO_COLOR})),
+        ...D.holdings.map(h=>{const mul=h.currency==='usd'?(D.settings.usdJpy||150):1;const val=holdingJpy(h).value;const prevVal=(prev?.holdingValues?.[h.id]?.value||0)*mul;return{id:h.id,name:h.name,account:h.account,assetType:h.assetType,value:val,prevVal,accColor:accs[h.account]?.color||'#9ca3af',typeColor:ats[h.assetType]?.color||'#9ca3af'};}),
+        ...D.idecoHoldings.map(h=>({id:h.id,name:h.name,account:'ideco',assetType:h.assetType,value:c.idecoValues[h.id]?.value||0,prevVal:prev?.idecoValues?.[h.id]?.value||0,accColor:IDECO_COLOR,typeColor:ats[h.assetType]?.color||IDECO_COLOR})),
     ].filter(i=>i.value>0);
-    const tbody=el('db-ptable');
+    const tbody=el('db-ptable');const thead=el('db-pthead');
+    const _diffHtml=diff=>diff!=null?`<span class="${diff>=0?'positive':'negative'}" style="font-size:11px;">${diff>=0?'+':''}${fmt(diff)}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';
+    const _doughnut=(labels,data,colors)=>_chartRender(chartPortfolio,el('portfolio-chart').getContext('2d'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)}  (${((c.raw/totalInv)*100).toFixed(1)}%)`}}}}});
     if(!items.length){tbody.innerHTML='<tr><td colspan="4" class="empty">記録タブからデータを入力してください</td></tr>';if(chartPortfolio){chartPortfolio.destroy();chartPortfolio=null;}renderAllocationBars([]);return;}
-    tbody.innerHTML=items.map(i=>{
-        const r=totalInv>0?((i.value/totalInv)*100).toFixed(1):'0.0';
-        const accLabel=i.account==='ideco'?'<span class="badge b-ideco">iDeCo</span>':acBadge(i.account)+'</span>';
-        const diff=i.prevVal>0?i.value-i.prevVal:null;
-        const diffHtml=diff!==null?`<span class="${diff>=0?'positive':'negative'}" style="font-size:11px;">${diff>=0?'+':''}${fmt(diff)}</span>`:'<span style="color:var(--muted);font-size:11px;">--</span>';
-        return`<tr><td><div class="td-name"><span class="dot" style="background:${i.color}"></span>${i.name}</div></td><td>${accLabel}</td><td style="text-align:right">${diffHtml}</td><td style="text-align:right">${r}%</td></tr>`;
-    }).join('');
-    const ctx=el('portfolio-chart').getContext('2d');
-    chartPortfolio=_chartRender(chartPortfolio,ctx,{type:'doughnut',data:{labels:items.map(i=>i.name),datasets:[{data:items.map(i=>i.value),backgroundColor:items.map(i=>i.color),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)}  (${((c.raw/totalInv)*100).toFixed(1)}%)`}}}}});
+    if(_portView==='holding'){
+        thead.innerHTML='<tr><th>銘柄名</th><th>口座</th><th style="text-align:right">前月比</th><th style="text-align:right">比率</th></tr>';
+        tbody.innerHTML=items.map(i=>{const r=totalInv>0?((i.value/totalInv)*100).toFixed(1):'0.0';const accLabel=i.account==='ideco'?'<span class="badge b-ideco">iDeCo</span>':acBadge(i.account)+'</span>';const diff=i.prevVal>0?i.value-i.prevVal:null;return`<tr><td><div class="td-name"><span class="dot" style="background:${i.accColor}"></span>${i.name}</div></td><td>${accLabel}</td><td style="text-align:right">${_diffHtml(diff)}</td><td style="text-align:right">${r}%</td></tr>`;}).join('');
+        chartPortfolio=_doughnut(items.map(i=>i.name),items.map(i=>i.value),items.map(i=>i.accColor));
+    } else if(_portView==='account'){
+        const grp={};items.forEach(i=>{if(!grp[i.account])grp[i.account]={val:0,prev:0,color:i.accColor};grp[i.account].val+=i.value;grp[i.account].prev+=i.prevVal;});
+        const rows=Object.entries(grp);
+        thead.innerHTML='<tr><th>口座</th><th style="text-align:right">前月比</th><th style="text-align:right">比率</th></tr>';
+        tbody.innerHTML=rows.map(([k,d])=>{const r=totalInv>0?((d.val/totalInv)*100).toFixed(1):'0.0';const badge=k==='ideco'?'<span class="badge b-ideco">iDeCo</span>':acBadge(k)+'</span>';return`<tr><td><div class="td-name"><span class="dot" style="background:${d.color}"></span>${badge}</div></td><td style="text-align:right">${_diffHtml(d.prev>0?d.val-d.prev:null)}</td><td style="text-align:right">${r}%</td></tr>`;}).join('');
+        chartPortfolio=_doughnut(rows.map(([k])=>accs[k]?.label||k),rows.map(([,d])=>d.val),rows.map(([,d])=>d.color));
+    } else {
+        const grp={};items.forEach(i=>{if(!grp[i.assetType])grp[i.assetType]={val:0,prev:0,color:i.typeColor};grp[i.assetType].val+=i.value;grp[i.assetType].prev+=i.prevVal;});
+        const rows=Object.entries(grp);
+        thead.innerHTML='<tr><th>種別</th><th style="text-align:right">前月比</th><th style="text-align:right">比率</th></tr>';
+        tbody.innerHTML=rows.map(([k,d])=>{const r=totalInv>0?((d.val/totalInv)*100).toFixed(1):'0.0';return`<tr><td><div class="td-name"><span class="dot" style="background:${d.color}"></span>${atBadge(k)}</div></td><td style="text-align:right">${_diffHtml(d.prev>0?d.val-d.prev:null)}</td><td style="text-align:right">${r}%</td></tr>`;}).join('');
+        chartPortfolio=_doughnut(rows.map(([k])=>ats[k]?.label||k),rows.map(([,d])=>d.val),rows.map(([,d])=>d.color));
+    }
     renderAllocationBars(items);
 }
 
