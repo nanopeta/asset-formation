@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=108">
+    <link rel="stylesheet" href="style.css?v=109">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -1080,6 +1080,12 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v109 <span class="changelog-date">2026-06-15</span></div>
+                <ul class="changelog-items">
+                    <li>ダッシュボード「先月比」が今月の保存済みスナップと比較していた問題を修正 — 今月より前の最新スナップと正しく比較するよう変更</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v108 <span class="changelog-date">2026-06-15</span></div>
                 <ul class="changelog-items">
                     <li>記録タブの「前回比」・「前月」が同月内の前回保存と比較していた問題を修正 — 選択中の記録月より前の月のスナップと正しく比較するよう変更</li>
@@ -1382,6 +1388,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=108"></script>
+<script src="app.js?v=109"></script>
 </body>
 </html>
