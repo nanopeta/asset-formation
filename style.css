@@ -599,5 +599,3 @@
     .btn,.qnav-pill,.qnav-group,.snap-reminder-btn{display:none!important;}
     main{padding:0;margin-left:0!important;}
 }
-.scd-checks{display:flex;flex-direction:column;gap:4px;min-height:24px;}
-.scd-check-label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;line-height:var(--lh-tight);}

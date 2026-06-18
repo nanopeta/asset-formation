@@ -1,4 +1,4 @@
-const CACHE = 'asset-dashboard-v115';
+const CACHE = 'asset-dashboard-v116';
 const ASSETS = ['./index.html', './app.js', './style.css', './icon-192.svg', './icon-512.svg',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'];
 
