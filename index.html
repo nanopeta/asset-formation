@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=116">
+    <link rel="stylesheet" href="style.css?v=117">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -788,7 +788,7 @@
         <div class="card" style="max-width:480px;margin-bottom:20px;">
             <div class="fi">
                 <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000" min="0"></div>
-                <div class="fg"><label>SCHD 対象銘柄</label><select id="s-scd-holding"></select></div>
+                <div class="fg"><label>SCHD 対象銘柄 <span style="font-size:10px;color:var(--muted)">(複数選択可)</span></label><select id="s-scd-holding" multiple class="scd-multi"></select></div>
                 <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0" min="0"></div>
                 <div class="fg"><label>iDeCo 開始月</label><input type="month" id="s-ideco-start"></div>
                 <div class="fg"><label>USD/JPY レート</label><input type="number" id="s-usd-jpy" placeholder="150" step="0.1"></div>
@@ -1085,6 +1085,12 @@
 
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v117 <span class="changelog-date">2026-06-16</span></div>
+                <ul class="changelog-items">
+                    <li>SCHD対象銘柄を複数選択に対応 — 設定 &gt; 基本設定でCtrl/Cmdクリックにより複数銘柄を選択でき、合算値を各画面に反映</li>
+                </ul>
+            </div>
             <div class="changelog-entry">
                 <div class="changelog-ver">v116 <span class="changelog-date">2026-06-16</span></div>
                 <ul class="changelog-items">
@@ -1436,6 +1442,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=116"></script>
+<script src="app.js?v=117"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v116';
+const APP_VERSION='v117';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -20,6 +20,7 @@ function getAccounts(){const r={...BUILT_IN_ACCOUNTS};Object.entries(D.accountTy
 function getAssetTypes(){const r={...BUILT_IN_ASSET_TYPES};Object.entries(D.assetTypeOverrides||{}).forEach(([id,v])=>{if(r[id])r[id]={...r[id],...v};});(D.customAssetTypes||[]).forEach(t=>{r[t.id]={label:t.label,badge:t.badge||'b-gray',color:t.color||'#9ca3af'};});return r;}
 
 function getScdHolding(){const id=D.settings.scdHoldingId;return(id&&D.holdings.find(h=>h.id===id))||D.holdings[0];}
+function getScdHoldings(){const ids=D.settings.scdHoldingIds||[];const hs=D.holdings.filter(h=>ids.includes(h.id));return hs.length?hs:(getScdHolding()?[getScdHolding()]:[]);}
 
 function makeDefault(){
     return {
@@ -215,12 +216,12 @@ function scdSpotAdvice(accountType){
     }
     return{type,msg};
 }
-function renderDashScdStrip(scdH,scdJpy,target){
+function renderDashScdStrip(scdHs,scdJpy,target){
     const principal=scdJpy.principal,p=pct(principal,target);
     el('ss-val').textContent=fmt(principal);el('ss-meta').textContent=`/ ${fmt(target)}`;el('ss-pct').textContent=p.toFixed(1)+'%';el('ss-rem').textContent=`残り ${fmt(Math.max(0,target-principal))}`;el('ss-bar').style.width=p+'%';
-    if(scdH){const rate=(scdH.monthlyAmount||0)+spotTotal(scdH)/12,rem=target-principal;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('ss-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月（${fmtMonths(months)}）`;}else el('ss-eta').textContent=rem<=0?'達成済み':'--';}
+    if(scdHs.length){const rate=scdHs.reduce((s,h)=>s+(h.monthlyAmount||0)+spotTotal(h)/12,0),rem=target-principal;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('ss-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月（${fmtMonths(months)}）`;}else el('ss-eta').textContent=rem<=0?'達成済み':'--';}
     const advEl=el('ss-spot-advice');
-    if(advEl){const adv=scdSpotAdvice(scdH?scdH.account:'');advEl.className=`spot-advice spot-advice-${adv.type}`;advEl.textContent=adv.msg;}
+    if(advEl){const adv=scdSpotAdvice(scdHs[0]?.account||'');advEl.className=`spot-advice spot-advice-${adv.type}`;advEl.textContent=adv.msg;}
 }
 function renderDashNisaSection(mo){
     const now=new Date();
@@ -264,8 +265,9 @@ function renderOverview(){
     const totalPri=invPri+effectiveIdecoPri;
     const snaps=D.snapshots.slice().sort((a,b)=>a.month.localeCompare(b.month));
     renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps);
-    const scdH=getScdHolding();
-    renderDashScdStrip(scdH,scdH?holdingJpy(scdH):{value:0,principal:0},D.settings.scdTarget||10000000);
+    const scdHs=getScdHoldings();
+    const scdJpy=scdHs.reduce((acc,h)=>{const j=holdingJpy(h);return{value:acc.value+j.value,principal:acc.principal+j.principal};},{value:0,principal:0});
+    renderDashScdStrip(scdHs,scdJpy,D.settings.scdTarget||10000000);
     renderDashNisaSection(new Date().getMonth()+1);
     renderPortfolio(inv+ideco);
     updateTs();
@@ -396,12 +398,14 @@ function renderAllocationBars(items){
 }
 
 function renderScdSimTable(){
-    const scdH=getScdHolding();
-    const scdAnalJpy=scdH?holdingJpy(scdH):{value:0,principal:0};
+    const scdHs=getScdHoldings();
+    const scdAnalJpy=scdHs.reduce((acc,h)=>{const j=holdingJpy(h);return{value:acc.value+j.value,principal:acc.principal+j.principal};},{value:0,principal:0});
     const target=D.settings.scdTarget||10000000;
-    el('sim-cur').textContent=fmt(scdAnalJpy.principal);el('sim-m').textContent=scdH?fmt(scdH.monthlyAmount)+'/月':'--';el('sim-sp').textContent=scdH?fmt(spotTotal(scdH))+'/年':'--';
+    const totalMonthly=scdHs.reduce((s,h)=>s+(h.monthlyAmount||0),0);
+    const totalSpot=scdHs.reduce((s,h)=>s+spotTotal(h),0);
+    el('sim-cur').textContent=fmt(scdAnalJpy.principal);el('sim-m').textContent=scdHs.length?fmt(totalMonthly)+'/月':'--';el('sim-sp').textContent=scdHs.length?fmt(totalSpot)+'/年':'--';
     const rem=Math.max(0,target-scdAnalJpy.principal);el('sim-rem').textContent=fmt(rem);
-    if(scdH){const rate=(scdH.monthlyAmount||0)+spotTotal(scdH)/12;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('sim-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月`;el('sim-months').textContent=fmtMonths(months);}else{el('sim-eta').textContent=rem<=0?'達成済み':'--';el('sim-months').textContent='--';}}
+    if(scdHs.length){const rate=totalMonthly+totalSpot/12;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('sim-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月`;el('sim-months').textContent=fmtMonths(months);}else{el('sim-eta').textContent=rem<=0?'達成済み':'--';el('sim-months').textContent='--';}}
 }
 function renderAnalysisData(){
     const c=D.current;
@@ -797,7 +801,7 @@ function renderTrendChart(){
     if(!snaps.length){if(chartTrend){chartTrend.destroy();chartTrend=null;}_emptyChartNote(ctx);return;}
     const principalData=snaps.map(_snapPrincipal);
     const gainData=snaps.map(_snapGain);
-    const scdH=getScdHolding();
+    const scdHs=getScdHoldings();
     const scdTarget=D.settings.scdTarget||0;
     const _tooltipOrder=['現金','投資','iDeCo','投資元本','含み損益','SCHD元本','SCHD目標'];
     // メモ付きスナップはポイントを強調表示（ツールチップにメモを表示）
@@ -807,7 +811,7 @@ function renderTrendChart(){
         {label:'現金',     data:snaps.map(s=>s.cash),          borderColor:'#8ab4c8',backgroundColor:'rgba(138,180,200,.18)',fill:true, tension:.3,pointRadius:snaps.map(s=>s.note?5:3),pointBackgroundColor:snaps.map(s=>s.note?'#c9915a':'#8ab4c8'),stack:'assets'},
         {label:'投資元本', data:principalData,                  borderColor:'#c9915a',borderDash:[6,3],fill:false,tension:.3,pointRadius:3,borderWidth:2,stack:'pri'},
         {label:'含み損益', data:gainData,                       borderColor:'#5fad9b',borderDash:[3,2],fill:false,tension:.3,pointRadius:3,borderWidth:2,stack:'gain'},
-        {label:'SCHD元本', data:snaps.map(s=>scdH?(s.holdingValues?.[scdH.id]?.principal||0):0),borderColor:'#9b8fc4',borderDash:[2,2],fill:false,tension:.3,pointRadius:0,borderWidth:1.5,hidden:true,stack:'scd'},
+        {label:'SCHD元本', data:snaps.map(s=>scdHs.reduce((sum,h)=>sum+(s.holdingValues?.[h.id]?.principal||0),0)),borderColor:'#9b8fc4',borderDash:[2,2],fill:false,tension:.3,pointRadius:0,borderWidth:1.5,hidden:true,stack:'scd'},
         {label:'SCHD目標', data:snaps.map(()=>scdTarget),       borderColor:'#7a94a6',borderDash:[8,4],fill:false,tension:0,pointRadius:0,borderWidth:1,hidden:true,stack:'tgt'},
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:11}},tooltip:{itemSort:(a,b)=>_tooltipOrder.indexOf(a.dataset.label)-_tooltipOrder.indexOf(b.dataset.label),callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.parsed.y),afterBody:items=>{const m=items[0]?.label;const s=D.snapshots.find(x=>x.month===m);return s&&s.note?['','📝 '+s.note]:[];}}}},scales:{y:{stacked:true,ticks:{callback:fmtMan}}}}});
 }
@@ -1031,7 +1035,7 @@ function openSnapCompare(month){
     const b=D.snapshots.find(s=>s.month===month);
     _compareBase=null;if(!a||!b){renderHistoryTable();return;}
     const [older,newer]=a.month<b.month?[a,b]:[b,a];
-    const scdH=getScdHolding();
+    const scdHs=getScdHoldings();
     const diffFmt=(v,base)=>{const d=v-base;return`<span class="${d>=0?'positive':'negative'}">${d>=0?'+':''}${fmt(d)}</span>`;};
     const rows=[
         ['総資産',fmt(older.total),fmt(newer.total),diffFmt(newer.total,older.total)],
@@ -1039,7 +1043,7 @@ function openSnapCompare(month){
         ['iDeCo',fmt(older.idecoTotal||0),fmt(newer.idecoTotal||0),diffFmt(newer.idecoTotal||0,older.idecoTotal||0)],
         ['現金',fmt(older.cash),fmt(newer.cash),diffFmt(newer.cash,older.cash)],
     ];
-    if(scdH){rows.push(['SCHD元本',fmt(older.holdingValues?.[scdH.id]?.principal||0),fmt(newer.holdingValues?.[scdH.id]?.principal||0),diffFmt(newer.holdingValues?.[scdH.id]?.principal||0,older.holdingValues?.[scdH.id]?.principal||0)]);}
+    if(scdHs.length){const getP=s=>scdHs.reduce((sum,h)=>sum+(s.holdingValues?.[h.id]?.principal||0),0);rows.push(['SCHD元本',fmt(getP(older)),fmt(getP(newer)),diffFmt(getP(newer),getP(older))]);}
     const modal=el('snap-compare-modal');
     el('snap-compare-title').textContent=`${older.month} → ${newer.month} 比較`;
     el('snap-compare-body').innerHTML=`<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px 4px;border-bottom:1px solid var(--border)">項目</th><th style="text-align:right;padding:6px 4px;border-bottom:1px solid var(--border)">${older.month}</th><th style="text-align:right;padding:6px 4px;border-bottom:1px solid var(--border)">${newer.month}</th><th style="text-align:right;padding:6px 4px;border-bottom:1px solid var(--border)">差分</th></tr></thead><tbody>${rows.map(r=>`<tr><td style="padding:5px 4px">${r[0]}</td><td style="text-align:right;padding:5px 4px">${r[1]}</td><td style="text-align:right;padding:5px 4px">${r[2]}</td><td style="text-align:right;padding:5px 4px">${r[3]}</td></tr>`).join('')}</tbody></table>${older.note||newer.note?`<div style="margin-top:12px;font-size:12px;color:var(--muted)">${older.note?`${older.month}: ${older.note}`:''}${older.note&&newer.note?'<br>':''}${newer.note?`${newer.month}: ${newer.note}`:''}</div>`:''}`;
@@ -1048,8 +1052,8 @@ function openSnapCompare(month){
 }
 function renderHistoryTable(){
     const snaps=D.snapshots.slice().sort((a,b)=>b.month.localeCompare(a.month));
-    const scdH=getScdHolding();
-    el('rec-history').innerHTML=!snaps.length?'<tr><td colspan="8" class="empty">記録がありません</td></tr>':snaps.map(s=>{const isBase=_compareBase===s.month;return`<tr${isBase?' style="background:var(--primary-light)"':''}><td>${s.month}</td><td style="text-align:right">${fmt(s.total)}</td><td style="text-align:right">${fmt(s.investment)}</td><td style="text-align:right">${fmt(s.idecoTotal||0)}</td><td style="text-align:right">${fmt(s.cash)}</td><td style="text-align:right">${fmt(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)}</td><td style="max-width:120px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.note||''}</td><td><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="openSnapCompare('${s.month}')">${isBase?'比較中...':'比較'}</button><button class="btn btn-s btn-sm" onclick="loadSnap('${s.month}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteSnap('${s.month}')">削除</button></div></td></tr>`;}).join('');
+    const scdHs=getScdHoldings();
+    el('rec-history').innerHTML=!snaps.length?'<tr><td colspan="8" class="empty">記録がありません</td></tr>':snaps.map(s=>{const isBase=_compareBase===s.month;return`<tr${isBase?' style="background:var(--primary-light)"':''}><td>${s.month}</td><td style="text-align:right">${fmt(s.total)}</td><td style="text-align:right">${fmt(s.investment)}</td><td style="text-align:right">${fmt(s.idecoTotal||0)}</td><td style="text-align:right">${fmt(s.cash)}</td><td style="text-align:right">${fmt(scdHs.reduce((sum,h)=>sum+(s.holdingValues?.[h.id]?.principal||0),0))}</td><td style="max-width:120px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.note||''}</td><td><div class="flex-gap" style="justify-content:flex-end"><button class="btn btn-s btn-sm" onclick="openSnapCompare('${s.month}')">${isBase?'比較中...':'比較'}</button><button class="btn btn-s btn-sm" onclick="loadSnap('${s.month}')">編集</button><button class="btn btn-d btn-sm" onclick="deleteSnap('${s.month}')">削除</button></div></td></tr>`;}).join('');
     renderHistorySelect();
 }
 
@@ -1104,7 +1108,7 @@ function renderSettings(){
     const usdEl=el('s-usd-jpy');if(usdEl)usdEl.value=D.settings.usdJpy||150;
     const memoEl=el('s-ai-memo');if(memoEl)memoEl.value=D.settings.aiMemo||'';
     const scdSel=el('s-scd-holding');
-    if(scdSel)scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${h.id===D.settings.scdHoldingId?' selected':''}>${h.name}</option>`).join('')||'<option value="">銘柄なし</option>';
+    if(scdSel){const ids=D.settings.scdHoldingIds||[];scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${ids.includes(h.id)?' selected':''}>${h.name}</option>`).join('')||'<option value="" disabled>銘柄なし</option>';}
     renderBanksTable();renderCardsTable();renderPointsTable();renderBrokersTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();renderTargetAllocInputs();renderHiddenSectionSettings();
 }
 function saveBasic(){
@@ -1114,7 +1118,7 @@ function saveBasic(){
     const usdEl=el('s-usd-jpy');if(usdEl)D.settings.usdJpy=Number(usdEl.value)||150;
     const memoEl=el('s-ai-memo');if(memoEl)D.settings.aiMemo=memoEl.value;
     const scdSel=el('s-scd-holding');
-    if(scdSel&&scdSel.value)D.settings.scdHoldingId=scdSel.value;
+    if(scdSel){D.settings.scdHoldingIds=[...scdSel.selectedOptions].map(o=>o.value);if(D.settings.scdHoldingIds.length)D.settings.scdHoldingId=D.settings.scdHoldingIds[0];}
     D.settings.targetAllocation={};
     Object.keys(getAssetTypes()).forEach(id=>{const v=Number(el('ta-'+id)?.value)||0;if(v>0)D.settings.targetAllocation[id]=v;});
     const _totalAlloc=Object.values(D.settings.targetAllocation).reduce((a,v)=>a+v,0);
@@ -1301,9 +1305,9 @@ function importRakuten(e){const f=e.target.files[0];if(!f)return;e.target.value=
 // CSV エクスポート
 function _csvRow(arr){return arr.map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}
 function _exportCsv(snaps,filename){
-    const scdH=getScdHolding();
+    const scdHs=getScdHoldings();
     const header=['月','総資産','投資','iDeCo','現金','SCHD元本'];
-    const rows=snaps.map(s=>[s.month,Math.round(s.total||0),Math.round(s.investment||0),Math.round(s.idecoTotal||0),Math.round(s.cash||0),Math.round(scdH?s.holdingValues?.[scdH.id]?.principal||0:0)]);
+    const rows=snaps.map(s=>[s.month,Math.round(s.total||0),Math.round(s.investment||0),Math.round(s.idecoTotal||0),Math.round(s.cash||0),Math.round(scdHs.reduce((sum,h)=>sum+(s.holdingValues?.[h.id]?.principal||0),0))]);
     const csv='﻿'+[header,...rows].map(r=>_csvRow(r)).join('\n');
     const b=new Blob([csv],{type:'text/csv;charset=utf-8'});_triggerExport(b,filename,'btn-export-csv');
 }
