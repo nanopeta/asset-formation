@@ -4,6 +4,12 @@
 
 ---
 
+## v122（2026-07-19）
+
+SCHD対象銘柄の選択を複数選択から単一選択に戻した。
+
+---
+
 ## v121（2026-07-19）
 
 `prefers-reduced-motion` 対応の漏れを修正: tabFadeIn・countUp(JS)・progress bar transition を追加、an-block の重複セレクターを統合。

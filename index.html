@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=121">
+    <link rel="stylesheet" href="style.css?v=122">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -791,7 +791,7 @@
         <div class="card" style="max-width:480px;margin-bottom:20px;">
             <div class="fi">
                 <div class="fg"><label>SCHD 元本目標（円）</label><input type="number" id="s-target" placeholder="10000000" min="0"></div>
-                <div class="fg"><label>SCHD 対象銘柄 <span style="font-size:10px;color:var(--muted)">(複数選択可)</span></label><select id="s-scd-holding" multiple class="scd-multi"></select></div>
+                <div class="fg"><label>SCHD 対象銘柄</label><select id="s-scd-holding"></select></div>
                 <div class="fg"><label>iDeCo 月次拠出合計（円）</label><input type="number" id="s-ideco-monthly" placeholder="0" min="0"></div>
                 <div class="fg"><label>iDeCo 開始月</label><input type="month" id="s-ideco-start"></div>
                 <div class="fg"><label>USD/JPY レート</label><input type="number" id="s-usd-jpy" placeholder="150" step="0.1"></div>
@@ -1088,6 +1088,12 @@
 
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
+            <div class="changelog-entry">
+                <div class="changelog-ver">v122 <span class="changelog-date">2026-07-19</span></div>
+                <ul class="changelog-items">
+                    <li>SCHD対象銘柄の選択を単一選択に戻した</li>
+                </ul>
+            </div>
             <div class="changelog-entry">
                 <div class="changelog-ver">v121 <span class="changelog-date">2026-07-19</span></div>
                 <ul class="changelog-items">
@@ -1478,6 +1484,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=121"></script>
+<script src="app.js?v=122"></script>
 </body>
 </html>
