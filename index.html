@@ -10,7 +10,10 @@
     <meta name="apple-mobile-web-app-title" content="資産管理">
     <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=117">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=118">
 </head>
 <body>
 <!-- ======= PC: サイドバー ======= -->
@@ -1086,6 +1089,14 @@
         <!-- 更新履歴 -->
         <div id="help-pane-changelog" class="help-pane" style="display:none">
             <div class="changelog-entry">
+                <div class="changelog-ver">v118 <span class="changelog-date">2026-07-19</span></div>
+                <ul class="changelog-items">
+                    <li>Noto Sans JP フォント導入 — 数値・日本語テキストの視認性を向上</li>
+                    <li>総資産カウントアップアニメーション — 初回表示時に¥0から総資産額まで滑らかにカウントアップ</li>
+                    <li>ダッシュボードカードのフェードインアニメーション — ヒーロー・サマリーカード・SCHDストリップが段階的にスライドイン</li>
+                </ul>
+            </div>
+            <div class="changelog-entry">
                 <div class="changelog-ver">v117 <span class="changelog-date">2026-06-16</span></div>
                 <ul class="changelog-items">
                     <li>SCHD対象銘柄を複数選択に対応 — 設定 &gt; 基本設定でCtrl/Cmdクリックにより複数銘柄を選択でき、合算値を各画面に反映</li>
@@ -1442,6 +1453,6 @@
     </div>
 </div>
 </main>
-<script src="app.js?v=117"></script>
+<script src="app.js?v=118"></script>
 </body>
 </html>
