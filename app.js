@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v122';
+const APP_VERSION='v123';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -1235,30 +1235,7 @@ function deleteAssetType(id){const t=(D.customAssetTypes||[]).find(t=>t.id===id)
 
 // ===== 並び替え（ドラッグ＋上下ボタン） =====
 // ドラッグ列セル生成。モバイルではドラッグ不可のため ▲▼ ボタンを表示（.row-move は768px以下でのみ表示）
-function _dragCell(group,id){return`<td class="drag-handle">⠿<span class="row-move"><button type="button" onclick="moveRow('${group}','${id}',-1)" aria-label="上へ移動">▲</button><button type="button" onclick="moveRow('${group}','${id}',1)" aria-label="下へ移動">▼</button></span></td>`;}
-function moveRow(group,id,dir){
-    if(group==='acctype'||group==='assettype'){
-        const key=group==='acctype'?'accountTypeOrder':'assetTypeOrder';
-        const order=D[key]||[];
-        const i=order.indexOf(id),j=i+dir;
-        if(i<0||j<0||j>=order.length)return;
-        [order[i],order[j]]=[order[j],order[i]];
-        persist();
-        if(group==='acctype')renderAccTypesTable();else renderAssetTypesTable();
-        return;
-    }
-    const arr=group==='ideco'?D.idecoHoldings:group==='bank'?D.bankAccounts:group==='card'?D.creditCards:group==='broker'?(D.brokers||[]):group==='point'?(D.pointAccounts||[]):D.holdings;
-    const i=arr.findIndex(x=>x.id===id),j=i+dir;
-    if(i<0||j<0||j>=arr.length)return;
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-    persist();
-    if(group==='ideco'){renderIdecoTable();renderIdecoInputs();}
-    else if(group==='bank'){renderBanksTable();renderBankInputs();}
-    else if(group==='card'){renderCardsTable();renderCardInputs();}
-    else if(group==='broker'){renderBrokersTable();}
-    else if(group==='point'){renderPointsTable();renderPointInputs();}
-    else{renderHoldingsTable();renderHoldingInputs();}
-}
+function _dragCell(){return`<td class="drag-handle">⠿</td>`;}
 
 // ===== ドラッグ&ドロップ =====
 let dragId=null,dragGroup=null;
