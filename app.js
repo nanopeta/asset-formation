@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v121';
+const APP_VERSION='v122';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -1113,7 +1113,7 @@ function renderSettings(){
     const usdEl=el('s-usd-jpy');if(usdEl)usdEl.value=D.settings.usdJpy||150;
     const memoEl=el('s-ai-memo');if(memoEl)memoEl.value=D.settings.aiMemo||'';
     const scdSel=el('s-scd-holding');
-    if(scdSel){const ids=D.settings.scdHoldingIds||[];scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${ids.includes(h.id)?' selected':''}>${h.name}</option>`).join('')||'<option value="" disabled>銘柄なし</option>';}
+    if(scdSel){const curId=D.settings.scdHoldingId||'';scdSel.innerHTML=D.holdings.map(h=>`<option value="${h.id}"${h.id===curId?' selected':''}>${h.name}</option>`).join('')||'<option value="" disabled>銘柄なし</option>';}
     renderBanksTable();renderCardsTable();renderPointsTable();renderBrokersTable();renderAccTypesTable();renderAssetTypesTable();renderHoldingsTable();renderIdecoTable();renderCsvYearSel();renderTargetAllocInputs();renderHiddenSectionSettings();
 }
 function saveBasic(){
@@ -1123,7 +1123,7 @@ function saveBasic(){
     const usdEl=el('s-usd-jpy');if(usdEl)D.settings.usdJpy=Number(usdEl.value)||150;
     const memoEl=el('s-ai-memo');if(memoEl)D.settings.aiMemo=memoEl.value;
     const scdSel=el('s-scd-holding');
-    if(scdSel){D.settings.scdHoldingIds=[...scdSel.selectedOptions].map(o=>o.value);if(D.settings.scdHoldingIds.length)D.settings.scdHoldingId=D.settings.scdHoldingIds[0];}
+    if(scdSel&&scdSel.value){D.settings.scdHoldingId=scdSel.value;D.settings.scdHoldingIds=[scdSel.value];}
     D.settings.targetAllocation={};
     Object.keys(getAssetTypes()).forEach(id=>{const v=Number(el('ta-'+id)?.value)||0;if(v>0)D.settings.targetAllocation[id]=v;});
     const _totalAlloc=Object.values(D.settings.targetAllocation).reduce((a,v)=>a+v,0);
