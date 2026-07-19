@@ -61,7 +61,8 @@
         }
 
         .tab-content{display:none;}
-        .tab-content.active{display:block;}
+        @keyframes tabFadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+        .tab-content.active{display:block;animation:tabFadeIn .18s ease both;}
 
         /* ===== サブタブ ===== */
         .sub-nav{display:flex;gap:4px;padding:12px 0 0;margin-bottom:16px;border-bottom:1px solid var(--border);}
@@ -100,9 +101,10 @@
 
         /* ===== HERO ===== */
         .hero{background:linear-gradient(135deg,#2a5068 0%,#3d7490 50%,#4e8fa6 100%);border-radius:14px;padding:20px 24px;margin-bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;color:#fff;box-shadow:0 8px 32px rgba(42,80,104,.28),0 2px 8px rgba(0,0,0,.12);position:relative;overflow:hidden;}
-        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(95,173,155,.25) 0%,transparent 60%);pointer-events:none;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 88% 8%,rgba(95,173,155,.42) 0%,transparent 50%),radial-gradient(ellipse at 10% 88%,rgba(20,48,72,.55) 0%,transparent 40%);pointer-events:none;}
         .hero-label{font-size:13px;font-weight:500;opacity:.75;margin-bottom:4px;}
         .hero-value{font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1;}
+        .hero-value,.sum-val,.cval,.cval-lg,.sl-val,.hero-month-val{font-variant-numeric:tabular-nums;}
         .hero-gain{font-size:15px;margin-top:8px;}
         .hero-right{text-align:right;}
         .hero-month{font-size:12px;opacity:.7;margin-bottom:4px;}
@@ -112,10 +114,14 @@
         .hero span[style*="color:var(--muted)"]{color:rgba(255,255,255,.6)!important;}
 
         /* ===== サマリーカード ===== */
-        .sum-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(91,143,168,.09);}
+        .sum-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(91,143,168,.09);transition:transform .22s var(--ease-spring),box-shadow .22s ease;}
+        .sum-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(91,143,168,.18);}
         .sum-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
         .sum-val{font-size:24px;font-weight:800;letter-spacing:-.5px;}
         .sum-gain{font-size:11px;margin-top:4px;}
+        .sum-gain .positive{background:var(--accent-light);border-radius:4px;padding:1px 6px;}
+        .sum-gain .negative{background:#fde8e8;border-radius:4px;padding:1px 6px;}
+        .dark-mode .sum-gain .negative{background:rgba(208,104,104,.15);}
         .bank-mini{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
         .bank-mini-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--muted);}
         .bank-mini-row span:last-child{font-weight:600;color:var(--text);}
@@ -145,7 +151,7 @@
 
         /* ===== プログレスバー ===== */
         .pb{height:7px;background:var(--border);border-radius:99px;overflow:hidden;}
-        .pb-fill{height:100%;border-radius:99px;transition:width .5s ease;}
+        .pb-fill{height:100%;border-radius:99px;transition:width .8s ease-out;}
         .fill-blue{background:linear-gradient(90deg,var(--primary) 0%,#7ab3c8 100%);}
         .fill-orange{background:linear-gradient(90deg,var(--warning) 0%,#e0a870 100%);}
         .fill-green{background:linear-gradient(90deg,var(--accent) 0%,#82c9b8 100%);}
@@ -432,6 +438,7 @@
         .toast-action:hover{background:rgba(255,255,255,.3);}
         /* ===== ダークモード ===== */
         .dark-mode{--primary:#6fa9c4;--primary-dark:#5b9ab5;--primary-light:#1a2e3a;--accent:#6dbfad;--accent-light:#1a2e28;--bg:#111c24;--card:#1a2a36;--text:#dde8f0;--muted:#6a8898;--border:#243342;--success:#5fad9b;--danger:#d06868;--warning:#c9915a;}
+        .dark-mode body{background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.03) 1px,transparent 0);background-size:28px 28px;}
         .dark-mode .sidebar,.dark-mode .mobile-header,.dark-mode .bottom-nav,.dark-mode .sub-nav{background:var(--card);}
         .dark-mode .hero{background:linear-gradient(135deg,#1a3548 0%,#1e4060 50%,#224d72 100%);}
         .dark-mode .card,.dark-mode .sum-card,.dark-mode .schd-strip,.dark-mode .rec-sec,.dark-mode .add-panel.open,.dark-mode .snap-modal-card{background:var(--card);}
@@ -589,6 +596,10 @@
 }
 /* ===== エントランスアニメーション ===== */
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.an-block.anim-scroll{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s var(--ease-spring),box-shadow .22s ease;}
+.an-block.vis-in{opacity:1;transform:none;}
+.an-block.vis-in:hover{box-shadow:0 6px 22px rgba(91,143,168,.13);}
+@media(prefers-reduced-motion:reduce){.an-block.anim-scroll{transition:none;}.an-block.anim-scroll{opacity:1;transform:none;}}
 .app-loaded .hero{animation:fadeSlideUp .5s var(--ease-spring) both;}
 .app-loaded .g3.mb>.sum-card:nth-child(1){animation:fadeSlideUp .45s .06s var(--ease-spring) both;}
 .app-loaded .g3.mb>.sum-card:nth-child(2){animation:fadeSlideUp .45s .12s var(--ease-spring) both;}

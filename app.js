@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v119';
+const APP_VERSION='v120';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -132,7 +132,8 @@ function closeHelp(){el('help-modal').style.display='none';}
 function switchHelpTab(tab){['usage','changelog'].forEach(t=>{el('help-tab-'+t).classList.toggle('active',t===tab);el('help-pane-'+t).style.display=t===tab?'':'none';});}
 
 // ===== NISA バー =====
-function renderNisaBar(prefix,used,max){used=Math.max(0,used||0);const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);barEl.style.width=Math.min(100,p)+'%';const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
+function animPbWidth(barEl,p){const w=Math.min(100,p)+'%';barEl.style.transition='none';barEl.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{barEl.style.transition='';barEl.style.width=w;}));}
+function renderNisaBar(prefix,used,max){used=Math.max(0,used||0);const p=pct(used,max);const barEl=el(`ns-${prefix}-bar`);animPbWidth(barEl,p);const over=used>max;if(over)barEl.classList.add('fill-red');else barEl.classList.remove('fill-red');el(`ns-${prefix}-used`).textContent=fmt(used);el(`ns-${prefix}-pct`).textContent=p.toFixed(1)+'%';const remEl=el(`ns-${prefix}-rem`);if(over){remEl.textContent='超過 '+fmt(used-max);remEl.style.color='var(--danger)';}else{remEl.textContent=fmt(max-used);remEl.style.color='';}}
 
 // ===== ダッシュボード =====
 let chartPortfolio=null;
@@ -222,7 +223,7 @@ function scdSpotAdvice(accountType){
 }
 function renderDashScdStrip(scdHs,scdJpy,target){
     const principal=scdJpy.principal,p=pct(principal,target);
-    el('ss-val').textContent=fmt(principal);el('ss-meta').textContent=`/ ${fmt(target)}`;el('ss-pct').textContent=p.toFixed(1)+'%';el('ss-rem').textContent=`残り ${fmt(Math.max(0,target-principal))}`;el('ss-bar').style.width=p+'%';
+    el('ss-val').textContent=fmt(principal);el('ss-meta').textContent=`/ ${fmt(target)}`;el('ss-pct').textContent=p.toFixed(1)+'%';el('ss-rem').textContent=`残り ${fmt(Math.max(0,target-principal))}`;animPbWidth(el('ss-bar'),p);
     if(scdHs.length){const rate=scdHs.reduce((s,h)=>s+(h.monthlyAmount||0)+spotTotal(h)/12,0),rem=target-principal;if(rem>0&&rate>0){const months=Math.ceil(rem/rate);const eta=new Date();eta.setMonth(eta.getMonth()+months);el('ss-eta').textContent=`${eta.getFullYear()}年${eta.getMonth()+1}月（${fmtMonths(months)}）`;}else el('ss-eta').textContent=rem<=0?'達成済み':'--';}
     const advEl=el('ss-spot-advice');
     if(advEl){const adv=scdSpotAdvice(scdHs[0]?.account||'');advEl.className=`spot-advice spot-advice-${adv.type}`;advEl.textContent=adv.msg;}
@@ -1910,6 +1911,9 @@ function initCmdPalette(){
     el('cmd-list').addEventListener('click',e=>{const item=e.target.closest('.cmd-item');if(item)_cmdRun(+item.dataset.i);});
 }
 
+// ===== スクロールアニメーション =====
+function initScrollAnimations(){const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis-in');obs.unobserve(e.target);}});},{threshold:0.05,rootMargin:'0px 0px -20px 0px'});document.querySelectorAll('.an-block').forEach(b=>{b.classList.add('anim-scroll');obs.observe(b);});}
+
 // ===== 初期化 (B-2) =====
 function initTabEvents(){
     document.querySelectorAll('.sidebar-nav button[data-tab],.bottom-nav button[data-tab]').forEach(btn=>{btn.addEventListener('click',()=>switchTab(btn.dataset.tab));});
@@ -2016,6 +2020,7 @@ function init(){
     initCmdPalette();
     renderOverview();
     document.body.classList.add('app-loaded');
+    initScrollAnimations();
     renderRecordTab();
     // URLハッシュ復元（リロード時のタブ維持）＋ ブラウザバック対応
     window.addEventListener('popstate',()=>{if(closeTopModal())return;_applyHashNav();});
