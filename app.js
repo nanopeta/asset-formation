@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v118';
+const APP_VERSION='v119';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -89,6 +89,7 @@ let D=load();
 
 // ===== ユーティリティ =====
 let _privacy=false;
+let _heroAnimated=false;
 const fmt=n=>_privacy?'¥•••••':'¥'+Math.round(n||0).toLocaleString('ja-JP');
 const fmtMan=v=>_privacy?'¥•••':'¥'+(v/10000).toFixed(1)+'万';
 const pct=(v,m)=>m>0?Math.min(100,(v/m)*100):0;
@@ -151,10 +152,10 @@ function _filteredSnaps(){
 }
 
 // ===== ダッシュボード サブレンダラー (B-1) =====
-function countUp(elem,target,dur){dur=dur||1000;const start=Date.now();const step=()=>{const p=Math.min((Date.now()-start)/dur,1);const ease=1-Math.pow(1-p,3);elem.textContent=fmt(Math.round(target*ease));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
+function countUp(elem,target,dur=1000){const start=Date.now();const step=()=>{const p=Math.min((Date.now()-start)/dur,1);const ease=1-Math.pow(1-p,3);elem.textContent=fmt(Math.round(target*ease));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
 function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps){
     const totalEl=el('db-total');
-    if(totalEl.textContent==='¥0'&&total>0)countUp(totalEl,total,1200);
+    if(!_heroAnimated&&total>0){_heroAnimated=true;countUp(totalEl,total,1200);}
     else totalEl.textContent=fmt(total);
     el('db-total-gain').innerHTML=gainHtml(inv+ideco,totalPri,'14px');
     {const curM=formatMonth(new Date());const ps=snaps.filter(s=>s.month<curM).pop();const mEl=el('db-month-diff');if(ps){const diff=total-ps.total;mEl.textContent=(diff>=0?'+':'')+fmt(diff);mEl.style.color=diff>=0?'rgba(255,255,255,.95)':'#fca5a5';}else{mEl.textContent='--';}}
