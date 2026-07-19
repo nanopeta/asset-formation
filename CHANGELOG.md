@@ -4,6 +4,12 @@
 
 ---
 
+## v121（2026-07-19）
+
+`prefers-reduced-motion` 対応の漏れを修正: tabFadeIn・countUp(JS)・progress bar transition を追加、an-block の重複セレクターを統合。
+
+---
+
 ## v120（2026-07-19）
 
 UI polish 8件: プログレスバーアニメーション・カードホバーリフト・tabular-nums・タブフェード・スクロール起動アニメーション・損益ティント・ダークモードテクスチャ・ヒーローグロー強化。

@@ -1,5 +1,5 @@
 // ===== 定数 =====
-const APP_VERSION='v120';
+const APP_VERSION='v121';
 const TAX_RATE=0.20315;
 const BUILT_IN_ACCOUNTS={
     'nisa-growth':    {label:'NISA成長投資',color:'#5b8fa8',badge:'b-blue',   taxFree:true},
@@ -153,7 +153,7 @@ function _filteredSnaps(){
 }
 
 // ===== ダッシュボード サブレンダラー (B-1) =====
-function countUp(elem,target,dur=1000){const start=Date.now();const step=()=>{const p=Math.min((Date.now()-start)/dur,1);const ease=1-Math.pow(1-p,3);elem.textContent=fmt(Math.round(target*ease));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
+function countUp(elem,target,dur=1000){if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){elem.textContent=fmt(target);return;}const start=Date.now();const step=()=>{const p=Math.min((Date.now()-start)/dur,1);const ease=1-Math.pow(1-p,3);elem.textContent=fmt(Math.round(target*ease));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
 function renderDashHero(c,{cash,inv,ideco,total},invPri,effectiveIdecoPri,idecoActualPri,idecoEstPri,totalPri,snaps){
     const totalEl=el('db-total');
     if(!_heroAnimated&&total>0){_heroAnimated=true;countUp(totalEl,total,1200);}
