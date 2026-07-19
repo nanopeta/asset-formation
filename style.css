@@ -599,13 +599,19 @@
 .an-block.anim-scroll{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s var(--ease-spring),box-shadow .22s ease;}
 .an-block.vis-in{opacity:1;transform:none;}
 .an-block.vis-in:hover{box-shadow:0 6px 22px rgba(91,143,168,.13);}
-@media(prefers-reduced-motion:reduce){.an-block.anim-scroll{transition:none;}.an-block.anim-scroll{opacity:1;transform:none;}}
 .app-loaded .hero{animation:fadeSlideUp .5s var(--ease-spring) both;}
 .app-loaded .g3.mb>.sum-card:nth-child(1){animation:fadeSlideUp .45s .06s var(--ease-spring) both;}
 .app-loaded .g3.mb>.sum-card:nth-child(2){animation:fadeSlideUp .45s .12s var(--ease-spring) both;}
 .app-loaded .g3.mb>.sum-card:nth-child(3){animation:fadeSlideUp .45s .18s var(--ease-spring) both;}
 .app-loaded .schd-strip{animation:fadeSlideUp .45s .22s var(--ease-spring) both;}
 @media(prefers-reduced-motion:reduce){
+    /* RC-1: tabFadeIn */
+    .tab-content.active{animation:none;}
+    /* RC-2: anim-scroll（重複セレクター統合） */
+    .an-block.anim-scroll{transition:none;opacity:1;transform:none;}
+    /* RC-4: progress bar transition */
+    .pb-fill{transition:none;}
+    /* fadeSlideUp */
     .app-loaded .hero,.app-loaded .g3.mb>.sum-card,.app-loaded .schd-strip{animation:none;}
 }
 /* ===== 印刷レイアウト ===== */
