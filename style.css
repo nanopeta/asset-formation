@@ -61,8 +61,7 @@
         }
 
         .tab-content{display:none;}
-        @keyframes tabFadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-        .tab-content.active{display:block;animation:tabFadeIn .18s ease backwards;}
+        .tab-content.active{display:block;}
 
         /* ===== サブタブ ===== */
         .sub-nav{display:flex;gap:4px;padding:12px 0 0;margin-bottom:16px;border-bottom:1px solid var(--border);}
@@ -584,8 +583,6 @@
 .app-loaded .g3.mb>.sum-card:nth-child(3){animation:fadeSlideUp .45s .18s var(--ease-spring) both;}
 .app-loaded .schd-strip{animation:fadeSlideUp .45s .22s var(--ease-spring) both;}
 @media(prefers-reduced-motion:reduce){
-    /* RC-1: tabFadeIn */
-    .tab-content.active{animation:none;}
     /* RC-2: anim-scroll（重複セレクター統合） */
     .an-block.anim-scroll{transition:none;opacity:1;transform:none;}
     /* RC-4: progress bar transition */
