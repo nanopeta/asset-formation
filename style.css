@@ -255,7 +255,7 @@
         .add-panel{background:var(--card);display:none;}
         .add-panel.open{display:block;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;width:min(580px,94vw);max-height:90dvh;overflow-y:auto;border-radius:16px;padding:20px 24px;box-shadow:0 16px 48px rgba(36,52,71,.22),0 4px 16px rgba(0,0,0,.08);border:1px solid var(--border);}
         .add-panel-title{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--text);}
-        #settings-backdrop{display:none;position:fixed;inset:0;background:rgba(20,35,50,.45);backdrop-filter:blur(2px);z-index:499;}
+        #settings-backdrop{display:none;position:fixed;inset:0;background:rgba(20,35,50,.55);z-index:499;}
         #settings-backdrop.active{display:block;}
 
         /* ===== Excel風フィルター ===== */
@@ -397,7 +397,7 @@
         }
 
         /* ===== 月次サマリーモーダル ===== */
-        .snap-modal{position:fixed;inset:0;background:rgba(20,35,50,.5);backdrop-filter:blur(3px);z-index:9000;display:flex;align-items:center;justify-content:center;}
+        .snap-modal{position:fixed;inset:0;background:rgba(20,35,50,.6);z-index:9000;display:flex;align-items:center;justify-content:center;}
         .snap-modal-card{background:#fff;border-radius:16px;padding:20px 24px;max-width:360px;width:90%;box-shadow:0 16px 48px rgba(36,52,71,.22);}
         .snap-modal-title{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--text);}
         .snap-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
